@@ -9,11 +9,14 @@
   },
   "dependencies": {
     "framer-motion": "^12.38.0",
+    "gsap": "^3.14.2",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "three": "^0.167.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",
+    "shadcn": "^4.0.8",
     "vite": "^5.4.2"
   }
 }

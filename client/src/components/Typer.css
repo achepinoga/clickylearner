@@ -2,24 +2,23 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 28px;
+  gap: 24px;
   padding-top: 4px;
 }
 
 /* Progress */
 .progress-track {
   width: 100%;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 2px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 0;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent), var(--teal));
-  border-radius: 2px;
-  box-shadow: 0 0 10px rgba(124, 106, 255, 0.5);
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
 }
 
 /* Stats */
@@ -27,149 +26,166 @@
   display: flex;
   align-items: center;
   gap: 24px;
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 50px;
-  padding: 12px 32px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 0;
+  padding: 10px 28px;
+}
+
+.stats-row::before {
+  content: '> ';
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  margin-right: -8px;
 }
 
 .stat-divider {
   width: 1px;
-  height: 26px;
-  background: rgba(255, 255, 255, 0.07);
+  height: 22px;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .stat-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
+  gap: 2px;
   min-width: 52px;
 }
 
 .stat-num {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: var(--text);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--accent);
   line-height: 1;
-  transition: color 0.2s;
+  text-shadow: 0 0 10px var(--accent-glow);
 }
 
 .stat-of {
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: var(--text-dim);
 }
 
 .stat-lbl {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   color: var(--text-dim);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
 }
 
-/* Type card */
+/* ─── Type card ─── */
 .type-card {
   width: 100%;
-  background: rgba(255, 255, 255, 0.025);
-  border: 1.5px solid rgba(255, 255, 255, 0.07);
-  border-radius: 22px;
-  padding: 42px 52px;
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 0;
   cursor: text;
-  min-height: 150px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  transition: border-color 0.25s, box-shadow 0.25s;
-  backdrop-filter: blur(12px);
+  transition: border-color 0.2s, box-shadow 0.2s;
   position: relative;
   overflow: hidden;
 }
 
-.type-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at top left, rgba(124, 106, 255, 0.04), transparent 55%);
-  pointer-events: none;
+.card-header {
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  letter-spacing: 0.15em;
+  padding: 6px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.card-header-text {
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
 }
 
 .type-card:focus-within {
-  border-color: rgba(124, 106, 255, 0.28);
-  box-shadow: 0 0 44px rgba(124, 106, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.06), inset 0 0 20px rgba(255, 255, 255, 0.02);
 }
 
-.type-card.completing {
-  border-color: rgba(52, 211, 153, 0.45);
-  box-shadow: 0 0 36px rgba(52, 211, 153, 0.08);
+/* ─── Crawl stage ─── */
+.crawl-stage {
+  perspective: 480px;
+  perspective-origin: 50% -40%;
+  position: relative;
+  max-height: 320px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  padding: 50px 52px 40px;
 }
 
-.note-label {
-  font-size: 0.68rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--text-dim);
-  opacity: 0.55;
+.crawl-stage::-webkit-scrollbar {
+  display: none;
 }
 
-/* Star Wars crawl: perspective on parent, rotateX on child */
-.note-3d-stage {
-  perspective: 700px;
-  perspective-origin: 50% -10%;
-  width: 100%;
-}
-
-.note-3d-inner {
+.crawl-inner {
   transform-origin: top center;
   transform-style: preserve-3d;
-  width: 100%;
 }
 
 .note-display {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 1.18rem;
-  line-height: 2;
-  letter-spacing: 0.01em;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 1.1rem;
+  line-height: 2.1;
+  letter-spacing: 0.03em;
   word-break: break-word;
 }
 
-/* Character states */
-.char.intro-hidden {
-  opacity: 0;
-  /* preserve layout space — width is kept, just invisible */
+.crawl-fade-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 72px;
+  background: linear-gradient(to bottom, #000000 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 2;
 }
 
+.crawl-fade-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Word unit for fall animation */
+.word-unit {
+  display: inline-block;
+}
+
+/* Character states */
 .char.pending {
-  color: var(--pending);
+  color: #2a2a2a;
 }
 
 .char.correct {
   color: var(--correct);
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
 }
 
 .char.incorrect {
   color: var(--incorrect);
-  background: rgba(251, 113, 133, 0.1);
-  border-radius: 2px;
+  background: rgba(255, 49, 49, 0.1);
+  text-shadow: 0 0 6px rgba(255, 49, 49, 0.4);
 }
 
 .char.cursor {
-  color: var(--text);
+  color: #000;
+  background: var(--accent);
   position: relative;
+  box-shadow: 0 0 10px var(--accent-glow);
 }
 
 .char.cursor::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 12%;
-  bottom: 12%;
-  width: 2px;
-  background: var(--accent);
-  border-radius: 1px;
-  box-shadow: 0 0 6px var(--accent), 0 0 12px var(--accent-glow);
-  animation: blink 0.9s step-end infinite;
+  display: none;
 }
 
 @keyframes blink {
@@ -194,23 +210,26 @@
 }
 
 .hint-text {
-  font-size: 0.76rem;
+  font-size: 0.7rem;
   color: var(--text-dim);
-  opacity: 0.55;
+  letter-spacing: 0.05em;
 }
 
 .btn-back {
-  background: none;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   color: var(--text-dim);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.08em;
   padding: 8px 18px;
-  border-radius: 50px;
+  border-radius: 0;
+  text-transform: uppercase;
   transition: all 0.2s;
 }
 
 .btn-back:hover {
-  border-color: rgba(124, 106, 255, 0.35);
+  border-color: var(--accent);
   color: var(--accent);
-  background: rgba(124, 106, 255, 0.06);
+  box-shadow: 0 0 10px var(--accent-glow);
 }

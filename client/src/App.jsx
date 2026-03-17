@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import Upload from './components/Upload'
 import Typer from './components/Typer'
 import Results from './components/Results'
+import ShapeGrid from './components/ShapeGrid/ShapeGrid'
 import './App.css'
 
 const STAGES = { UPLOAD: 'upload', TYPING: 'typing', RESULTS: 'results' }
@@ -70,6 +71,17 @@ export default function App() {
   return (
     <>
       <BackgroundOrbs />
+      <div className="shapegrid-bg">
+        <ShapeGrid
+          direction="diagonal"
+          speed={0.15}
+          squareSize={40}
+          borderColor="rgba(255,255,255,0.06)"
+          hoverFillColor="rgba(255,255,255,0.08)"
+          shape="square"
+          hoverTrailAmount={4}
+        />
+      </div>
       <div className="app">
         <motion.header
           className="header"

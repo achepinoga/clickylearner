@@ -5,28 +5,28 @@
 }
 
 :root {
-  --bg: #050508;
-  --surface: #0c0c16;
-  --surface2: #111120;
-  --glass: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(255, 255, 255, 0.07);
-  --border-hover: rgba(124, 106, 255, 0.45);
-  --accent: #7c6aff;
-  --accent-glow: rgba(124, 106, 255, 0.22);
-  --teal: #2dd4bf;
-  --teal-glow: rgba(45, 212, 191, 0.2);
-  --correct: #34d399;
-  --incorrect: #fb7185;
-  --pending: #2e2e50;
-  --text: #eeeeff;
-  --text-dim: #52527a;
-  --radius: 16px;
+  --bg: #000000;
+  --surface: #080808;
+  --surface2: #0f0f0f;
+  --glass: rgba(255, 255, 255, 0.02);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --border-hover: rgba(255, 255, 255, 0.4);
+  --accent: #ffffff;
+  --accent-glow: rgba(255, 255, 255, 0.15);
+  --teal: #ffffff;
+  --teal-glow: rgba(255, 255, 255, 0.15);
+  --correct: #ffffff;
+  --incorrect: #ff4444;
+  --pending: #1c1c1c;
+  --text: #ffffff;
+  --text-dim: #444444;
+  --radius: 0px;
 }
 
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'Inter', sans-serif;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -34,15 +34,30 @@ body {
   overflow-x: hidden;
 }
 
-/* Dot grid background */
+/* Scanlines */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
-  background-size: 28px 28px;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.18) 3px,
+    rgba(0, 0, 0, 0.18) 4px
+  );
   pointer-events: none;
-  z-index: 0;
+  z-index: 9998;
+}
+
+/* CRT vignette */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, 0.7) 100%);
+  pointer-events: none;
+  z-index: 9997;
 }
 
 #root {
@@ -55,9 +70,9 @@ body::before {
 
 button {
   cursor: pointer;
-  font-family: 'Inter', sans-serif;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
 }
 
-::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--pending); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--text-dim); }

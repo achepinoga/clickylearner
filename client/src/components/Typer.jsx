@@ -1,59 +1,67 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { motion } from 'framer-motion'
+import TextType from './TextType/TextType'
 import './Typer.css'
 
 export default function Typer({ notes, onFinished, onBack }) {
-  const [noteIndex, setNoteIndex] = useState(0)
+  // All notes joined into one single challenge
+  const fullText = useMemo(() => notes.join(' '), [notes])
+
   const [typed, setTyped] = useState('')
   const [startTime, setStartTime] = useState(null)
   const [errors, setErrors] = useState(0)
-  const [totalChars, setTotalChars] = useState(0)
   const [wpm, setWpm] = useState(0)
-  const [finished, setFinished] = useState(false)
-  const [completing, setCompleting] = useState(false)
-
-  // Typewriter intro state
-  const [revealedChars, setRevealedChars] = useState(0)
-  const [introComplete, setIntroComplete] = useState(false)
-
+  const [fallenWords, setFallenWords] = useState(new Set())
   const inputRef = useRef()
-  const currentNote = notes[noteIndex] || ''
+  const cursorRef = useRef(null)
 
-  // Typewriter + Star Wars: runs on every note change
+  // Parse fullText into word segments (each includes its trailing space)
+  const words = useMemo(() => {
+    const parts = fullText.split(' ')
+    let pos = 0
+    return parts.map((w, i) => {
+      const start = pos
+      const wordEnd = pos + w.length
+      const end = i < parts.length - 1 ? wordEnd + 1 : wordEnd
+      pos = end
+      return { word: w, start, wordEnd, end, index: i }
+    })
+  }, [fullText])
+
   useEffect(() => {
-    setRevealedChars(0)
-    setIntroComplete(false)
     inputRef.current?.focus()
+  }, [])
 
-    const len = currentNote.length
-    if (len === 0) { setIntroComplete(true); return }
-
-    // ~12ms per char, clamped: min 350ms total, max 850ms total
-    const totalMs = Math.min(Math.max(len * 12, 350), 850)
-    const intervalMs = totalMs / len
-
-    let i = 0
-    const timer = setInterval(() => {
-      i++
-      setRevealedChars(i)
-      if (i >= len) {
-        clearInterval(timer)
-        setIntroComplete(true)
-      }
-    }, intervalMs)
-
-    return () => clearInterval(timer)
-  }, [noteIndex]) // eslint-disable-line react-hooks/exhaustive-deps
-
+  // Scroll cursor into view as user types
   useEffect(() => {
-    if (!startTime || finished) return
+    cursorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }, [typed.length])
+
+  // Detect newly completed words and trigger fall animation
+  useEffect(() => {
+    let changed = false
+    const next = new Set(fallenWords)
+    words.forEach(({ start, end, index }) => {
+      if (!next.has(index) && typed.length >= end) {
+        if (typed.slice(start, end) === fullText.slice(start, end)) {
+          next.add(index)
+          changed = true
+        }
+      }
+    })
+    if (changed) setFallenWords(next)
+  }, [typed])
+
+  // WPM ticker
+  useEffect(() => {
+    if (!startTime) return
     const interval = setInterval(() => {
       const elapsed = (Date.now() - startTime) / 60000
-      const words = (totalChars + typed.length) / 5
+      const words = typed.length / 5
       setWpm(elapsed > 0 ? Math.round(words / elapsed) : 0)
     }, 500)
     return () => clearInterval(interval)
-  }, [startTime, typed, totalChars, finished])
+  }, [startTime, typed])
 
   const handleInput = useCallback((e) => {
     const value = e.target.value
@@ -61,72 +69,89 @@ export default function Typer({ notes, onFinished, onBack }) {
 
     if (value.length > typed.length) {
       const idx = typed.length
-      if (value[idx] !== currentNote[idx]) {
+      if (value[idx] !== fullText[idx]) {
         setErrors(prev => prev + 1)
       }
     }
 
     setTyped(value)
 
-    if (value === currentNote) {
-      const charsTyped = currentNote.length
-      setTotalChars(prev => prev + charsTyped)
-      setTyped('')
-
-      if (noteIndex + 1 >= notes.length) {
-        setFinished(true)
-        const elapsed = (Date.now() - startTime) / 60000
-        const allChars = totalChars + charsTyped
-        const finalWpm = Math.round((allChars / 5) / elapsed)
-        const accuracy = Math.round(((allChars - errors) / allChars) * 100)
-        onFinished({ wpm: finalWpm, accuracy, errors, totalChars: allChars, notes: notes.length })
-      } else {
-        setCompleting(true)
-        setTimeout(() => {
-          setCompleting(false)
-          setNoteIndex(prev => prev + 1)
-        }, 320)
-      }
+    if (value.length >= fullText.length) {
+      const elapsed = (Date.now() - startTime) / 60000
+      const finalWpm = Math.round((fullText.length / 5) / elapsed)
+      const accuracy = Math.round(((fullText.length - errors) / fullText.length) * 100)
+      onFinished({
+        wpm: finalWpm,
+        accuracy,
+        errors,
+        totalChars: fullText.length,
+        notes: notes.length,
+      })
     }
-  }, [typed, currentNote, noteIndex, notes, startTime, totalChars, errors, onFinished])
+  }, [typed, fullText, startTime, errors, notes.length, onFinished])
 
-  const renderNote = () => {
-    return currentNote.split('').map((char, i) => {
-      // During intro: chars beyond the reveal cursor are invisible
-      if (!introComplete && i >= revealedChars) {
-        return (
-          <span key={i} className="char intro-hidden">
-            {char === ' ' ? '\u00A0' : char}
-          </span>
-        )
+  const renderText = () => {
+    return words.map(({ word, start, wordEnd, index }) => {
+      const isFallen = fallenWords.has(index)
+
+      const chars = []
+      for (let ci = 0; ci < word.length; ci++) {
+        const i = start + ci
+        const char = word[ci]
+        if (i === typed.length) {
+          chars.push(<span key={i} className="char cursor" ref={cursorRef}>{char}</span>)
+        } else if (i < typed.length) {
+          chars.push(<span key={i} className={typed[i] === char ? 'char correct' : 'char incorrect'}>{char}</span>)
+        } else {
+          chars.push(<span key={i} className="char pending">{char}</span>)
+        }
       }
 
-      let cls = 'char pending'
-      if (i < typed.length) {
-        cls = typed[i] === char ? 'char correct' : 'char incorrect'
-      } else if (i === typed.length) {
-        cls = 'char cursor'
+      // Trailing space (not for last word)
+      if (index < words.length - 1) {
+        const si = wordEnd
+        if (si === typed.length) {
+          chars.push(<span key="sp" className="char cursor" ref={cursorRef}>{'\u00A0'}</span>)
+        } else if (si < typed.length) {
+          chars.push(<span key="sp" className={typed[si] === ' ' ? 'char correct' : 'char incorrect'}>{'\u00A0'}</span>)
+        } else {
+          chars.push(<span key="sp" className="char pending">{'\u00A0'}</span>)
+        }
       }
+
       return (
-        <span key={i} className={cls}>
-          {char === ' ' ? '\u00A0' : char}
-        </span>
+        <motion.span
+          key={index}
+          className="word-unit"
+          animate={isFallen
+            ? { y: 24, opacity: 0, filter: 'blur(3px)' }
+            : { y: 0, opacity: 1, filter: 'blur(0px)' }
+          }
+          transition={isFallen
+            ? { duration: 0.45, ease: [0.4, 0, 1, 1] }
+            : { duration: 0 }
+          }
+        >
+          {chars}
+        </motion.span>
       )
     })
   }
 
-  const progress = (noteIndex / notes.length) * 100
+  const progress = fullText.length > 0 ? (typed.length / fullText.length) * 100 : 0
 
   return (
     <div className="typer-container">
+      {/* Progress */}
       <div className="progress-track">
         <motion.div
           className="progress-fill"
           animate={{ width: `${progress}%` }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
         />
       </div>
 
+      {/* Stats */}
       <motion.div
         className="stats-row"
         initial={{ opacity: 0, y: -10 }}
@@ -150,9 +175,9 @@ export default function Typer({ notes, onFinished, onBack }) {
 
         <div className="stat-item">
           <span className="stat-num">
-            {noteIndex + 1}<span className="stat-of">/{notes.length}</span>
+            {Math.round(progress)}<span className="stat-of">%</span>
           </span>
-          <span className="stat-lbl">note</span>
+          <span className="stat-lbl">done</span>
         </div>
 
         <div className="stat-divider" />
@@ -162,7 +187,7 @@ export default function Typer({ notes, onFinished, onBack }) {
             className="stat-num"
             style={{ color: errors > 0 ? 'var(--incorrect)' : 'inherit' }}
             key={errors}
-            initial={errors > 0 ? { scale: 1.3 } : {}}
+            initial={errors > 0 ? { scale: 1.35 } : {}}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 400, damping: 15 }}
           >
@@ -172,46 +197,62 @@ export default function Typer({ notes, onFinished, onBack }) {
         </div>
       </motion.div>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={noteIndex}
-          className={`type-card ${completing ? 'completing' : ''}`}
-          onClick={() => inputRef.current?.focus()}
-          initial={{ opacity: 0, x: 28, filter: 'blur(4px)' }}
-          animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-          exit={{ opacity: 0, x: -28, filter: 'blur(4px)' }}
-          transition={{ duration: 0.25, ease: 'easeInOut' }}
-        >
-          <div className="note-label">Note {noteIndex + 1}</div>
-
-          {/* Star Wars crawl wrapper — perspective lives on this div, rotateX on the child */}
-          <div className="note-3d-stage">
-            <motion.div
-              className="note-3d-inner"
-              initial={{ rotateX: 22, y: 10, opacity: 0.4 }}
-              animate={{ rotateX: 0, y: 0, opacity: 1 }}
-              transition={{ duration: 1.1, ease: [0.15, 0.85, 0.35, 1] }}
-            >
-              <div className="note-display">{renderNote()}</div>
-            </motion.div>
-          </div>
-
-          <input
-            ref={inputRef}
-            className="hidden-input"
-            value={typed}
-            onChange={handleInput}
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck={false}
-            maxLength={currentNote.length + 1}
+      {/* Typing card with Star Wars crawl */}
+      <motion.div
+        className="type-card"
+        onClick={() => inputRef.current?.focus()}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="card-header">
+          <TextType
+            as="span"
+            text={['TERMINAL://INPUT', 'TYPE TO MATCH', 'FOCUS_MODE.EXE', 'INITIALIZING...']}
+            typingSpeed={55}
+            deletingSpeed={35}
+            pauseDuration={2500}
+            cursorCharacter="_"
+            cursorBlinkDuration={0.4}
+            className="card-header-text"
           />
-        </motion.div>
-      </AnimatePresence>
+        </div>
+
+        {/* The perspective stage — vanishing point sits above the card */}
+        <div className="crawl-stage">
+          <motion.div
+            className="crawl-inner"
+            initial={{ rotateX: 28, y: 90, opacity: 0 }}
+            animate={{ rotateX: 0, y: 0, opacity: 1 }}
+            transition={{
+              duration: 1.5,
+              ease: [0.1, 0.9, 0.3, 1],
+              opacity: { duration: 0.5, ease: 'easeIn' },
+            }}
+          >
+            <div className="note-display">{renderText()}</div>
+          </motion.div>
+
+          {/* Gradient fades — top simulates text disappearing into deep space */}
+          <div className="crawl-fade-top" />
+          <div className="crawl-fade-bottom" />
+        </div>
+
+        <input
+          ref={inputRef}
+          className="hidden-input"
+          value={typed}
+          onChange={handleInput}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          maxLength={fullText.length + 1}
+        />
+      </motion.div>
 
       <div className="typer-footer">
-        <p className="hint-text">Click the card and start typing · match exactly</p>
+        <p className="hint-text">Click the card · type to match exactly</p>
         <motion.button
           className="btn-back"
           onClick={onBack}

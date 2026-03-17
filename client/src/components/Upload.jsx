@@ -5,9 +5,9 @@ import './Upload.css'
 function UploadIcon() {
   return (
     <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
-      <circle cx="26" cy="26" r="24" fill="rgba(124,106,255,0.08)" stroke="rgba(124,106,255,0.18)" strokeWidth="1.5" />
-      <path d="M26 35V22M19 28l7-7 7 7" stroke="#7c6aff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M18 38h16" stroke="rgba(124,106,255,0.35)" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="26" cy="26" r="24" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" />
+      <path d="M26 35V22M19 28l7-7 7 7" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M18 38h16" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   )
 }
@@ -16,16 +16,16 @@ function FileIcon({ type }) {
   if (type === 'application/pdf') {
     return (
       <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
-        <rect x="6" y="3" width="26" height="32" rx="4" fill="rgba(124,106,255,0.1)" stroke="rgba(124,106,255,0.4)" strokeWidth="1.5" />
-        <path d="M24 3v8a1 1 0 001 1h7" stroke="rgba(124,106,255,0.4)" strokeWidth="1.5" strokeLinecap="round" />
-        <text x="19" y="27" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="7" fontWeight="700" fill="#7c6aff">PDF</text>
+        <rect x="6" y="3" width="26" height="32" rx="4" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" />
+        <path d="M24 3v8a1 1 0 001 1h7" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" />
+        <text x="19" y="27" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="7" fontWeight="700" fill="#ffffff">PDF</text>
       </svg>
     )
   }
   return (
     <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
-      <rect x="6" y="3" width="26" height="32" rx="4" fill="rgba(45,212,191,0.08)" stroke="rgba(45,212,191,0.35)" strokeWidth="1.5" />
-      <path d="M13 15h12M13 21h8M13 27h10" stroke="rgba(45,212,191,0.65)" strokeWidth="1.5" strokeLinecap="round" />
+      <rect x="6" y="3" width="26" height="32" rx="4" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" />
+      <path d="M13 15h12M13 21h8M13 27h10" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   )
 }
@@ -39,7 +39,7 @@ export default function Upload({ onNotesReady }) {
 
   const mouseX = useMotionValue(0)
   const mouseY = useMotionValue(0)
-  const spotlightBg = useMotionTemplate`radial-gradient(300px circle at ${mouseX}px ${mouseY}px, rgba(124, 106, 255, 0.1), transparent 70%)`
+  const spotlightBg = useMotionTemplate`radial-gradient(300px circle at ${mouseX}px ${mouseY}px, rgba(255, 255, 255, 0.04), transparent 70%)`
 
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect()
@@ -108,12 +108,12 @@ export default function Upload({ onNotesReady }) {
         onClick={() => !file && !isLoading && inputRef.current.click()}
         animate={{
           borderColor: dragging
-            ? 'rgba(124,106,255,0.65)'
+            ? 'rgba(255,255,255,0.5)'
             : file
-              ? 'rgba(124,106,255,0.3)'
-              : 'rgba(255,255,255,0.07)',
+              ? 'rgba(255,255,255,0.25)'
+              : 'rgba(255,255,255,0.1)',
           boxShadow: dragging
-            ? '0 0 60px rgba(124,106,255,0.12), inset 0 0 40px rgba(124,106,255,0.04)'
+            ? '0 0 40px rgba(255,255,255,0.06), inset 0 0 30px rgba(255,255,255,0.02)'
             : '0 0 0px transparent',
         }}
         transition={{ duration: 0.2 }}
