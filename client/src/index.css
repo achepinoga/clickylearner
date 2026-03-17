@@ -5,18 +5,22 @@
 }
 
 :root {
-  --bg: #0f1117;
-  --surface: #1a1d27;
-  --surface2: #242838;
-  --border: #2e3347;
-  --accent: #6c8eff;
-  --accent-dim: #3d5aff22;
-  --text: #e8eaf6;
-  --text-dim: #7b82a3;
-  --correct: #4ade80;
-  --incorrect: #f87171;
-  --pending: #7b82a3;
-  --radius: 12px;
+  --bg: #050508;
+  --surface: #0c0c16;
+  --surface2: #111120;
+  --glass: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.07);
+  --border-hover: rgba(124, 106, 255, 0.45);
+  --accent: #7c6aff;
+  --accent-glow: rgba(124, 106, 255, 0.22);
+  --teal: #2dd4bf;
+  --teal-glow: rgba(45, 212, 191, 0.2);
+  --correct: #34d399;
+  --incorrect: #fb7185;
+  --pending: #2e2e50;
+  --text: #eeeeff;
+  --text-dim: #52527a;
+  --radius: 16px;
 }
 
 body {
@@ -27,15 +31,33 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow-x: hidden;
+}
+
+/* Dot grid background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+  z-index: 0;
 }
 
 #root {
   width: 100%;
-  max-width: 900px;
+  max-width: 860px;
   padding: 0 24px;
+  position: relative;
+  z-index: 1;
 }
 
 button {
   cursor: pointer;
   font-family: 'Inter', sans-serif;
 }
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--pending); border-radius: 3px; }

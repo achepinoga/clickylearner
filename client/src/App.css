@@ -1,41 +1,150 @@
+.bg-orbs {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(110px);
+  opacity: 0.13;
+}
+
+.orb-1 {
+  width: 650px;
+  height: 650px;
+  background: radial-gradient(circle, #7c6aff, transparent 70%);
+  top: -250px;
+  left: -180px;
+}
+
+.orb-2 {
+  width: 520px;
+  height: 520px;
+  background: radial-gradient(circle, #2dd4bf, transparent 70%);
+  bottom: -180px;
+  right: -120px;
+}
+
+.orb-3 {
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, #c084fc, transparent 70%);
+  top: 35%;
+  left: 48%;
+  transform: translateX(-50%);
+}
+
 .app {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  padding-bottom: 60px;
+  padding-bottom: 80px;
+  position: relative;
+  z-index: 1;
 }
 
 .header {
-  text-align: center;
-  padding: 48px 0 32px;
+  padding: 52px 0 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
 }
 
 .logo {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 12px;
-  margin-bottom: 8px;
 }
 
-.logo-icon {
-  font-size: 2rem;
+.logo-mark {
+  width: 40px;
+  height: 40px;
+  background: rgba(124, 106, 255, 0.12);
+  border: 1px solid rgba(124, 106, 255, 0.25);
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
 }
 
 .logo-text {
-  font-size: 2rem;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.8rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #6c8eff, #a78bfa);
+  letter-spacing: -0.03em;
+  background: linear-gradient(125deg, #a5b4fc 0%, #7c6aff 45%, #2dd4bf 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.tagline {
+/* Stage breadcrumb */
+.stage-nav {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 50px;
+  padding: 6px 16px;
+  gap: 6px;
+}
+
+.stage-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stage-connector {
+  width: 24px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 0 2px;
+  transition: background 0.5s ease;
+}
+
+.stage-connector.active {
+  background: rgba(124, 106, 255, 0.5);
+}
+
+.stage-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.stage-dot.done {
+  background: var(--accent);
+  opacity: 0.5;
+}
+
+.stage-dot.current {
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent), 0 0 12px var(--accent-glow);
+}
+
+.stage-dot.upcoming {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.stage-label {
+  font-size: 0.75rem;
   color: var(--text-dim);
-  font-size: 0.95rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  transition: color 0.3s;
+  padding: 2px 0;
+}
+
+.stage-label.active {
+  color: var(--text);
 }
 
 .main {
