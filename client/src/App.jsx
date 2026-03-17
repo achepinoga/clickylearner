@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import Upload from './components/Upload'
 import Typer from './components/Typer'
 import Results from './components/Results'
-import ShapeGrid from './components/ShapeGrid/ShapeGrid'
+import SettingsModal from './components/SettingsModal'
 import './App.css'
 
 const STAGES = { UPLOAD: 'upload', TYPING: 'typing', RESULTS: 'results' }
@@ -18,32 +18,15 @@ const pageVariants = {
 
 const pageTransition = { duration: 0.4, ease: [0.4, 0, 0.2, 1] }
 
-function BackgroundOrbs() {
-  return (
-    <div className="bg-orbs" aria-hidden="true">
-      <motion.div
-        className="orb orb-1"
-        animate={{ x: [0, 55, 0], y: [0, -45, 0] }}
-        transition={{ duration: 22, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        className="orb orb-2"
-        animate={{ x: [0, -65, 0], y: [0, 50, 0] }}
-        transition={{ duration: 28, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        className="orb orb-3"
-        animate={{ x: [0, 35, 0], y: [0, -55, 0] }}
-        transition={{ duration: 19, repeat: Infinity, ease: 'easeInOut' }}
-      />
-    </div>
-  )
-}
 
 export default function App() {
   const [stage, setStage] = useState(STAGES.UPLOAD)
   const [notes, setNotes] = useState([])
   const [results, setResults] = useState(null)
+  const [showSettings, setShowSettings] = useState(false)
+  const [settings, setSettings] = useState({
+    allowBackspace: true
+  })
 
   const currentStageIndex = STAGE_KEYS.indexOf(stage)
 
@@ -70,18 +53,6 @@ export default function App() {
 
   return (
     <>
-      <BackgroundOrbs />
-      <div className="shapegrid-bg">
-        <ShapeGrid
-          direction="diagonal"
-          speed={0.15}
-          squareSize={40}
-          borderColor="rgba(255,255,255,0.06)"
-          hoverFillColor="rgba(255,255,255,0.08)"
-          shape="square"
-          hoverTrailAmount={4}
-        />
-      </div>
       <div className="app">
         <motion.header
           className="header"
@@ -96,8 +67,15 @@ export default function App() {
                 <path d="M5 9h2M9 9h2M13 9h2M17 9h2M5 13h2M9 13h2M13 13h2M5 17h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
               </svg>
             </div>
-            <span className="logo-text">StudyTyper</span>
+            <span className="logo-text">Clickylearner</span>
           </div>
+
+          <button className="btn-settings" aria-label="Settings" onClick={() => setShowSettings(true)}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+          </button>
 
           <nav className="stage-nav" aria-label="Progress">
             {STAGE_LABELS.map((label, i) => (
@@ -116,7 +94,7 @@ export default function App() {
           </nav>
         </motion.header>
 
-        <main className="main">
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <AnimatePresence mode="wait">
             {stage === STAGES.UPLOAD && (
               <motion.div key="upload" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition}>
@@ -124,8 +102,8 @@ export default function App() {
               </motion.div>
             )}
             {stage === STAGES.TYPING && (
-              <motion.div key="typing" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition}>
-                <Typer notes={notes} onFinished={handleFinished} onBack={handleRestart} />
+              <motion.div key="typing" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                <Typer notes={notes} onFinished={handleFinished} onBack={handleRestart} settings={settings} />
               </motion.div>
             )}
             {stage === STAGES.RESULTS && (
@@ -134,8 +112,15 @@ export default function App() {
               </motion.div>
             )}
           </AnimatePresence>
-        </main>
+        </div>
       </div>
+
+      <SettingsModal 
+        isOpen={showSettings} 
+        onClose={() => setShowSettings(false)} 
+        settings={settings}
+        setSettings={setSettings}
+      />
     </>
   )
 }

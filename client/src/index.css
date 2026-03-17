@@ -24,7 +24,7 @@
 }
 
 body {
-  background: var(--bg);
+  background: #0d0d0d;
   color: var(--text);
   font-family: 'JetBrains Mono', 'Courier New', monospace;
   min-height: 100vh;
@@ -34,31 +34,7 @@ body {
   overflow-x: hidden;
 }
 
-/* Scanlines */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 3px,
-    rgba(0, 0, 0, 0.18) 3px,
-    rgba(0, 0, 0, 0.18) 4px
-  );
-  pointer-events: none;
-  z-index: 9998;
-}
 
-/* CRT vignette */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, 0.7) 100%);
-  pointer-events: none;
-  z-index: 9997;
-}
 
 #root {
   width: 100%;
