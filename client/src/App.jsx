@@ -30,8 +30,43 @@ export default function App() {
 
   const currentStageIndex = STAGE_KEYS.indexOf(stage)
 
+  const chunkNotes = (rawNotes) => {
+    const MAX_CHARS = 300
+    const MIN_CHARS = 100
+    const result = []
+    for (const note of rawNotes) {
+      // Split on numbered list patterns like "1. text 2. text"
+      const splitByNumber = note.split(/\s*\d+\.\s+/).filter(s => s.trim().length > 0)
+      const items = splitByNumber.length > 1 ? splitByNumber.map(s => s.trim()) : [note.trim()]
+      for (const item of items) {
+        if (item.length <= MAX_CHARS) { result.push(item); continue }
+        const words = item.split(' ')
+        let chunk = ''
+        for (const word of words) {
+          const cand = chunk ? chunk + ' ' + word : word
+          if (cand.length > MAX_CHARS) { if (chunk) result.push(chunk); chunk = word } else { chunk = cand }
+        }
+        if (chunk) result.push(chunk)
+      }
+    }
+    // Merge consecutive short chunks so every note occupies at least ~2 lines
+    const merged = []
+    for (const chunk of result) {
+      if (merged.length > 0) {
+        const prev = merged[merged.length - 1]
+        const combined = prev + ' ' + chunk
+        if (prev.length < MIN_CHARS && combined.length <= MAX_CHARS) {
+          merged[merged.length - 1] = combined
+          continue
+        }
+      }
+      merged.push(chunk)
+    }
+    return merged
+  }
+
   const handleNotesReady = (generatedNotes) => {
-    setNotes(generatedNotes)
+    setNotes(chunkNotes(generatedNotes))
     setStage(STAGES.TYPING)
   }
 
@@ -60,7 +95,7 @@ export default function App() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
         >
-          <div className="logo">
+          <div className="logo" onClick={handleRestart} style={{ cursor: 'pointer' }} title="Return Home">
             <div className="logo-mark">
               <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
                 <rect x="1" y="5" width="20" height="13" rx="3" stroke="currentColor" strokeWidth="1.5" />

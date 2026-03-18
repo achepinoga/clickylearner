@@ -1,16 +1,20 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
+import FallingText from './FallingText'
 import './Typer.css'
 
 const LINE_HEIGHT = 40   // px — must match CSS
 
 export default function Typer({ notes, onFinished, onBack, settings }) {
-  const fullText = useMemo(() => notes.join(' '), [notes])
+  const [currentNoteIndex, setCurrentNoteIndex] = useState(0)
+  const fullText = useMemo(() => notes[currentNoteIndex] || '', [notes, currentNoteIndex])
+  const [completedChars, setCompletedChars] = useState(0)
 
   const [typed, setTyped] = useState('')
   const [startTime, setStartTime] = useState(null)
   const [errors, setErrors] = useState(0)
   const [wpm, setWpm] = useState(0)
+  const [isFalling, setIsFalling] = useState(false)
   const [translateY, setTranslateY] = useState(0)
   const [visibleRows, setVisibleRows] = useState(3)
   const [failedIndices, setFailedIndices] = useState(() => new Set())
@@ -32,7 +36,13 @@ export default function Typer({ notes, onFinished, onBack, settings }) {
     })
   }, [fullText])
 
-  useEffect(() => { inputRef.current?.focus() }, [])
+  useEffect(() => {
+    if (isFalling) return;
+    const focusInput = () => inputRef.current?.focus();
+    focusInput();
+    const id = setTimeout(focusInput, 500); // Trigger again after Framer Motion page transition completes
+    return () => clearTimeout(id);
+  }, [isFalling, currentNoteIndex]);
 
   // Row count computation
   useEffect(() => {
@@ -53,10 +63,10 @@ export default function Typer({ notes, onFinished, onBack, settings }) {
     if (!startTime) return
     const interval = setInterval(() => {
       const elapsed = (Date.now() - startTime) / 60000
-      setWpm(elapsed > 0 ? Math.round((typed.length / 5) / elapsed) : 0)
+      setWpm(elapsed > 0 ? Math.round(((completedChars + typed.length) / 5) / elapsed) : 0)
     }, 500)
     return () => clearInterval(interval)
-  }, [startTime, typed])
+  }, [startTime, typed, completedChars])
 
   // Keep cursor on the middle visible row
   useEffect(() => {
@@ -69,6 +79,8 @@ export default function Typer({ notes, onFinished, onBack, settings }) {
   }, [typed.length, visibleRows])
 
   const handleInput = useCallback((e) => {
+    if (isFalling) return;
+
     const value = e.target.value
 
     // Strict mode when backspace is disabled
@@ -100,12 +112,25 @@ export default function Typer({ notes, onFinished, onBack, settings }) {
     }
     setTyped(value)
     if (value.length >= fullText.length) {
-      const elapsed = (Date.now() - startTime) / 60000
-      const finalWpm = Math.round((fullText.length / 5) / elapsed)
-      const accuracy = Math.max(0, Math.round(((fullText.length - errors) / fullText.length) * 100))
-      onFinished({ wpm: finalWpm, accuracy, errors, totalChars: fullText.length, notes: notes.length })
+      setIsFalling(true);
+      setTimeout(() => {
+        if (currentNoteIndex < notes.length - 1) {
+          setIsFalling(false);
+          setCompletedChars(p => p + fullText.length)
+          setCurrentNoteIndex(p => p + 1)
+          setTranslateY(0)
+          setTyped('')
+        } else {
+          // Leave isFalling true on the last note so it animates fully away while the new screen loads in!
+          const finalTotalChars = completedChars + fullText.length
+          const elapsed = (Date.now() - startTime) / 60000
+          const finalWpm = Math.round((finalTotalChars / 5) / elapsed)
+          const accuracy = Math.max(0, Math.round(((finalTotalChars - errors) / finalTotalChars) * 100))
+          onFinished({ wpm: finalWpm, accuracy, errors, totalChars: finalTotalChars, notes: notes.length })
+        }
+      }, 1500);
     }
-  }, [typed, fullText, startTime, errors, notes.length, onFinished, settings])
+  }, [typed, fullText, startTime, errors, notes.length, currentNoteIndex, completedChars, onFinished, settings, isFalling])
 
   const handleKeyDown = useCallback((e) => {
     // Intercept Ctrl+Backspace to delete only the last word
@@ -167,7 +192,8 @@ export default function Typer({ notes, onFinished, onBack, settings }) {
     })
   }
 
-  const progress = fullText.length > 0 ? (typed.length / fullText.length) * 100 : 0
+  const overallTotalChars = useMemo(() => notes.join('').length, [notes])
+  const progress = overallTotalChars > 0 ? ((completedChars + typed.length) / overallTotalChars) * 100 : 0
 
   return (
     <div className="typer-container" onClick={() => inputRef.current?.focus()}>
@@ -190,7 +216,7 @@ export default function Typer({ notes, onFinished, onBack, settings }) {
         <div className="stat-divider" />
         <div className="stat-item">
           <span className="stat-num">
-            {typed.length > 0 ? Math.max(0, Math.round(((typed.length - errors) / typed.length) * 100)) : 100}<span className="stat-of">%</span>
+            {(completedChars + typed.length) > 0 ? Math.max(0, Math.round((((completedChars + typed.length) - errors) / (completedChars + typed.length)) * 100)) : 100}<span className="stat-of">%</span>
           </span>
           <span className="stat-lbl">acc</span>
         </div>
@@ -198,14 +224,28 @@ export default function Typer({ notes, onFinished, onBack, settings }) {
 
       {/* Text zone — flex:1 fills remaining space */}
       <div className="text-zone" ref={textZoneRef}>
-        <div className="rows-viewport" style={{ height: visibleRows * LINE_HEIGHT }}>
-          <div
-            ref={displayRef}
-            className="note-display"
-            style={{ transform: `translateY(-${translateY}px)`, transition: 'transform 0.22s ease' }}
-          >
-            {renderText()}
-          </div>
+        <div className="rows-viewport" style={{ height: visibleRows * LINE_HEIGHT, position: 'relative' }}>
+          {isFalling ? (
+            <FallingText 
+              text={fullText} 
+              trigger="auto" 
+              fontSize="1rem"
+              backgroundColor="transparent"
+              highlightClass="char correct"
+              highlightWords={fullText.split(' ')}
+              gravity={0.3}
+              initialTranslateY={translateY}
+              targetClassName="note-display"
+            />
+          ) : (
+            <div
+              ref={displayRef}
+              className="note-display"
+              style={{ transform: `translateY(-${translateY}px)`, transition: 'transform 0.22s ease' }}
+            >
+              {renderText()}
+            </div>
+          )}
         </div>
 
         {/* Footer sits directly below the typing box */}
