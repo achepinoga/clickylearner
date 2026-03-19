@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence, useMotionValue, useMotionTemplate } from 'framer-motion'
 import './Upload.css'
 
@@ -30,12 +30,30 @@ function FileIcon({ type }) {
   )
 }
 
-export default function Upload({ onNotesReady }) {
+const DIFFICULTY_LEVELS = [
+  { value: 1, label: 'I', name: 'Light', pct: '~25%' },
+  { value: 2, label: 'II', name: 'Standard', pct: '~50%' },
+  { value: 3, label: 'III', name: 'Heavy', pct: '~75%' },
+  { value: 4, label: 'IV', name: 'Brutal', pct: '~80%' },
+]
+
+export default function Upload({ onNotesReady, gameMode, difficulty, onDifficultyChange }) {
   const [file, setFile] = useState(null)
   const [dragging, setDragging] = useState(false)
   const [status, setStatus] = useState('idle')
   const [error, setError] = useState('')
+  const [infoOpen, setInfoOpen] = useState(false)
   const inputRef = useRef()
+  const infoRef = useRef()
+
+  useEffect(() => {
+    if (!infoOpen) return
+    const handler = (e) => {
+      if (infoRef.current && !infoRef.current.contains(e.target)) setInfoOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [infoOpen])
 
   const mouseX = useMotionValue(0)
   const mouseY = useMotionValue(0)
@@ -173,6 +191,64 @@ export default function Upload({ onNotesReady }) {
           )}
         </AnimatePresence>
       </motion.div>
+
+      <AnimatePresence>
+        {gameMode === 'flashcards' && (
+          <motion.div
+            className="difficulty-section"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="difficulty-header">
+              <span className="difficulty-label">Recall Difficulty</span>
+              <div className="difficulty-info-wrap" ref={infoRef}>
+                <button className="difficulty-info-btn" onClick={() => setInfoOpen(v => !v)} aria-label="How it works">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.3" />
+                    <path d="M7 6.3v3.4M7 4.5v.4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                  </svg>
+                </button>
+                <AnimatePresence>
+                  {infoOpen && (
+                    <motion.div
+                      className="difficulty-tooltip"
+                      initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                      transition={{ duration: 0.18 }}
+                    >
+                      <p className="tooltip-title">How Flashcard Mode Works</p>
+                      <p className="tooltip-body">
+                        <strong>Pass 1</strong> — Type all your notes normally to build familiarity.<br />
+                        <strong>Pass 2</strong> — The same notes reappear with key words blacked out. You must recall them from memory.
+                      </p>
+                      <p className="tooltip-tip">
+                        Start on <strong>Light</strong> when the material is new, then work your way up to <strong>Brutal</strong> as you improve. Jumping straight to hard difficulty will only frustrate you.
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+
+            <div className="difficulty-scale">
+              {DIFFICULTY_LEVELS.map((lvl) => (
+                <button
+                  key={lvl.value}
+                  className={`diff-step ${difficulty === lvl.value ? 'diff-step--active' : ''}`}
+                  onClick={() => onDifficultyChange(lvl.value)}
+                >
+                  <span className="diff-roman">{lvl.label}</span>
+                  <span className="diff-name">{lvl.name}</span>
+                  <span className="diff-pct">{lvl.pct}</span>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {error && (

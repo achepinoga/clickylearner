@@ -26,11 +26,16 @@ const CONFETTI = Array.from({ length: 30 }, (_, i) => ({
   delay: Math.random() * 0.45,
 }))
 
-export default function Results({ stats, onRetry, onNew }) {
-  const { wpm, accuracy, errors, totalChars, notes } = stats
+function getGrade(accuracy) {
+  return accuracy >= 98 ? 'S' : accuracy >= 95 ? 'A' : accuracy >= 88 ? 'B' : accuracy >= 75 ? 'C' : 'D'
+}
 
-  const grade = accuracy >= 98 ? 'S' : accuracy >= 95 ? 'A' : accuracy >= 88 ? 'B' : accuracy >= 75 ? 'C' : 'D'
-  const gradeColor = { S: '#f59e0b', A: '#34d399', B: '#7c6aff', C: '#fb923c', D: '#fb7185' }
+const gradeColor = { S: '#f59e0b', A: '#34d399', B: '#7c6aff', C: '#fb923c', D: '#fb7185' }
+
+export default function Results({ stats, onRetry, onUpload, onNew }) {
+  const { wpm, accuracy, errors, totalChars, notes, noteResults = [] } = stats
+
+  const grade = getGrade(accuracy)
 
   const animWpm = useCountUp(wpm)
   const animAccuracy = useCountUp(accuracy)
@@ -64,108 +69,142 @@ export default function Results({ stats, onRetry, onNew }) {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.2, 0.8, 0.4, 1] }}
       >
-        {/* Top shimmer line */}
         <div className="card-shimmer" />
 
-        {/* Grade */}
-        <motion.div
-          className="grade-wrap"
-          initial={{ scale: 0, rotate: -20 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ delay: 0.2, type: 'spring', stiffness: 240, damping: 15 }}
-        >
-          <div
-            className="grade"
-            style={{
-              color: gradeColor[grade],
-              '--grade-glow': gradeColor[grade] + '40',
-            }}
-          >
-            {grade}
-          </div>
-          <motion.div
-            className="grade-ring"
-            style={{ borderColor: gradeColor[grade] + '30' }}
-            animate={{ scale: [1, 1.12, 1], opacity: [0.5, 0.15, 0.5] }}
-            transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-          />
-        </motion.div>
-
-        <motion.h2
-          className="results-title"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.38, duration: 0.35 }}
-        >
-          Session Complete
-        </motion.h2>
-
-        <motion.p
-          className="results-sub"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.3 }}
-        >
-          {notes} notes typed through
-        </motion.p>
-
-        {/* Stats grid */}
-        <motion.div
-          className="stats-grid"
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.55, duration: 0.4 }}
-        >
-          <div className="stat-box">
-            <span className="sbox-val">{animWpm}</span>
-            <span className="sbox-label">Words / min</span>
-          </div>
-          <div className="stat-box accent-box">
-            <span className="sbox-val accent-val">{animAccuracy}%</span>
-            <span className="sbox-label">Accuracy</span>
-          </div>
-          <div className="stat-box">
-            <span className="sbox-val">{animChars}</span>
-            <span className="sbox-label">Characters</span>
-          </div>
-          <div className="stat-box">
-            <span
-              className="sbox-val"
-              style={{ color: errors > 0 ? 'var(--incorrect)' : 'var(--correct)' }}
+        <div className="results-body">
+          {/* LEFT — overall */}
+          <div className="results-left">
+            <motion.div
+              className="grade-wrap"
+              initial={{ scale: 0, rotate: -20 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 240, damping: 15 }}
             >
-              {animErrors}
-            </span>
-            <span className="sbox-label">Errors</span>
-          </div>
-        </motion.div>
+              <div
+                className="grade"
+                style={{ color: gradeColor[grade], '--grade-glow': gradeColor[grade] + '40' }}
+              >
+                {grade}
+              </div>
+              <motion.div
+                className="grade-ring"
+                style={{ borderColor: gradeColor[grade] + '30' }}
+                animate={{ scale: [1, 1.12, 1], opacity: [0.5, 0.15, 0.5] }}
+                transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+              />
+            </motion.div>
 
-        {/* Actions */}
-        <motion.div
-          className="results-actions"
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.72, duration: 0.35 }}
-        >
-          <motion.button
-            className="btn-retry"
-            onClick={onRetry}
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
-          >
-            Type Again
-          </motion.button>
-          <motion.button
-            className="btn-new"
-            onClick={onNew}
-            whileHover={{ scale: 1.04, y: -2 }}
-            whileTap={{ scale: 0.97 }}
-          >
-            <span>New Material</span>
-            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-              <path d="M3 7.5h9M8.5 3.5l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </motion.button>
-        </motion.div>
+            <motion.h2
+              className="results-title"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.38, duration: 0.35 }}
+            >
+              Session Complete
+            </motion.h2>
+
+            <motion.p
+              className="results-sub"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.3 }}
+            >
+              {notes} notes typed through
+            </motion.p>
+
+            <motion.div
+              className="stats-grid"
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.55, duration: 0.4 }}
+            >
+              <div className="stat-box">
+                <span className="sbox-val">{animWpm}</span>
+                <span className="sbox-label">Words / min</span>
+              </div>
+              <div className="stat-box accent-box">
+                <span className="sbox-val accent-val">{animAccuracy}%</span>
+                <span className="sbox-label">Accuracy</span>
+              </div>
+              <div className="stat-box">
+                <span className="sbox-val">{animChars}</span>
+                <span className="sbox-label">Characters</span>
+              </div>
+              <div className="stat-box">
+                <span
+                  className="sbox-val"
+                  style={{ color: errors > 0 ? 'var(--incorrect)' : 'var(--correct)' }}
+                >
+                  {animErrors}
+                </span>
+                <span className="sbox-label">Errors</span>
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="results-actions"
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.72, duration: 0.35 }}
+            >
+              <motion.button
+                className="btn-action"
+                onClick={onRetry}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+              >
+                Type Again
+              </motion.button>
+              <motion.button
+                className="btn-action"
+                onClick={onUpload}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+              >
+                Upload Notes
+              </motion.button>
+              <motion.button
+                className="btn-action btn-action--primary"
+                onClick={onNew}
+                whileHover={{ scale: 1.04, y: -2 }}
+                whileTap={{ scale: 0.97 }}
+              >
+                <span>Change Mode</span>
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                  <path d="M3 7.5h9M8.5 3.5l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </motion.button>
+            </motion.div>
+          </div>
+
+          {/* RIGHT — per-challenge breakdown */}
+          {noteResults.length > 0 && (
+            <motion.div
+              className="results-right"
+              initial={{ opacity: 0, x: 16 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.6, duration: 0.4 }}
+            >
+              <div className="breakdown-label">challenge breakdown</div>
+              <div className="breakdown-list">
+                {noteResults.map((r, i) => {
+                  const g = getGrade(r.accuracy)
+                  return (
+                    <div key={i} className="breakdown-row">
+                      <span className="breakdown-num">#{i + 1}</span>
+                      <span className="breakdown-grade" style={{ color: gradeColor[g] }}>{g}</span>
+                      <span className="breakdown-stat">{r.wpm} <span className="breakdown-unit">wpm</span></span>
+                      <span className="breakdown-stat">{r.accuracy}<span className="breakdown-unit">%</span></span>
+                      <span className="breakdown-bar-wrap">
+                        <span className="breakdown-bar" style={{ width: `${r.accuracy}%`, background: gradeColor[g] + '99' }} />
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </motion.div>
+          )}
+        </div>
       </motion.div>
     </div>
   )

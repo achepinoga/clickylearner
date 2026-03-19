@@ -23,8 +23,8 @@ const FallingText = ({
   const [effectStarted, setEffectStarted] = useState(false);
 
   useEffect(() => {
-    if (!textRef.current) return;
-    const words = text.split(' ');
+    if (!textRef.current || effectStarted) return;
+    const words = text.split(' ').filter(Boolean);
     const newHTML = words
       .map(word => {
         const isHighlighted = highlightWords.some(hw => word.startsWith(hw));
@@ -32,7 +32,7 @@ const FallingText = ({
       })
       .join(' ');
     textRef.current.innerHTML = newHTML;
-  }, [text, highlightWords, highlightClass]);
+  }, [text, highlightWords, highlightClass, effectStarted]);
 
   useEffect(() => {
     if (trigger === 'auto') {
@@ -86,7 +86,7 @@ const FallingText = ({
       const x = rect.left - containerRect.left + rect.width / 2;
       const y = rect.top - containerRect.top + rect.height / 2;
 
-      const body = Bodies.rectangle(x, y, rect.width, rect.height, {
+      const body = Bodies.rectangle(x, y, Math.max(1, rect.width), Math.max(1, rect.height), {
         render: { fillStyle: 'transparent' },
         restitution: 0.8,
         frictionAir: 0.01,
@@ -156,7 +156,7 @@ const FallingText = ({
       onMouseEnter={trigger === 'hover' ? handleTrigger : undefined}
       style={{ position: 'relative', overflow: 'hidden' }}
     >
-      <div ref={textRef} className={`falling-text-target ${targetClassName}`} style={{ fontSize, lineHeight: '40px', marginTop: `-${initialTranslateY}px`, display: 'block', width: '100%', wordBreak: 'normal', overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }} />
+      <div ref={textRef} className={`falling-text-target ${targetClassName}`} style={{ fontSize, lineHeight: '56px', marginTop: `-${initialTranslateY}px`, display: 'block', width: '100%', wordBreak: 'normal', overflowWrap: 'anywhere', whiteSpace: 'pre-wrap' }} />
       <div ref={canvasContainerRef} className="falling-text-canvas" />
     </div>
   );

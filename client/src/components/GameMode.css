@@ -1,0 +1,147 @@
+.gamemode-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  padding: 48px 48px 32px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.gamemode-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.gamemode-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.gamemode-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  width: 100%;
+}
+
+.mode-card--disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.mode-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.mode-card::before {
+  content: '';
+  position: absolute;
+  top: 8px; left: 8px;
+  width: 12px; height: 12px;
+  border-top: 1px solid var(--accent);
+  border-left: 1px solid var(--accent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.mode-card::after {
+  content: '';
+  position: absolute;
+  bottom: 8px; right: 8px;
+  width: 12px; height: 12px;
+  border-bottom: 1px solid var(--accent);
+  border-right: 1px solid var(--accent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.mode-card:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.mode-card:hover::before,
+.mode-card:hover::after {
+  opacity: 1;
+}
+
+.mode-keys {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.mode-key {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--accent);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 4px 10px;
+  min-width: 32px;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.mode-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.mode-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 16px var(--accent-glow);
+}
+
+.mode-desc {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  line-height: 1.6;
+  flex: 1;
+}
+
+.mode-arrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  color: var(--text-dim);
+  margin-top: 8px;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.mode-card:hover .mode-arrow {
+  color: var(--accent);
+  transform: translateX(4px);
+}
+
+@media (max-width: 700px) {
+  .gamemode-grid {
+    grid-template-columns: 1fr;
+  }
+}

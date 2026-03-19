@@ -4,8 +4,10 @@
   flex: 1;
   overflow: hidden;
   width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
   gap: 20px;
-  padding-top: 4px;
+  padding: 4px 48px 0;
   cursor: text;
 }
 
@@ -77,27 +79,23 @@
   letter-spacing: 0.12em;
 }
 
-/* ─── Text zone: fills all remaining space ─── */
+/* ─── Text zone: natural height ─── */
 .text-zone {
-  flex: 1;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  padding: 20px 0 0;
+  padding: 12px 0 0;
 }
 
-/* ─── Fixed-height rows viewport ─── */
+/* ─── Rows viewport: fixed 5-line height ─── */
 .rows-viewport {
-  overflow: hidden;
-  padding: 0 0;
   width: 100%;
+  height: calc(5 * 56px);
 }
 
 .note-display {
   font-family: 'JetBrains Mono', 'Courier New', monospace;
-  font-size: 1rem;
-  line-height: 40px;   /* must match LINE_HEIGHT in Typer.jsx */
+  font-size: 1.5rem;
+  line-height: 56px;   /* must match LINE_HEIGHT in Typer.jsx */
   letter-spacing: 0.04em;
   word-break: normal;
   overflow-wrap: anywhere;
@@ -115,7 +113,24 @@
 .char.pending  { color: #2a2a2a; }
 .char.correct  { color: var(--correct); text-shadow: 0 0 6px rgba(255,255,255,0.3); }
 .char.incorrect { color: var(--incorrect); background: rgba(255,49,49,0.1); text-shadow: 0 0 6px rgba(255,49,49,0.4); }
-.char.cursor   { color: #000; background: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
+.char.cursor       { color: #000; background: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
+.char.cursor.wrong { background: var(--incorrect); box-shadow: 0 0 10px rgba(251, 113, 133, 0.4); }
+.char.blackout { color: transparent; background: rgba(255,255,255,0.15); border-radius: 2px; user-select: none; }
+
+/* Recall phase badge */
+.recall-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+  color: #f59e0b;
+  border: 1px solid #f59e0b44;
+  padding: 2px 7px;
+  margin-right: 4px;
+}
+
+.stats-row--recall {
+  border-color: #f59e0b44;
+}
 
 .hidden-input {
   position: absolute;
@@ -133,11 +148,11 @@
   width: 100%;
   flex-shrink: 0;
   padding-bottom: 16px;
-  margin-top: 16px;
+  margin-top: 8px;
 }
 
 .hint-text {
-  font-size: 0.7rem;
+  font-size: 0.9rem;
   color: var(--text-dim);
   letter-spacing: 0.05em;
 }
@@ -146,10 +161,10 @@
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: var(--text-dim);
-  font-size: 0.75rem;
+  font-size: 0.9rem;
   font-family: 'JetBrains Mono', monospace;
   letter-spacing: 0.08em;
-  padding: 8px 18px;
+  padding: 12px 28px;
   border-radius: 0;
   text-transform: uppercase;
   transition: all 0.2s;

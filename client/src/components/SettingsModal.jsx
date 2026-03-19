@@ -33,10 +33,24 @@ export default function SettingsModal({ isOpen, onClose, settings, setSettings }
                 <span className="setting-desc">Let you delete mistakes (Hard mode)</span>
               </div>
               <label className="setting-toggle">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={settings.allowBackspace}
                   onChange={(e) => setSettings({ ...settings, allowBackspace: e.target.checked })}
+                />
+                <span className="toggle-slider"></span>
+              </label>
+            </div>
+            <div className="setting-row">
+              <div className="setting-info">
+                <span className="setting-label">Punctuation</span>
+                <span className="setting-desc">Include capitals, symbols and numbers in text</span>
+              </div>
+              <label className="setting-toggle">
+                <input
+                  type="checkbox"
+                  checked={settings.punctuation ?? true}
+                  onChange={(e) => setSettings({ ...settings, punctuation: e.target.checked })}
                 />
                 <span className="toggle-slider"></span>
               </label>
