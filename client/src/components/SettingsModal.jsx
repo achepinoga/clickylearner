@@ -30,7 +30,7 @@ export default function SettingsModal({ isOpen, onClose, settings, setSettings }
             <div className="setting-row">
               <div className="setting-info">
                 <span className="setting-label">Allow Backspace</span>
-                <span className="setting-desc">Let you delete mistakes (Hard mode)</span>
+                <span className="setting-desc">Lets you delete mistakes</span>
               </div>
               <label className="setting-toggle">
                 <input
@@ -44,7 +44,7 @@ export default function SettingsModal({ isOpen, onClose, settings, setSettings }
             <div className="setting-row">
               <div className="setting-info">
                 <span className="setting-label">Punctuation</span>
-                <span className="setting-desc">Include capitals, symbols and numbers in text</span>
+                <span className="setting-desc">Include capitals, symbols and numbers</span>
               </div>
               <label className="setting-toggle">
                 <input

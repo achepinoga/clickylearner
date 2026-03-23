@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Upload from './components/Upload'
 import Typer from './components/Typer'
+import SpeedTyper from './components/SpeedTyper'
 import Results from './components/Results'
 import GameMode from './components/GameMode'
 import SettingsModal from './components/SettingsModal'
@@ -9,24 +10,6 @@ import './App.css'
 
 const STAGES = { GAMEMODE: 'gamemode', UPLOAD: 'upload', TYPING: 'typing', RESULTS: 'results' }
 
-function computeBlackoutRanges(text, difficulty = 2) {
-  const ranges = []
-  const wordRegex = /\b[a-zA-Z]{5,}\b/g
-  let match
-  let count = 0
-  const shouldBlackout = (n) => {
-    if (difficulty === 1) return n % 4 === 0        // ~25%
-    if (difficulty === 2) return n % 2 === 0        // ~50%
-    if (difficulty === 3) return n % 4 !== 0        // ~75%
-    if (difficulty === 4) return n % 5 !== 0        // ~80%
-    return n % 2 === 0
-  }
-  while ((match = wordRegex.exec(text)) !== null) {
-    count++
-    if (shouldBlackout(count)) ranges.push([match.index, match.index + match[0].length])
-  }
-  return ranges
-}
 
 function numberToWords(n) {
   if (n < 0) return 'negative ' + numberToWords(-n)
@@ -62,12 +45,17 @@ const pageTransition = { duration: 0.4, ease: [0.4, 0, 0.2, 1] }
 
 
 export default function App() {
-  const [stage, setStage] = useState(() => {
-    try { return localStorage.getItem('cl_stage') || STAGES.GAMEMODE } catch { return STAGES.GAMEMODE }
-  })
   // rawNotes = chunked but not punctuation-processed (source of truth)
   const [rawNotes, setRawNotes] = useState(() => {
     try { const s = localStorage.getItem('cl_raw_notes'); return s ? JSON.parse(s) : [] } catch { return [] }
+  })
+  const [stage, setStage] = useState(() => {
+    try {
+      const savedMode = localStorage.getItem('cl_game_mode')
+      if (savedMode === 'speed') return STAGES.GAMEMODE
+      const saved = localStorage.getItem('cl_raw_notes')
+      return saved && JSON.parse(saved).length > 0 ? STAGES.TYPING : STAGES.GAMEMODE
+    } catch { return STAGES.GAMEMODE }
   })
   const [results, setResults] = useState(() => {
     try { const s = localStorage.getItem('cl_results'); return s ? JSON.parse(s) : null } catch { return null }
@@ -81,9 +69,10 @@ export default function App() {
   })
   // Incremented to force-remount Typer whenever settings change
   const [typingKey, setTypingKey] = useState(0)
-  const [gameMode, setGameMode] = useState('standard')
+  const [gameMode, setGameMode] = useState(() => {
+    try { return localStorage.getItem('cl_game_mode') || 'standard' } catch { return 'standard' }
+  })
   const [flashcardDifficulty, setFlashcardDifficulty] = useState(2)
-  const [flashcardRanges, setFlashcardRanges] = useState(null) // null = standard or phase 1; array = recall phase 2
   const settingsInitialized = useRef(false)
 
   // Derive final notes from raw + current punctuation setting
@@ -93,7 +82,7 @@ export default function App() {
   )
 
   useEffect(() => { localStorage.setItem('cl_settings', JSON.stringify(settings)) }, [settings])
-  useEffect(() => { localStorage.setItem('cl_stage', stage) }, [stage])
+  useEffect(() => { try { localStorage.removeItem('cl_stage') } catch {} }, [])
   useEffect(() => { localStorage.setItem('cl_raw_notes', JSON.stringify(rawNotes)) }, [rawNotes])
   useEffect(() => { localStorage.setItem('cl_results', JSON.stringify(results)) }, [results])
 
@@ -144,30 +133,22 @@ export default function App() {
   }
 
   const handleFinished = (stats) => {
-    if (gameMode === 'flashcards' && flashcardRanges === null) {
-      // Phase 1 done — start recall phase with blackouts
-      const ranges = notes.map(note => computeBlackoutRanges(note, flashcardDifficulty))
-      setFlashcardRanges(ranges)
-      setTypingKey(k => k + 1)
-    } else {
-      setResults(stats)
-      setFlashcardRanges(null)
-      setStage(STAGES.RESULTS)
-    }
+    setResults(stats)
+    setStage(STAGES.RESULTS)
   }
 
   const handleModeSelect = (modeId) => {
+    try { localStorage.setItem('cl_game_mode', modeId) } catch {}
     setGameMode(modeId)
-    setFlashcardRanges(null)
     setFlashcardDifficulty(2)
-    setStage(STAGES.UPLOAD)
+    setStage(modeId === 'speed' ? STAGES.TYPING : STAGES.UPLOAD)
   }
 
   const handleRestart = () => {
+    try { localStorage.removeItem('cl_game_mode') } catch {}
     setStage(STAGES.GAMEMODE)
     setRawNotes([])
     setResults(null)
-    setFlashcardRanges(null)
     setGameMode('standard')
   }
 
@@ -179,7 +160,6 @@ export default function App() {
 
   const handleUpload = () => {
     setResults(null)
-    setFlashcardRanges(null)
     setStage(STAGES.UPLOAD)
   }
 
@@ -242,12 +222,15 @@ export default function App() {
             )}
             {stage === STAGES.TYPING && (
               <motion.div key="typing" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                <Typer key={typingKey} notes={notes} onFinished={handleFinished} onBack={handleRestart} settings={settings} flashcardRanges={flashcardRanges} />
+                {gameMode === 'speed'
+                  ? <SpeedTyper key={typingKey} onFinished={handleFinished} onBack={handleRestart} settings={settings} />
+                  : <Typer key={typingKey} notes={notes} onFinished={handleFinished} onBack={handleRestart} settings={settings} flashcardDifficulty={flashcardDifficulty} isFlashcard={gameMode === 'flashcards'} />
+                }
               </motion.div>
             )}
             {stage === STAGES.RESULTS && (
               <motion.div key="results" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                <Results stats={results} onRetry={handleRetry} onUpload={handleUpload} onNew={handleRestart} />
+                <Results stats={results} onRetry={handleRetry} onUpload={handleUpload} onNew={handleRestart} isFlashcard={gameMode === 'flashcards'} isSpeed={gameMode === 'speed'} flashcardDifficulty={flashcardDifficulty} onDifficultyChange={setFlashcardDifficulty} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -260,6 +243,7 @@ export default function App() {
         settings={settings}
         setSettings={setSettings}
       />
+
     </>
   )
 }

@@ -19,12 +19,12 @@ const MODES = [
     available: true,
   },
   {
-    id: 'coming_soon',
-    name: 'Coming Soon',
-    tag: '[ LOCKED ]',
-    description: 'A new challenge mode is on the way. Stay tuned.',
-    keys: ['?'],
-    available: false,
+    id: 'speed',
+    name: 'Speed',
+    tag: '[ ENDLESS ]',
+    description: 'Pure speed training. Random words keep coming until you stop. No notes needed — just type as fast as you can.',
+    keys: ['go', '→', '∞'],
+    available: true,
   },
 ]
 

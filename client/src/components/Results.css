@@ -274,7 +274,7 @@
 
 .breakdown-row {
   display: grid;
-  grid-template-columns: 28px 22px 70px 52px 1fr;
+  grid-template-columns: 32px 22px 70px 52px 1fr;
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
@@ -285,6 +285,15 @@
 
 .breakdown-row:hover {
   background: rgba(255, 255, 255, 0.04);
+}
+
+.breakdown-row--recall {
+  border-color: rgba(245, 158, 11, 0.25);
+  background: rgba(245, 158, 11, 0.03);
+}
+
+.breakdown-row--recall:hover {
+  background: rgba(245, 158, 11, 0.06);
 }
 
 .breakdown-num {
@@ -330,6 +339,64 @@
 .results-right {
   border-left: 1px solid rgba(255, 255, 255, 0.07);
   padding-left: 32px;
+}
+
+/* Flashcard difficulty picker in results */
+.results-difficulty {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.results-difficulty-label {
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-dim);
+}
+
+.results-difficulty-steps {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.rdiff-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 4px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-dim);
+  transition: all 0.18s;
+}
+
+.rdiff-btn:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: var(--text);
+}
+
+.rdiff-btn--active {
+  border-color: #f59e0b;
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.06);
+}
+
+.rdiff-roman {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.rdiff-name {
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 /* Narrow screens — stack vertically */

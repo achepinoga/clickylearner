@@ -1,0 +1,38 @@
+.speed-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 20px;
+  padding: 4px 48px 0;
+  cursor: text;
+}
+
+.speed-text-zone {
+  position: relative;
+  overflow: hidden;
+  padding: 12px 0 0;
+}
+
+.btn-stop {
+  background: transparent;
+  border: 1px solid rgba(251, 113, 133, 0.25);
+  color: rgba(251, 113, 133, 0.5);
+  font-size: 0.9rem;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.08em;
+  padding: 12px 28px;
+  border-radius: 0;
+  text-transform: uppercase;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.btn-stop:hover {
+  border-color: #fb7185;
+  color: #fb7185;
+  box-shadow: 0 0 10px rgba(251, 113, 133, 0.25);
+}

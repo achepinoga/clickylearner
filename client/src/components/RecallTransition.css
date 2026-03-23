@@ -1,0 +1,53 @@
+.recall-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(6, 6, 6, 0.96);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.recall-scanline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent, #e2e8f0);
+  box-shadow: 0 0 24px 6px var(--accent-glow, rgba(226,232,240,0.35));
+  pointer-events: none;
+}
+
+.recall-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.recall-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--accent, #e2e8f0);
+  text-shadow: 0 0 30px var(--accent-glow, rgba(226,232,240,0.4));
+  display: flex;
+}
+
+.recall-divider {
+  width: 280px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
+  transform-origin: left center;
+}
+
+.recall-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.16em;
+  color: rgba(255, 255, 255, 0.25);
+  text-transform: uppercase;
+}

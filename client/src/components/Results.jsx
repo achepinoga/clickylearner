@@ -32,7 +32,14 @@ function getGrade(accuracy) {
 
 const gradeColor = { S: '#f59e0b', A: '#34d399', B: '#7c6aff', C: '#fb923c', D: '#fb7185' }
 
-export default function Results({ stats, onRetry, onUpload, onNew }) {
+const DIFFICULTY_LEVELS = [
+  { value: 1, label: 'I',   name: 'Light' },
+  { value: 2, label: 'II',  name: 'Standard' },
+  { value: 3, label: 'III', name: 'Heavy' },
+  { value: 4, label: 'IV',  name: 'Brutal' },
+]
+
+export default function Results({ stats, onRetry, onUpload, onNew, isFlashcard, isSpeed, flashcardDifficulty, onDifficultyChange }) {
   const { wpm, accuracy, errors, totalChars, notes, noteResults = [] } = stats
 
   const grade = getGrade(accuracy)
@@ -109,7 +116,7 @@ export default function Results({ stats, onRetry, onUpload, onNew }) {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5, duration: 0.3 }}
             >
-              {notes} notes typed through
+              {isSpeed ? `${notes} screens completed` : `${notes} notes typed through`}
             </motion.p>
 
             <motion.div
@@ -141,6 +148,29 @@ export default function Results({ stats, onRetry, onUpload, onNew }) {
               </div>
             </motion.div>
 
+            {isFlashcard && (
+              <motion.div
+                className="results-difficulty"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.65, duration: 0.3 }}
+              >
+                <span className="results-difficulty-label">next recall difficulty</span>
+                <div className="results-difficulty-steps">
+                  {DIFFICULTY_LEVELS.map(lvl => (
+                    <button
+                      key={lvl.value}
+                      className={`rdiff-btn ${flashcardDifficulty === lvl.value ? 'rdiff-btn--active' : ''}`}
+                      onClick={() => onDifficultyChange(lvl.value)}
+                    >
+                      <span className="rdiff-roman">{lvl.label}</span>
+                      <span className="rdiff-name">{lvl.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
             <motion.div
               className="results-actions"
               initial={{ opacity: 0, y: 14 }}
@@ -155,14 +185,16 @@ export default function Results({ stats, onRetry, onUpload, onNew }) {
               >
                 Type Again
               </motion.button>
-              <motion.button
-                className="btn-action"
-                onClick={onUpload}
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-              >
-                Upload Notes
-              </motion.button>
+              {!isSpeed && (
+                <motion.button
+                  className="btn-action"
+                  onClick={onUpload}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                >
+                  Upload Notes
+                </motion.button>
+              )}
               <motion.button
                 className="btn-action btn-action--primary"
                 onClick={onNew}
@@ -189,14 +221,21 @@ export default function Results({ stats, onRetry, onUpload, onNew }) {
               <div className="breakdown-list">
                 {noteResults.map((r, i) => {
                   const g = getGrade(r.accuracy)
+                  const isRecall = r.phase === 'recall'
+                  const isStudy = r.phase === 'study'
+                  const rowColor = isRecall ? '#f59e0b' : isStudy ? 'rgba(255,255,255,0.55)' : gradeColor[g]
+                  const cardNum = r.phase ? Math.floor(i / 2) + 1 : i + 1
+                  const numLabel = isSpeed
+                    ? `SCR${i + 1}${r.partial ? '*' : ''}`
+                    : r.phase ? `${cardNum}${isRecall ? 'R' : 'S'}` : `#${i + 1}`
                   return (
-                    <div key={i} className="breakdown-row">
-                      <span className="breakdown-num">#{i + 1}</span>
-                      <span className="breakdown-grade" style={{ color: gradeColor[g] }}>{g}</span>
+                    <div key={i} className={`breakdown-row${isRecall ? ' breakdown-row--recall' : ''}`}>
+                      <span className="breakdown-num">{numLabel}</span>
+                      <span className="breakdown-grade" style={{ color: rowColor }}>{g}</span>
                       <span className="breakdown-stat">{r.wpm} <span className="breakdown-unit">wpm</span></span>
                       <span className="breakdown-stat">{r.accuracy}<span className="breakdown-unit">%</span></span>
                       <span className="breakdown-bar-wrap">
-                        <span className="breakdown-bar" style={{ width: `${r.accuracy}%`, background: gradeColor[g] + '99' }} />
+                        <span className="breakdown-bar" style={{ width: `${r.accuracy}%`, background: rowColor + '99' }} />
                       </span>
                     </div>
                   )
