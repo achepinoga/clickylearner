@@ -5,37 +5,49 @@
 }
 
 :root {
-  --bg: #0f1117;
-  --surface: #1a1d27;
-  --surface2: #242838;
-  --border: #2e3347;
-  --accent: #6c8eff;
-  --accent-dim: #3d5aff22;
-  --text: #e8eaf6;
-  --text-dim: #7b82a3;
-  --correct: #4ade80;
-  --incorrect: #f87171;
-  --pending: #7b82a3;
-  --radius: 12px;
+  --bg: #000000;
+  --surface: #080808;
+  --surface2: #0f0f0f;
+  --glass: rgba(255, 255, 255, 0.02);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --border-hover: rgba(255, 255, 255, 0.4);
+  --accent: #ffffff;
+  --accent-glow: rgba(255, 255, 255, 0.15);
+  --teal: #ffffff;
+  --teal-glow: rgba(255, 255, 255, 0.15);
+  --correct: #ffffff;
+  --incorrect: #ff4444;
+  --pending: #1c1c1c;
+  --text: #ffffff;
+  --text-dim: #444444;
+  --radius: 0px;
 }
 
 body {
-  background: var(--bg);
+  background: #0d0d0d;
   color: var(--text);
-  font-family: 'Inter', sans-serif;
-  min-height: 100vh;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  overflow: hidden;
 }
 
 #root {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   width: 100%;
-  max-width: 900px;
-  padding: 0 24px;
+  position: relative;
+  z-index: 1;
 }
 
 button {
   cursor: pointer;
-  font-family: 'Inter', sans-serif;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
 }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--text-dim); }

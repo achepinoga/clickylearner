@@ -1,117 +1,299 @@
 .typer-container {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 24px;
-  padding-top: 8px;
-}
-
-.progress-bar-wrap {
-  width: 100%;
-  height: 4px;
-  background: var(--border);
-  border-radius: 2px;
+  flex: 1;
   overflow: hidden;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 20px;
+  padding: 4px 48px 0;
+  cursor: text;
 }
 
-.progress-bar {
+/* Progress */
+.progress-track {
+  width: 100%;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #6c8eff, #a78bfa);
-  border-radius: 2px;
-  transition: width 0.4s ease;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
 }
 
+/* Stats — horizontal row */
 .stats-row {
   display: flex;
-  gap: 40px;
+  align-items: center;
+  gap: 24px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 10px 28px;
+  flex-shrink: 0;
+  align-self: center;
 }
 
-.stat {
+.stats-row::before {
+  content: '> ';
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  margin-right: -8px;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.stat-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
+  min-width: 52px;
 }
 
-.stat-val {
-  font-size: 1.8rem;
+.stat-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.6rem;
   font-weight: 700;
   color: var(--accent);
-  font-family: 'JetBrains Mono', monospace;
+  line-height: 1;
+  text-shadow: 0 0 10px var(--accent-glow);
 }
 
-.stat-label {
-  font-size: 0.75rem;
+.stat-of {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+}
+
+.stat-lbl {
+  font-size: 0.6rem;
   color: var(--text-dim);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
 }
 
-.type-card {
-  width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 36px 40px;
-  cursor: text;
-  min-height: 120px;
+/* ─── Text zone: natural height ─── */
+.text-zone {
   display: flex;
-  align-items: center;
-  transition: border-color 0.2s;
-  position: relative;
+  flex-direction: column;
+  padding: 12px 0 0;
 }
 
-.type-card:focus-within {
-  border-color: var(--accent);
+/* ─── Rows viewport: fixed 5-line height ─── */
+.rows-viewport {
+  width: 100%;
+  height: calc(5 * 56px);
+}
+
+.note-display--success .char {
+  color: rgba(52, 211, 153, 0.9) !important;
+  text-shadow: 0 0 8px rgba(52, 211, 153, 0.4) !important;
+  background: transparent !important;
+  transition: color 0.05s ease, text-shadow 0.05s ease;
 }
 
 .note-display {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 1.5rem;
+  line-height: 56px;   /* must match LINE_HEIGHT in Typer.jsx */
+  letter-spacing: 0.04em;
+  word-break: normal;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  will-change: transform;
+}
+
+.word-unit {
+  display: inline;
+}
+
+/* Character states */
+.char.pending  { color: rgba(255, 255, 255, 0.14); }
+.char.correct  { color: var(--correct); text-shadow: 0 0 6px rgba(255,255,255,0.3); }
+.char.incorrect { color: var(--incorrect); background: rgba(255,49,49,0.1); text-shadow: 0 0 6px rgba(255,49,49,0.4); }
+.char.cursor       { color: #000; background: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
+.char.cursor.wrong { background: var(--incorrect); box-shadow: 0 0 10px rgba(251, 113, 133, 0.4); }
+.char.encrypted { color: rgba(255, 255, 255, 0.18); user-select: none; }
+
+/* Recall phase badge */
+.recall-badge {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 1.25rem;
-  line-height: 1.8;
-  letter-spacing: 0.02em;
-  word-break: break-word;
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+  color: #f59e0b;
+  border: 1px solid #f59e0b44;
+  padding: 2px 7px;
+  margin-right: 4px;
+}
+
+.stats-row--recall {
+  border-color: #f59e0b44;
+}
+
+/* ─── Flashcard deck ─── */
+.flashcard-scene {
+  position: relative;
+  width: 100%;
+  min-height: 320px;
+  display: flex;
+  align-items: stretch;
+  perspective: 1400px;
+  perspective-origin: 50% 40%;
+}
+
+.flashcard-ghost {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.01);
+  pointer-events: none;
+}
+
+.ghost-1 {
+  transform: rotate(1.5deg) translateY(10px) scale(0.975);
+  z-index: 1;
+}
+
+.ghost-2 {
+  transform: rotate(3deg) translateY(20px) scale(0.95);
+  z-index: 0;
+}
+
+/* Outer wrapper: handles enter/exit animations */
+.flashcard-card-wrapper {
+  position: relative;
+  z-index: 2;
   width: 100%;
 }
 
-.char {
-  position: relative;
+/* 3D flip container — grid stacking so taller face sets height */
+.flashcard-flip-inner {
+  width: 100%;
+  transform-style: preserve-3d;
+  display: grid;
 }
 
-.char.pending {
-  color: var(--pending);
+/* Shared face styles — both in same grid cell so taller face sets height */
+.flashcard-face {
+  grid-area: 1 / 1;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #1c1c1e;
+  padding: 32px 48px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  cursor: text;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-.char.correct {
-  color: var(--correct);
+/* Success flash — green border before flip */
+.flashcard-face--success {
+  border-color: rgba(52, 211, 153, 0.9) !important;
+  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.4), 0 0 24px rgba(52, 211, 153, 0.25), 0 4px 32px rgba(0, 0, 0, 0.35) !important;
+  transition: border-color 0.05s ease, box-shadow 0.05s ease;
 }
 
-.char.incorrect {
-  color: var(--incorrect);
-  background: #f8717122;
-  border-radius: 2px;
+.flashcard-face--success .flashcard-corner {
+  border-color: rgba(52, 211, 153, 0.9) !important;
 }
 
-.char.cursor {
-  color: var(--text);
-  position: relative;
+/* Back face — RECALL (rotated 180deg, stacked in same grid cell) */
+.flashcard-face--back {
+  transform: rotateY(180deg);
+  background: #1e1a12;
+  border-color: rgba(245, 158, 11, 0.22);
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(245, 158, 11, 0.07);
 }
 
-.char.cursor::before {
-  content: '';
+.flashcard-corner {
   position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--accent);
-  border-radius: 1px;
-  animation: blink 1s step-end infinite;
+  width: 12px;
+  height: 12px;
+  border-style: solid;
 }
 
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+.flashcard-face--front .flashcard-corner { border-color: rgba(255, 255, 255, 0.28); }
+.flashcard-face--back  .flashcard-corner { border-color: rgba(245, 158, 11, 0.45); }
+
+.fc-tl { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+.fc-tr { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
+.fc-bl { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
+.fc-br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+.flashcard-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.flashcard-rule {
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+}
+
+.flashcard-rule--recall {
+  background: rgba(245, 158, 11, 0.18);
+}
+
+.flashcard-counter {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.flashcard-phase {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.phase-study { color: rgba(255, 255, 255, 0.25); }
+.phase-recall { color: #f59e0b; }
+
+.flashcard-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  min-height: calc(3 * 56px);
+}
+
+/* Forgot button — shown during recall phase */
+.btn-forgot {
+  align-self: flex-start;
+  background: transparent;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  color: rgba(245, 158, 11, 0.55);
+  font-size: 0.65rem;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.1em;
+  padding: 7px 16px;
+  text-transform: uppercase;
+  transition: all 0.2s;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.btn-forgot:hover {
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.04);
 }
 
 .hidden-input {
@@ -122,22 +304,38 @@
   pointer-events: none;
 }
 
+/* Footer */
+.typer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  flex-shrink: 0;
+  padding-bottom: 16px;
+  margin-top: 8px;
+}
+
 .hint-text {
-  font-size: 0.82rem;
+  font-size: 0.9rem;
   color: var(--text-dim);
+  letter-spacing: 0.05em;
 }
 
 .btn-back {
-  background: none;
-  border: 1px solid var(--border);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   color: var(--text-dim);
-  font-size: 0.875rem;
-  padding: 8px 16px;
-  border-radius: 8px;
-  transition: all 0.15s;
+  font-size: 0.9rem;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.08em;
+  padding: 12px 28px;
+  border-radius: 0;
+  text-transform: uppercase;
+  transition: all 0.2s;
 }
 
 .btn-back:hover {
   border-color: var(--accent);
   color: var(--accent);
+  box-shadow: 0 0 10px var(--accent-glow);
 }

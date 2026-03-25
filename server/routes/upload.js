@@ -36,7 +36,11 @@ router.post('/', upload.single('file'), async (req, res) => {
     }
 
     // Clean up uploaded file
-    fs.unlinkSync(req.file.path);
+    try {
+      fs.unlinkSync(req.file.path);
+    } catch (e) {
+      console.warn('Could not delete temp file', e);
+    }
 
     if (!text.trim()) return res.status(400).json({ error: 'Could not extract text from file' });
 

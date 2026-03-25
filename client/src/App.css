@@ -1,45 +1,166 @@
+.bg-orbs {
+  display: none;
+}
+
+.shapegrid-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
 .app {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  padding-bottom: 60px;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
 }
 
 .header {
-  text-align: center;
-  padding: 48px 0 32px;
+  padding: 28px 0 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.header-inner {
+  width: 100%;
+  max-width: 1200px;
+  padding: 0 48px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  position: relative;
 }
 
 .logo {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 12px;
-  margin-bottom: 8px;
 }
 
-.logo-icon {
-  font-size: 2rem;
+.logo-mark {
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  border: 1px solid var(--accent);
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow), inset 0 0 8px rgba(255, 255, 255, 0.05);
 }
 
 .logo-text {
-  font-size: 2rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.9rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #6c8eff, #a78bfa);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.tagline {
-  color: var(--text-dim);
-  font-size: 0.95rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  color: var(--accent);
+  text-shadow: 0 0 20px var(--accent-glow), 0 0 40px rgba(255, 255, 255, 0.1);
+  -webkit-background-clip: unset;
+  -webkit-text-fill-color: unset;
+  background: none;
+}
+
+/* Settings Button */
+.btn-settings {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 8px;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-settings:hover {
+  color: var(--accent);
+  transform: translateY(-50%) rotate(30deg) scale(1.1);
+}
+
+/* Stage nav */
+.stage-nav {
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 0;
+  padding: 6px 20px;
+  gap: 6px;
+}
+
+.stage-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stage-connector {
+  width: 24px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0 2px;
+  transition: background 0.3s;
+}
+
+.stage-connector.active {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.stage-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 0;
+  transition: all 0.3s;
+}
+
+.stage-dot.done {
+  background: var(--accent);
+  opacity: 0.4;
+}
+
+.stage-dot.current {
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent), 0 0 14px var(--accent-glow);
+}
+
+.stage-dot.upcoming {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.stage-label {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: color 0.3s;
+  padding: 2px 0;
+}
+
+.stage-label.active {
+  color: var(--accent);
 }
 
 .main {
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
