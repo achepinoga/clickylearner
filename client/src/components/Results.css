@@ -28,7 +28,7 @@
   background: var(--surface);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 0;
-  padding: 40px 44px;
+  padding: 28px 36px;
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -80,8 +80,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
-  flex: 0 0 320px;
+  gap: 10px;
+  flex: 0 0 300px;
   min-width: 0;
 }
 
@@ -91,12 +91,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 4px;
+  margin-bottom: 0;
 }
 
 .grade {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 5.5rem;
+  font-size: 4rem;
   font-weight: 700;
   line-height: 1;
   filter: drop-shadow(0 0 20px var(--grade-glow));
@@ -113,7 +113,7 @@
 
 .results-title {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 400;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -136,19 +136,19 @@
 .stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
-  margin: 4px 0;
+  margin: 2px 0;
 }
 
 .stat-box {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0;
-  padding: 16px 14px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
   transition: border-color 0.2s, background 0.2s;
 }
 
@@ -169,7 +169,7 @@
 
 .sbox-val {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--text);
   line-height: 1;
@@ -191,8 +191,8 @@
 /* Actions */
 .results-actions {
   display: flex;
-  gap: 10px;
-  margin-top: 4px;
+  gap: 8px;
+  margin-top: 2px;
   flex-wrap: wrap;
 }
 
@@ -200,12 +200,12 @@
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: var(--text-dim);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 400;
   font-family: 'JetBrains Mono', monospace;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: 12px 22px;
+  padding: 9px 16px;
   border-radius: 0;
   display: flex;
   align-items: center;
@@ -237,7 +237,7 @@
   flex-direction: column;
   gap: 8px;
   overflow-y: auto;
-  max-height: 420px;
+  max-height: 460px;
   padding-right: 4px;
 }
 
@@ -345,7 +345,7 @@
 .results-difficulty {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
 }
 

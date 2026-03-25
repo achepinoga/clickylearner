@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { playClick } from '../sounds'
 import './GameMode.css'
 
 const MODES = [
@@ -14,7 +15,7 @@ const MODES = [
     id: 'flashcards',
     name: 'Flashcards',
     tag: '[ RECALL ]',
-    description: 'First pass: type all notes normally. Second pass: same notes again — but key words are blacked out. Forces active recall.',
+    description: 'Type your notes twice — second pass blacks out key words for active recall. Finish and unlock an AI-generated test: true/false and multiple choice, with a retype penalty for wrong answers.',
     keys: ['A', '█', '?'],
     available: true,
   },
@@ -45,7 +46,7 @@ export default function GameMode({ onSelect }) {
           <motion.button
             key={mode.id}
             className={`mode-card ${!mode.available ? 'mode-card--disabled' : ''}`}
-            onClick={() => mode.available && onSelect(mode.id)}
+            onClick={() => { if (mode.available) { playClick(); onSelect(mode.id) } }}
             disabled={!mode.available}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence, useMotionValue, useMotionTemplate } from 'framer-motion'
+import { playClick, playToggle, playBack } from '../sounds'
 import './Upload.css'
 
 function UploadIcon() {
@@ -161,7 +162,7 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
               </div>
               <motion.button
                 className="remove-btn"
-                onClick={(e) => { e.stopPropagation(); setFile(null) }}
+                onClick={(e) => { e.stopPropagation(); playBack(); setFile(null); if (inputRef.current) inputRef.current.value = '' }}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >
@@ -204,7 +205,7 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
             <div className="difficulty-header">
               <span className="difficulty-label">Recall Difficulty</span>
               <div className="difficulty-info-wrap" ref={infoRef}>
-                <button className="difficulty-info-btn" onClick={() => setInfoOpen(v => !v)} aria-label="How it works">
+                <button className="difficulty-info-btn" onClick={() => { playToggle(); setInfoOpen(v => !v) }} aria-label="How it works">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.3" />
                     <path d="M7 6.3v3.4M7 4.5v.4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
@@ -238,7 +239,7 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
                 <button
                   key={lvl.value}
                   className={`diff-step ${difficulty === lvl.value ? 'diff-step--active' : ''}`}
-                  onClick={() => onDifficultyChange(lvl.value)}
+                  onClick={() => { playToggle(); onDifficultyChange(lvl.value) }}
                 >
                   <span className="diff-roman">{lvl.label}</span>
                   <span className="diff-name">{lvl.name}</span>
@@ -272,7 +273,7 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
         {file && !isLoading && (
           <motion.button
             className="btn-generate"
-            onClick={handleSubmit}
+            onClick={() => { playClick(); handleSubmit() }}
             initial={{ opacity: 0, y: 10, scale: 0.94 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.94 }}

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { playBack, playChime } from '../sounds'
 import './Typer.css'
 import './SpeedTyper.css'
 
@@ -94,20 +95,16 @@ const SENTENCES = [
   'she stopped at the top of the stairs and listened',
 ]
 
-function generateScreen() {
-  const parts = []
-  let chars = 0
-  while (chars < 145) {
-    const s = SENTENCES[Math.floor(Math.random() * SENTENCES.length)]
-    parts.push(s)
-    chars += s.length + 2
-  }
-  return parts.join('. ')
+function generateScreen(punctuation = true) {
+  const pick = () => SENTENCES[Math.floor(Math.random() * SENTENCES.length)]
+  const parts = [pick(), pick()]
+  if (!punctuation) return parts.join(' ')
+  return parts.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('. ')
 }
 
 export default function SpeedTyper({ onFinished, onBack, settings }) {
-  const [currentScreen, setCurrentScreen] = useState(() => generateScreen())
-  const [nextScreen, setNextScreen] = useState(() => generateScreen())
+  const [currentScreen, setCurrentScreen] = useState(() => generateScreen(settings?.punctuation ?? true))
+  const [nextScreen, setNextScreen] = useState(() => generateScreen(settings?.punctuation ?? true))
   const [screenIdx, setScreenIdx] = useState(0)
   const [screenCount, setScreenCount] = useState(0)
   const [typed, setTyped] = useState('')
@@ -117,6 +114,8 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
   const [elapsed, setElapsed] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [pendingWrong, setPendingWrong] = useState(false)
+  const [failedIndices, setFailedIndices] = useState(() => new Set())
+  const [screenSuccess, setScreenSuccess] = useState(false)
 
   const inputRef = useRef()
   const screenStartRef = useRef(null)
@@ -143,6 +142,13 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
       return () => clearTimeout(t)
     }
   }, [isTransitioning])
+
+  // Re-focus whenever a click happens anywhere (e.g. closing the settings modal)
+  useEffect(() => {
+    const refocus = () => inputRef.current?.focus()
+    document.addEventListener('click', refocus)
+    return () => document.removeEventListener('click', refocus)
+  }, [])
 
   // Pause time tracking
   useEffect(() => {
@@ -190,20 +196,26 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
     screenResultsRef.current = [...screenResultsRef.current, result]
     setScreenCount(c => c + 1)
 
-    setIsTransitioning(true)
-    // Change screen content — AnimatePresence keeps old element frozen for its exit
-    setScreenIdx(i => i + 1)
-    setCurrentScreen(nextScreen)
-    setNextScreen(generateScreen())
-    typedRef.current = ''
-    if (inputRef.current) inputRef.current.value = ''
-    setTyped('')
-    setPendingWrong(false)
-    screenErrorsRef.current = 0
-    screenStartRef.current = null
+    setScreenSuccess(true)
+    if (settings?.completionSound ?? true) playChime()
 
-    setTimeout(() => setIsTransitioning(false), 320)
-  }, [nextScreen])
+    setTimeout(() => {
+      setScreenSuccess(false)
+      setIsTransitioning(true)
+      // Change screen content — AnimatePresence keeps old element frozen for its exit
+      setScreenIdx(i => i + 1)
+      setCurrentScreen(nextScreen)
+      setNextScreen(generateScreen(settings?.punctuation ?? true))
+      typedRef.current = ''
+      if (inputRef.current) inputRef.current.value = ''
+      setTyped('')
+      setPendingWrong(false)
+      setFailedIndices(new Set())
+      screenErrorsRef.current = 0
+      screenStartRef.current = null
+      setTimeout(() => setIsTransitioning(false), 320)
+    }, 350)
+  }, [nextScreen, settings])
 
   const handleStop = useCallback(() => {
     if (!startTimeRef.current) { onBack(); return }
@@ -256,6 +268,7 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
       setErrors(p => p + 1)
       screenErrorsRef.current++
       setPendingWrong(true)
+      setFailedIndices(prev => new Set(prev).add(pos))
       return
     }
 
@@ -347,7 +360,7 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
         if (i === typed.length) {
           chars.push(<span key={i} className={pendingWrong ? 'char cursor wrong' : 'char cursor'}>{char}</span>)
         } else if (i < typed.length) {
-          const wrong = typed[i] !== currentScreen[i]
+          const wrong = failedIndices.has(i) || typed[i] !== currentScreen[i]
           chars.push(<span key={i} className={wrong ? 'char incorrect' : 'char correct'}>{char}</span>)
         } else {
           chars.push(<span key={i} className="char pending">{char}</span>)
@@ -413,7 +426,7 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
         <AnimatePresence mode="wait">
           <motion.div
             key={screenIdx}
-            className="note-display"
+            className={`note-display${screenSuccess ? ' note-display--success' : ''}`}
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -14 }}
@@ -426,7 +439,7 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
 
       <div className="typer-footer">
         <p className="hint-text">Type the words · backspace to correct</p>
-        <button className="btn-stop" onClick={(e) => { e.stopPropagation(); handleStop() }}>
+        <button className="btn-stop" onClick={(e) => { e.stopPropagation(); playBack(); handleStop() }}>
           ■ Stop
         </button>
       </div>

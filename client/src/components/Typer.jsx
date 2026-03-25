@@ -1,25 +1,118 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import FallingText from './FallingText'
+import { playBack, playChime } from '../sounds'
 import './Typer.css'
 
 function computeBlackoutRanges(text, difficulty = 2) {
-  const ranges = []
-  const wordRegex = /\b[a-zA-Z]{5,}\b/g
+  const MONTHS = new Set([
+    'january','february','march','april','may','june',
+    'july','august','september','october','november','december'
+  ])
+  const DAYS = new Set([
+    'monday','tuesday','wednesday','thursday','friday','saturday','sunday'
+  ])
+  const NUMBER_WORDS = new Set([
+    'zero','one','two','three','four','five','six','seven','eight','nine','ten',
+    'eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen',
+    'eighteen','nineteen','twenty','thirty','forty','fifty','sixty','seventy',
+    'eighty','ninety','hundred','thousand','million','billion','trillion'
+  ])
+  const STOP_WORDS = new Set([
+    'the','a','an','and','or','but','in','on','at','to','for','of','with','by',
+    'from','is','was','are','were','be','been','being','have','has','had','do',
+    'does','did','will','would','shall','should','may','might','must','can',
+    'could','this','that','these','those','it','its','they','their','there',
+    'then','than','when','where','who','what','which','how','if','as','so',
+    'not','no','nor','yet','both','either','neither','each','every','all','any',
+    'few','more','most','other','some','such','only','own','same','just','about',
+    'above','after','also','back','even','here','into','much','need','our','out',
+    'over','said','time','up','very','well','your','his','her','him','she','he',
+    'we','you','me','my','our','us','am','i'
+  ])
+
+  const scored = []
+  const tokenRegex = /\b([A-Za-z0-9][A-Za-z0-9'-]*)\b/g
   let match
-  let count = 0
-  const shouldBlackout = (n) => {
-    if (difficulty === 1) return n % 4 === 0
-    if (difficulty === 2) return n % 2 === 0
-    if (difficulty === 3) return n % 4 !== 0
-    if (difficulty === 4) return n % 5 !== 0
-    return n % 2 === 0
+
+  while ((match = tokenRegex.exec(text)) !== null) {
+    const word = match[0]
+    const start = match.index
+    const end = start + word.length
+    const lower = word.toLowerCase()
+
+    // Skip trivially short words and pure stop words
+    if (word.length <= 2 && !/\d/.test(word)) continue
+    if (STOP_WORDS.has(lower) && !/\d/.test(word)) continue
+
+    // Detect sentence boundary (after . ! ? : \n or at text start)
+    const before = text.slice(0, start).trimEnd()
+    const atBoundary = before.length === 0 || /[.!?:\n]$/.test(before)
+
+    let priority = 0
+
+    // Pure numbers — years and stats are the most testable facts
+    if (/^\d+$/.test(word)) {
+      const n = parseInt(word, 10)
+      priority = (n >= 1000 && n <= 2999) ? 100 : 90
+    }
+    // Mixed alphanumeric (e.g. 1st, 3rd, 20th, WWI, H2O)
+    else if (/\d/.test(word) && word.length >= 2) {
+      priority = 88
+    }
+    // Acronyms — all uppercase, 2+ letters
+    else if (/^[A-Z]{2,}$/.test(word)) {
+      priority = 95
+    }
+    // Proper nouns — capitalised but not at a sentence boundary
+    else if (/^[A-Z]/.test(word) && !atBoundary) {
+      priority = 85
+    }
+    // Month names
+    else if (MONTHS.has(lower)) {
+      priority = 82
+    }
+    // Day names
+    else if (DAYS.has(lower)) {
+      priority = 75
+    }
+    // Number words (hundred, million, etc.)
+    else if (NUMBER_WORDS.has(lower)) {
+      priority = 70
+    }
+    // Long content words (8+ chars)
+    else if (word.length >= 8) {
+      priority = 45 + word.length
+    }
+    // Medium content words (5–7 chars)
+    else if (word.length >= 5) {
+      priority = 25 + word.length
+    }
+    // Short content words (3–4 chars)
+    else if (word.length >= 3) {
+      priority = 10
+    }
+
+    if (priority > 0) scored.push({ start, end, priority })
   }
-  while ((match = wordRegex.exec(text)) !== null) {
-    count++
-    if (shouldBlackout(count)) ranges.push([match.index, match.index + match[0].length])
-  }
-  return ranges
+
+  // Sort highest priority first
+  scored.sort((a, b) => b.priority - a.priority)
+
+  // Difficulty controls the minimum priority threshold AND max fraction blacked out
+  const thresholds = { 1: 70, 2: 40, 3: 22, 4: 10 }
+  const fractions  = { 1: 0.30, 2: 0.55, 3: 0.78, 4: 0.95 }
+  const minPriority = thresholds[difficulty] ?? 40
+  const maxFraction = fractions[difficulty] ?? 0.55
+
+  const eligible = scored.filter(w => w.priority >= minPriority)
+  const cap = Math.max(1, Math.ceil(scored.length * maxFraction))
+  const chosen = eligible.slice(0, cap)
+
+  // Return sorted by position for fast range lookup
+  return chosen
+    .sort((a, b) => a.start - b.start)
+    .map(w => [w.start, w.end])
 }
 
 export default function Typer({ notes, onFinished, onBack, settings, flashcardDifficulty = 2, isFlashcard }) {
@@ -38,6 +131,7 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
   const [encryptTick, setEncryptTick] = useState(0)
   const [cardPhase, setCardPhase] = useState('study') // 'study' | 'recall'
   const [flipped, setFlipped] = useState(false)
+  const [cardSuccess, setCardSuccess] = useState(false)
 
   const inputRef = useRef()
   const cursorRef = useRef(null)
@@ -68,6 +162,13 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
     const id = setTimeout(focusInput, 500);
     return () => clearTimeout(id);
   }, [isFalling, isTransitioning, currentNoteIndex]);
+
+  // Re-focus whenever a click happens anywhere (e.g. closing the settings modal)
+  useEffect(() => {
+    const refocus = () => inputRef.current?.focus()
+    document.addEventListener('click', refocus)
+    return () => document.removeEventListener('click', refocus)
+  }, []);
 
   // Accumulate paused time so WPM excludes transition delays
   useEffect(() => {
@@ -131,54 +232,69 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
 
     if (isFlashcard) {
       if (cardPhase === 'study') {
-        // Flip card to recall side
-        setIsTransitioning(true)
-        setFlipped(true)
+        // Green flash + chime, then flip
+        setCardSuccess(true)
+        if (settings?.completionSound ?? true) playChime()
         setCompletedChars(p => p + currentFullText.length)
-        // Switch content at halfway point (card edge-on, nothing visible)
         setTimeout(() => {
-          resetNote()
-          setCardPhase('recall')
-        }, 300)
-        setTimeout(() => {
-          setIsTransitioning(false)
-        }, 650)
-      } else {
-        // Recall complete — exit card and advance
-        setIsTransitioning(true)
-        setCompletedChars(p => p + currentFullText.length)
-        if (currentNoteIndex < notes.length - 1) {
+          setCardSuccess(false)
+          setIsTransitioning(true)
+          setFlipped(true)
+          // Switch content at halfway point (card edge-on, nothing visible)
           setTimeout(() => {
-            setCurrentNoteIndex(p => p + 1)
-            setCardPhase('study')
-            setFlipped(false)
             resetNote()
+            setCardPhase('recall')
+          }, 300)
+          setTimeout(() => {
             setIsTransitioning(false)
-          }, 550)
-        } else {
-          const finalTotalChars = currentCompletedChars + currentFullText.length
-          const elapsed = currentStartTime ? (Date.now() - currentStartTime - totalPausedRef.current) / 60000 : 0.001
-          const finalWpm = Math.round((finalTotalChars / 5) / elapsed)
-          const accuracy = Math.max(0, Math.round(((finalTotalChars - currentErrors) / finalTotalChars) * 100))
-          setTimeout(() => onFinished({ wpm: finalWpm, accuracy, errors: currentErrors, totalChars: finalTotalChars, notes: notes.length, noteResults: noteResultsRef.current }), 550)
-        }
+          }, 650)
+        }, 350)
+      } else {
+        // Recall complete — green flash + chime, then exit card and advance
+        setCardSuccess(true)
+        if (settings?.completionSound ?? true) playChime()
+        setCompletedChars(p => p + currentFullText.length)
+        setTimeout(() => {
+          setCardSuccess(false)
+          setIsTransitioning(true)
+          if (currentNoteIndex < notes.length - 1) {
+            setTimeout(() => {
+              setCurrentNoteIndex(p => p + 1)
+              setCardPhase('study')
+              setFlipped(false)
+              resetNote()
+              setIsTransitioning(false)
+            }, 550)
+          } else {
+            const finalTotalChars = currentCompletedChars + currentFullText.length
+            const elapsed = currentStartTime ? (Date.now() - currentStartTime - totalPausedRef.current) / 60000 : 0.001
+            const finalWpm = Math.round((finalTotalChars / 5) / elapsed)
+            const accuracy = Math.max(0, Math.round(((finalTotalChars - currentErrors) / finalTotalChars) * 100))
+            setTimeout(() => onFinished({ wpm: finalWpm, accuracy, errors: currentErrors, totalChars: finalTotalChars, notes: notes.length, noteResults: noteResultsRef.current }), 550)
+          }
+        }, 350)
       }
     } else {
-      setIsFalling(true)
+      setCardSuccess(true)
+      if (settings?.completionSound ?? true) playChime()
       setTimeout(() => {
-        if (currentNoteIndex < notes.length - 1) {
-          setIsFalling(false)
-          setCompletedChars(p => p + currentFullText.length)
-          setCurrentNoteIndex(p => p + 1)
-          resetNote()
-        } else {
-          const finalTotalChars = currentCompletedChars + currentFullText.length
-          const elapsed = currentStartTime ? (Date.now() - currentStartTime - totalPausedRef.current) / 60000 : 0.001
-          const finalWpm = Math.round((finalTotalChars / 5) / elapsed)
-          const accuracy = Math.max(0, Math.round(((finalTotalChars - currentErrors) / finalTotalChars) * 100))
-          onFinished({ wpm: finalWpm, accuracy, errors: currentErrors, totalChars: finalTotalChars, notes: notes.length, noteResults: noteResultsRef.current })
-        }
-      }, 1500)
+        setCardSuccess(false)
+        setIsFalling(true)
+        setTimeout(() => {
+          if (currentNoteIndex < notes.length - 1) {
+            setIsFalling(false)
+            setCompletedChars(p => p + currentFullText.length)
+            setCurrentNoteIndex(p => p + 1)
+            resetNote()
+          } else {
+            const finalTotalChars = currentCompletedChars + currentFullText.length
+            const elapsed = currentStartTime ? (Date.now() - currentStartTime - totalPausedRef.current) / 60000 : 0.001
+            const finalWpm = Math.round((finalTotalChars / 5) / elapsed)
+            const accuracy = Math.max(0, Math.round(((finalTotalChars - currentErrors) / finalTotalChars) * 100))
+            onFinished({ wpm: finalWpm, accuracy, errors: currentErrors, totalChars: finalTotalChars, notes: notes.length, noteResults: noteResultsRef.current })
+          }
+        }, 1500)
+      }, 350)
     }
   }, [isFlashcard, cardPhase, currentNoteIndex, notes.length, onFinished])
 
@@ -283,14 +399,14 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
         const i = start + ci
         const char = word[ci]
         if (i === typed.length) {
-          const displayChar = isBlackedOut(i) ? randChar() : char
+          const displayChar = isBlackedOut(i) ? '_' : char
           chars.push(<span key={i} className={pendingWrong ? 'char cursor wrong' : 'char cursor'} ref={cursorRef}>{displayChar}</span>)
         } else if (i < typed.length) {
           const wasFailed = failedIndices.has(i) || typed[i] !== fullText[i];
           const displayChar = isBlackedOut(i) && wasFailed ? typed[i] : char;
           chars.push(<span key={i} className={wasFailed ? 'char incorrect' : 'char correct'}>{displayChar}</span>)
         } else if (isBlackedOut(i)) {
-          chars.push(<span key={i} className="char encrypted">{randChar()}</span>)
+          chars.push(<span key={i} className="char encrypted">{'_'}</span>)
         } else {
           chars.push(<span key={i} className="char pending">{char}</span>)
         }
@@ -365,7 +481,7 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
                     transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
                   >
                     {/* Front face — STUDY */}
-                    <div className="flashcard-face flashcard-face--front">
+                    <div className={`flashcard-face flashcard-face--front${cardSuccess ? ' flashcard-face--success' : ''}`}>
                       <div className="flashcard-corner fc-tl" />
                       <div className="flashcard-corner fc-tr" />
                       <div className="flashcard-corner fc-bl" />
@@ -381,7 +497,7 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
                     </div>
 
                     {/* Back face — RECALL */}
-                    <div className="flashcard-face flashcard-face--back">
+                    <div className={`flashcard-face flashcard-face--back${cardSuccess ? ' flashcard-face--success' : ''}`}>
                       <div className="flashcard-corner fc-tl" />
                       <div className="flashcard-corner fc-tr" />
                       <div className="flashcard-corner fc-bl" />
@@ -404,7 +520,7 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
                 <motion.button
                   className="btn-forgot"
                   tabIndex={-1}
-                  onClick={(e) => { e.stopPropagation(); handleForgot() }}
+                  onClick={(e) => { e.stopPropagation(); playBack(); handleForgot() }}
                   initial={{ opacity: 0, y: -6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
@@ -430,7 +546,7 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
                 targetClassName="note-display"
               />
             ) : (
-              <div ref={displayRef} className="note-display">
+              <div ref={displayRef} className={`note-display${cardSuccess ? ' note-display--success' : ''}`}>
                 {renderText()}
               </div>
             )}
@@ -441,7 +557,7 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
       {/* Footer */}
       <div className="typer-footer">
         <p className="hint-text">Click anywhere · type to match exactly</p>
-        <button className="btn-back" onClick={(e) => { e.stopPropagation(); onBack() }}>
+        <button className="btn-back" onClick={(e) => { e.stopPropagation(); playBack(); onBack() }}>
           ← New file
         </button>
       </div>

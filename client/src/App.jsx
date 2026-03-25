@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { playBack, playToggle, updateSoundSettings } from './sounds'
 import Upload from './components/Upload'
 import Typer from './components/Typer'
 import SpeedTyper from './components/SpeedTyper'
 import Results from './components/Results'
 import GameMode from './components/GameMode'
 import SettingsModal from './components/SettingsModal'
+import FlashcardTest from './components/FlashcardTest'
 import './App.css'
 
-const STAGES = { GAMEMODE: 'gamemode', UPLOAD: 'upload', TYPING: 'typing', RESULTS: 'results' }
+const STAGES = { GAMEMODE: 'gamemode', UPLOAD: 'upload', TYPING: 'typing', RESULTS: 'results', TEST: 'test' }
 
 
 function numberToWords(n) {
@@ -64,8 +66,8 @@ export default function App() {
   const [settings, setSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('cl_settings')
-      return saved ? JSON.parse(saved) : { allowBackspace: true, punctuation: true }
-    } catch { return { allowBackspace: true, punctuation: true } }
+      return saved ? JSON.parse(saved) : { allowBackspace: true, punctuation: true, menuSounds: true, completionSound: true }
+    } catch { return { allowBackspace: true, punctuation: true, menuSounds: true, completionSound: true } }
   })
   // Incremented to force-remount Typer whenever settings change
   const [typingKey, setTypingKey] = useState(0)
@@ -82,6 +84,7 @@ export default function App() {
   )
 
   useEffect(() => { localStorage.setItem('cl_settings', JSON.stringify(settings)) }, [settings])
+  useEffect(() => { updateSoundSettings(settings) }, [settings])
   useEffect(() => { try { localStorage.removeItem('cl_stage') } catch {} }, [])
   useEffect(() => { localStorage.setItem('cl_raw_notes', JSON.stringify(rawNotes)) }, [rawNotes])
   useEffect(() => { localStorage.setItem('cl_results', JSON.stringify(results)) }, [results])
@@ -163,6 +166,8 @@ export default function App() {
     setStage(STAGES.UPLOAD)
   }
 
+  const handleTest = () => setStage(STAGES.TEST)
+
   return (
     <>
       <div className="app">
@@ -173,7 +178,7 @@ export default function App() {
           transition={{ duration: 0.6, ease: 'easeOut' }}
         >
           <div className="header-inner">
-            <div className="logo" onClick={handleRestart} style={{ cursor: 'pointer' }} title="Return Home">
+            <div className="logo" onClick={() => { playBack(); handleRestart() }} style={{ cursor: 'pointer' }} title="Return Home">
               <div className="logo-mark">
                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
                   <rect x="1" y="5" width="20" height="13" rx="3" stroke="currentColor" strokeWidth="1.5" />
@@ -199,7 +204,7 @@ export default function App() {
               ))}
             </nav>
 
-            <button className="btn-settings" aria-label="Settings" onClick={() => setShowSettings(true)}>
+            <button className="btn-settings" aria-label="Settings" onClick={() => { playToggle(); setShowSettings(true) }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="3" />
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
@@ -230,7 +235,12 @@ export default function App() {
             )}
             {stage === STAGES.RESULTS && (
               <motion.div key="results" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                <Results stats={results} onRetry={handleRetry} onUpload={handleUpload} onNew={handleRestart} isFlashcard={gameMode === 'flashcards'} isSpeed={gameMode === 'speed'} flashcardDifficulty={flashcardDifficulty} onDifficultyChange={setFlashcardDifficulty} />
+                <Results stats={results} onRetry={handleRetry} onUpload={handleUpload} onNew={handleRestart} onTest={handleTest} isFlashcard={gameMode === 'flashcards'} isSpeed={gameMode === 'speed'} flashcardDifficulty={flashcardDifficulty} onDifficultyChange={setFlashcardDifficulty} />
+              </motion.div>
+            )}
+            {stage === STAGES.TEST && (
+              <motion.div key="test" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden auto' }}>
+                <FlashcardTest notes={notes} onBack={() => setStage(STAGES.RESULTS)} settings={settings} />
               </motion.div>
             )}
           </AnimatePresence>

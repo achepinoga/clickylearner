@@ -92,6 +92,13 @@
   height: calc(5 * 56px);
 }
 
+.note-display--success .char {
+  color: rgba(52, 211, 153, 0.9) !important;
+  text-shadow: 0 0 8px rgba(52, 211, 153, 0.4) !important;
+  background: transparent !important;
+  transition: color 0.05s ease, text-shadow 0.05s ease;
+}
+
 .note-display {
   font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 1.5rem;
@@ -189,6 +196,17 @@
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   box-shadow: 0 4px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Success flash — green border before flip */
+.flashcard-face--success {
+  border-color: rgba(52, 211, 153, 0.9) !important;
+  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.4), 0 0 24px rgba(52, 211, 153, 0.25), 0 4px 32px rgba(0, 0, 0, 0.35) !important;
+  transition: border-color 0.05s ease, box-shadow 0.05s ease;
+}
+
+.flashcard-face--success .flashcard-corner {
+  border-color: rgba(52, 211, 153, 0.9) !important;
 }
 
 /* Back face — RECALL (rotated 180deg, stacked in same grid cell) */

@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion'
+import { playBack, playToggle } from '../sounds'
 import './SettingsModal.css'
 
 export default function SettingsModal({ isOpen, onClose, settings, setSettings }) {
@@ -23,7 +24,7 @@ export default function SettingsModal({ isOpen, onClose, settings, setSettings }
         >
           <div className="modal-header">
             <h2 className="modal-title">Settings</h2>
-            <button className="btn-close" onClick={onClose}>×</button>
+            <button className="btn-close" onClick={() => { playBack(); onClose() }}>×</button>
           </div>
 
           <div className="settings-group">
@@ -36,7 +37,7 @@ export default function SettingsModal({ isOpen, onClose, settings, setSettings }
                 <input
                   type="checkbox"
                   checked={settings.allowBackspace}
-                  onChange={(e) => setSettings({ ...settings, allowBackspace: e.target.checked })}
+                  onChange={(e) => { playToggle(); setSettings({ ...settings, allowBackspace: e.target.checked }) }}
                 />
                 <span className="toggle-slider"></span>
               </label>
@@ -50,7 +51,35 @@ export default function SettingsModal({ isOpen, onClose, settings, setSettings }
                 <input
                   type="checkbox"
                   checked={settings.punctuation ?? true}
-                  onChange={(e) => setSettings({ ...settings, punctuation: e.target.checked })}
+                  onChange={(e) => { playToggle(); setSettings({ ...settings, punctuation: e.target.checked }) }}
+                />
+                <span className="toggle-slider"></span>
+              </label>
+            </div>
+            <div className="setting-row">
+              <div className="setting-info">
+                <span className="setting-label">Menu Sounds</span>
+                <span className="setting-desc">Click sounds on buttons and navigation</span>
+              </div>
+              <label className="setting-toggle">
+                <input
+                  type="checkbox"
+                  checked={settings.menuSounds ?? true}
+                  onChange={(e) => { playToggle(); setSettings({ ...settings, menuSounds: e.target.checked }) }}
+                />
+                <span className="toggle-slider"></span>
+              </label>
+            </div>
+            <div className="setting-row">
+              <div className="setting-info">
+                <span className="setting-label">Completion Sound</span>
+                <span className="setting-desc">Chime when a note or screen is completed</span>
+              </div>
+              <label className="setting-toggle">
+                <input
+                  type="checkbox"
+                  checked={settings.completionSound ?? true}
+                  onChange={(e) => { playToggle(); setSettings({ ...settings, completionSound: e.target.checked }) }}
                 />
                 <span className="toggle-slider"></span>
               </label>

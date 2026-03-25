@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion, animate } from 'framer-motion'
+import { playClick, playToggle } from '../sounds'
 import './Results.css'
 
 function useCountUp(target, duration = 1.3) {
@@ -39,7 +40,7 @@ const DIFFICULTY_LEVELS = [
   { value: 4, label: 'IV',  name: 'Brutal' },
 ]
 
-export default function Results({ stats, onRetry, onUpload, onNew, isFlashcard, isSpeed, flashcardDifficulty, onDifficultyChange }) {
+export default function Results({ stats, onRetry, onUpload, onNew, onTest, isFlashcard, isSpeed, flashcardDifficulty, onDifficultyChange }) {
   const { wpm, accuracy, errors, totalChars, notes, noteResults = [] } = stats
 
   const grade = getGrade(accuracy)
@@ -161,7 +162,7 @@ export default function Results({ stats, onRetry, onUpload, onNew, isFlashcard, 
                     <button
                       key={lvl.value}
                       className={`rdiff-btn ${flashcardDifficulty === lvl.value ? 'rdiff-btn--active' : ''}`}
-                      onClick={() => onDifficultyChange(lvl.value)}
+                      onClick={() => { playToggle(); onDifficultyChange(lvl.value) }}
                     >
                       <span className="rdiff-roman">{lvl.label}</span>
                       <span className="rdiff-name">{lvl.name}</span>
@@ -179,7 +180,7 @@ export default function Results({ stats, onRetry, onUpload, onNew, isFlashcard, 
             >
               <motion.button
                 className="btn-action"
-                onClick={onRetry}
+                onClick={() => { playClick(); onRetry() }}
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}
               >
@@ -188,16 +189,29 @@ export default function Results({ stats, onRetry, onUpload, onNew, isFlashcard, 
               {!isSpeed && (
                 <motion.button
                   className="btn-action"
-                  onClick={onUpload}
+                  onClick={() => { playClick(); onUpload() }}
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.96 }}
                 >
                   Upload Notes
                 </motion.button>
               )}
+              {isFlashcard && (
+                <motion.button
+                  className="btn-action btn-action--primary"
+                  onClick={() => { playClick(); onTest() }}
+                  whileHover={{ scale: 1.04, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  <span>Take the Test</span>
+                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                    <path d="M7.5 1.5v12M1.5 7.5h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  </svg>
+                </motion.button>
+              )}
               <motion.button
                 className="btn-action btn-action--primary"
-                onClick={onNew}
+                onClick={() => { playClick(); onNew() }}
                 whileHover={{ scale: 1.04, y: -2 }}
                 whileTap={{ scale: 0.97 }}
               >
