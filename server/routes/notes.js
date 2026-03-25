@@ -21,12 +21,13 @@ router.post('/generate', async (req, res) => {
 
 RULES:
 1. Preserve all essential information — do not remove key facts, but you CAN rewrite sentences to be cleaner and easier to read/type.
-2. Each chunk must be between 100 and 280 characters (roughly 2 to 4 lines on a typing screen).
-3. Do NOT use numbered lists, bullet points, or special characters. Write in plain prose.
-4. Return ONLY a JSON array of strings. Each string is one independent typing challenge.
-5. Aim for 8 to 15 chunks total.
+2. Each chunk must be between 80 and 240 characters.
+3. CRITICAL: Every chunk MUST be one or more COMPLETE sentences. Never cut off mid-sentence. Each chunk must end with a period, exclamation mark, or question mark.
+4. Do NOT use numbered lists, bullet points, or special characters. Write in plain prose.
+5. Return ONLY a JSON array of strings. Each string is one independent typing challenge.
+6. Aim for 8 to 15 chunks total. If the material requires more to avoid cutting sentences, use more.
 
-Example output: ["The relational model organizes data into tables called relations.", "Each relation has rows called tuples and columns called attributes."]`
+Example output: ["The relational model organizes data into tables called relations.", "Each relation has rows called tuples and columns called attributes. Keys uniquely identify each row."]`
         },
         {
           role: 'user',
@@ -59,21 +60,23 @@ Example output: ["The relational model organizes data into tables called relatio
       }
     }
 
-    // Hard-split at word boundaries — 160 chars max (~50 chars/line × 3-4 lines)
-    const MAX_CHARS = 160;
+    // Split only at sentence boundaries to avoid mid-sentence cuts
+    const MAX_CHARS = 240;
     let notes = [];
     for (const note of rawNotes) {
       if (note.length <= MAX_CHARS) {
         notes.push(note);
         continue;
       }
-      const words = note.split(' ');
+      // Split into sentences first
+      const sentences = note.match(/[^.!?]+[.!?]+(\s|$)/g) || [note];
       let currentChunk = '';
-      for (const word of words) {
-        const candidate = currentChunk ? currentChunk + ' ' + word : word;
-        if (candidate.length > MAX_CHARS) {
-          if (currentChunk) notes.push(currentChunk);
-          currentChunk = word;
+      for (const sentence of sentences) {
+        const s = sentence.trim();
+        const candidate = currentChunk ? currentChunk + ' ' + s : s;
+        if (currentChunk && candidate.length > MAX_CHARS) {
+          notes.push(currentChunk);
+          currentChunk = s;
         } else {
           currentChunk = candidate;
         }

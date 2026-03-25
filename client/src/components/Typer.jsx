@@ -558,7 +558,7 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
       <div className="typer-footer">
         <p className="hint-text">Click anywhere · type to match exactly</p>
         <button className="btn-back" onClick={(e) => { e.stopPropagation(); playBack(); onBack() }}>
-          ← New file
+          ← Back
         </button>
       </div>
 

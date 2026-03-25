@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { playBack, playToggle, updateSoundSettings } from './sounds'
+import { supabase } from './lib/supabase'
 import Upload from './components/Upload'
 import Typer from './components/Typer'
 import SpeedTyper from './components/SpeedTyper'
@@ -8,10 +9,12 @@ import Results from './components/Results'
 import GameMode from './components/GameMode'
 import SettingsModal from './components/SettingsModal'
 import FlashcardTest from './components/FlashcardTest'
+import AuthModal from './components/AuthModal'
+import HistoryPanel from './components/HistoryPanel'
+import FlashcardsPage from './components/FlashcardsPage'
 import './App.css'
 
-const STAGES = { GAMEMODE: 'gamemode', UPLOAD: 'upload', TYPING: 'typing', RESULTS: 'results', TEST: 'test' }
-
+const STAGES = { GAMEMODE: 'gamemode', FLASHCARDS: 'flashcards', UPLOAD: 'upload', TYPING: 'typing', RESULTS: 'results', TEST: 'test' }
 
 function numberToWords(n) {
   if (n < 0) return 'negative ' + numberToWords(-n)
@@ -34,8 +37,10 @@ function stripPunctuation(text) {
     .trim()
 }
 
-const STAGE_LABELS = ['Mode', 'Upload', 'Practice', 'Results']
-const STAGE_KEYS = [STAGES.GAMEMODE, STAGES.UPLOAD, STAGES.TYPING, STAGES.RESULTS]
+const STAGE_LABELS_DEFAULT    = ['Mode', 'Upload',     'Practice', 'Results']
+const STAGE_KEYS_DEFAULT      = [STAGES.GAMEMODE, STAGES.UPLOAD,     STAGES.TYPING, STAGES.RESULTS]
+const STAGE_LABELS_FLASHCARDS = ['Mode', 'Sets',       'Practice', 'Results']
+const STAGE_KEYS_FLASHCARDS   = [STAGES.GAMEMODE, STAGES.FLASHCARDS, STAGES.TYPING, STAGES.RESULTS]
 
 const pageVariants = {
   initial: { opacity: 0, y: 22, filter: 'blur(6px)' },
@@ -45,13 +50,11 @@ const pageVariants = {
 
 const pageTransition = { duration: 0.4, ease: [0.4, 0, 0.2, 1] }
 
-
 export default function App() {
-  // rawNotes = chunked but not punctuation-processed (source of truth)
   const [rawNotes, setRawNotes] = useState(() => {
     try { const s = localStorage.getItem('cl_raw_notes'); return s ? JSON.parse(s) : [] } catch { return [] }
   })
-  const [stage, setStage] = useState(() => {
+  const [stage, setStageRaw] = useState(() => {
     try {
       const savedMode = localStorage.getItem('cl_game_mode')
       if (savedMode === 'speed') return STAGES.GAMEMODE
@@ -59,17 +62,29 @@ export default function App() {
       return saved && JSON.parse(saved).length > 0 ? STAGES.TYPING : STAGES.GAMEMODE
     } catch { return STAGES.GAMEMODE }
   })
+  const isPopState = useRef(false)
+  const stageRef = useRef(stage)
+  const currentSetIdRef = useRef(null)
+
+  const setStage = (newStage) => {
+    stageRef.current = newStage
+    setStageRaw(newStage)
+    if (!isPopState.current) history.pushState({ stage: newStage }, '')
+  }
+
   const [results, setResults] = useState(() => {
     try { const s = localStorage.getItem('cl_results'); return s ? JSON.parse(s) : null } catch { return null }
   })
   const [showSettings, setShowSettings] = useState(false)
+  const [showAuth, setShowAuth] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
+  const [user, setUser] = useState(null)
   const [settings, setSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('cl_settings')
       return saved ? JSON.parse(saved) : { allowBackspace: true, punctuation: true, menuSounds: true, completionSound: true }
     } catch { return { allowBackspace: true, punctuation: true, menuSounds: true, completionSound: true } }
   })
-  // Incremented to force-remount Typer whenever settings change
   const [typingKey, setTypingKey] = useState(0)
   const [gameMode, setGameMode] = useState(() => {
     try { return localStorage.getItem('cl_game_mode') || 'standard' } catch { return 'standard' }
@@ -77,25 +92,47 @@ export default function App() {
   const [flashcardDifficulty, setFlashcardDifficulty] = useState(2)
   const settingsInitialized = useRef(false)
 
-  // Derive final notes from raw + current punctuation setting
   const notes = useMemo(
     () => settings.punctuation ? rawNotes : rawNotes.map(stripPunctuation),
     [rawNotes, settings.punctuation]
   )
 
+  // Auth state listener
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
   useEffect(() => { localStorage.setItem('cl_settings', JSON.stringify(settings)) }, [settings])
   useEffect(() => { updateSoundSettings(settings) }, [settings])
   useEffect(() => { try { localStorage.removeItem('cl_stage') } catch {} }, [])
+  useEffect(() => { history.replaceState({ stage: stageRef.current }, '') }, [])
+  useEffect(() => {
+    const handlePopState = (e) => {
+      const prevStage = e.state?.stage
+      if (!prevStage) { history.pushState({ stage: stageRef.current }, ''); return }
+      isPopState.current = true
+      setStageRaw(prevStage)
+      isPopState.current = false
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
   useEffect(() => { localStorage.setItem('cl_raw_notes', JSON.stringify(rawNotes)) }, [rawNotes])
   useEffect(() => { localStorage.setItem('cl_results', JSON.stringify(results)) }, [results])
-
-  // Reset typing progress whenever any setting changes (skip on first mount)
   useEffect(() => {
     if (!settingsInitialized.current) { settingsInitialized.current = true; return }
     setTypingKey(k => k + 1)
   }, [settings])
 
-  const currentStageIndex = STAGE_KEYS.indexOf(stage)
+  const stageLabels = gameMode === 'flashcards' ? STAGE_LABELS_FLASHCARDS : STAGE_LABELS_DEFAULT
+  const stageKeys   = gameMode === 'flashcards' ? STAGE_KEYS_FLASHCARDS   : STAGE_KEYS_DEFAULT
+  const currentStageIndex = stageKeys.indexOf(stage)
 
   const chunkNotes = (incoming) => {
     const MAX_CHARS = 240
@@ -130,21 +167,48 @@ export default function App() {
     return merged
   }
 
-  const handleNotesReady = (generatedNotes) => {
-    setRawNotes(chunkNotes(generatedNotes))
+  const handleNotesReady = async (generatedNotes, title = 'Untitled Set') => {
+    const chunked = chunkNotes(generatedNotes)
+    setRawNotes(chunked)
     setStage(STAGES.TYPING)
+    currentSetIdRef.current = null
+
+    if (user && gameMode === 'flashcards') {
+      const { data, error } = await supabase
+        .from('flashcard_sets')
+        .insert({ user_id: user.id, title, notes: chunked })
+        .select('id')
+        .single()
+      if (!error && data) currentSetIdRef.current = data.id
+    }
   }
 
-  const handleFinished = (stats) => {
+  const handleFinished = async (stats) => {
     setResults(stats)
     setStage(STAGES.RESULTS)
+
+    if (user) {
+      await supabase.from('runs').insert({
+        user_id: user.id,
+        mode: gameMode,
+        wpm: Math.round(stats.wpm || 0),
+        accuracy: parseFloat((stats.accuracy || 0).toFixed(2)),
+        errors: stats.errors || 0,
+        total_chars: stats.totalChars || 0,
+        note_results: stats.noteResults || null,
+        flashcard_set_id: currentSetIdRef.current || null,
+      })
+      currentSetIdRef.current = null
+    }
   }
 
   const handleModeSelect = (modeId) => {
     try { localStorage.setItem('cl_game_mode', modeId) } catch {}
     setGameMode(modeId)
     setFlashcardDifficulty(2)
-    setStage(modeId === 'speed' ? STAGES.TYPING : STAGES.UPLOAD)
+    if (modeId === 'speed') setStage(STAGES.TYPING)
+    else if (modeId === 'flashcards') setStage(STAGES.FLASHCARDS)
+    else setStage(STAGES.UPLOAD)
   }
 
   const handleRestart = () => {
@@ -153,6 +217,7 @@ export default function App() {
     setRawNotes([])
     setResults(null)
     setGameMode('standard')
+    currentSetIdRef.current = null
   }
 
   const handleRetry = () => {
@@ -168,6 +233,23 @@ export default function App() {
 
   const handleTest = () => setStage(STAGES.TEST)
 
+  const handleReplaySet = (notes) => {
+    setRawNotes(notes)
+    setGameMode('flashcards')
+    try { localStorage.setItem('cl_game_mode', 'flashcards') } catch {}
+    setTypingKey(k => k + 1)
+    setStage(STAGES.TYPING)
+  }
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    setShowHistory(false)
+  }
+
+  const displayEmail = user?.email
+    ? user.email.length > 18 ? user.email.slice(0, 15) + '…' : user.email
+    : null
+
   return (
     <>
       <div className="app">
@@ -178,6 +260,25 @@ export default function App() {
           transition={{ duration: 0.6, ease: 'easeOut' }}
         >
           <div className="header-inner">
+            {/* Auth section — left side */}
+            <div className="header-auth">
+              {user ? (
+                <>
+                  <span className="auth-user-email">{displayEmail}</span>
+                  <button className="btn-header-auth btn-history" onClick={() => setShowHistory(true)}>
+                    History
+                  </button>
+                  <button className="btn-header-auth btn-signout" onClick={handleSignOut}>
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <button className="btn-header-auth btn-signin" onClick={() => setShowAuth(true)}>
+                  Sign In
+                </button>
+              )}
+            </div>
+
             <div className="logo" onClick={() => { playBack(); handleRestart() }} style={{ cursor: 'pointer' }} title="Return Home">
               <div className="logo-mark">
                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
@@ -189,7 +290,7 @@ export default function App() {
             </div>
 
             <nav className="stage-nav" aria-label="Progress">
-              {STAGE_LABELS.map((label, i) => (
+              {stageLabels.map((label, i) => (
                 <div key={label} className="stage-nav-item">
                   {i > 0 && (
                     <div className={`stage-connector ${i <= currentStageIndex ? 'active' : ''}`} />
@@ -220,9 +321,31 @@ export default function App() {
                 <GameMode onSelect={handleModeSelect} />
               </motion.div>
             )}
+            {stage === STAGES.FLASHCARDS && (
+              <motion.div key="flashcards" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden auto' }}>
+                <FlashcardsPage
+                  user={user}
+                  onNewFile={() => setStage(STAGES.UPLOAD)}
+                  onStudySet={(set) => {
+                    setRawNotes(set.notes)
+                    currentSetIdRef.current = set.id
+                    setTypingKey(k => k + 1)
+                    setStage(STAGES.TYPING)
+                  }}
+                  onBack={handleRestart}
+                  onSignIn={() => setShowAuth(true)}
+                />
+              </motion.div>
+            )}
             {stage === STAGES.UPLOAD && (
               <motion.div key="upload" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition}>
-                <Upload onNotesReady={handleNotesReady} gameMode={gameMode} difficulty={flashcardDifficulty} onDifficultyChange={setFlashcardDifficulty} />
+                <Upload
+                  onNotesReady={handleNotesReady}
+                  gameMode={gameMode}
+                  difficulty={flashcardDifficulty}
+                  onDifficultyChange={setFlashcardDifficulty}
+                  onBack={() => gameMode === 'flashcards' ? setStage(STAGES.FLASHCARDS) : handleRestart()}
+                />
               </motion.div>
             )}
             {stage === STAGES.TYPING && (
@@ -254,6 +377,15 @@ export default function App() {
         setSettings={setSettings}
       />
 
+      <AuthModal
+        isOpen={showAuth}
+        onClose={() => setShowAuth(false)}
+      />
+
+      <HistoryPanel
+        isOpen={showHistory}
+        onClose={() => setShowHistory(false)}
+      />
     </>
   )
 }

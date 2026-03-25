@@ -38,7 +38,7 @@ const DIFFICULTY_LEVELS = [
   { value: 4, label: 'IV', name: 'Brutal', pct: '~80%' },
 ]
 
-export default function Upload({ onNotesReady, gameMode, difficulty, onDifficultyChange }) {
+export default function Upload({ onNotesReady, gameMode, difficulty, onDifficultyChange, onBack }) {
   const [file, setFile] = useState(null)
   const [dragging, setDragging] = useState(false)
   const [status, setStatus] = useState('idle')
@@ -104,7 +104,7 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
       const notesData = await notesRes.json()
       if (!notesRes.ok) throw new Error(notesData.error || 'Failed to generate notes')
 
-      onNotesReady(notesData.notes)
+      onNotesReady(notesData.notes, file.name)
     } catch (err) {
       setError(err.message)
       setStatus('idle')
@@ -115,6 +115,19 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
 
   return (
     <div className="upload-container">
+      {onBack && (
+        <motion.button
+          className="upload-back-btn"
+          onClick={() => { playBack(); onBack() }}
+          initial={{ opacity: 0, x: -8 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3 }}
+          whileHover={{ x: -3 }}
+          whileTap={{ scale: 0.96 }}
+        >
+          ← Back
+        </motion.button>
+      )}
       <div className="upload-eyebrow">Step 1 — Upload your material</div>
 
       <motion.div

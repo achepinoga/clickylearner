@@ -234,7 +234,7 @@ export default function FlashcardTest({ notes, onBack, settings }) {
   if (phase === 'error') return (
     <div className="quiz-container quiz-center">
       <p className="quiz-error-msg">Failed to generate quiz: {loadError}</p>
-      <button className="quiz-btn-back" onClick={() => { playBack(); onBack() }}>← back to results</button>
+      <button className="quiz-btn-back" onClick={() => { playBack(); onBack() }}>← Back</button>
     </div>
   )
 
@@ -266,7 +266,7 @@ export default function FlashcardTest({ notes, onBack, settings }) {
           <span className="done-sep">·</span>
           <span className="done-total">{totalQuestions} total</span>
         </div>
-        <button className="quiz-btn-back" onClick={() => { playBack(); onBack() }}>← back to results</button>
+        <button className="quiz-btn-back" onClick={() => { playBack(); onBack() }}>← Back</button>
       </motion.div>
     </div>
   )
@@ -347,7 +347,7 @@ export default function FlashcardTest({ notes, onBack, settings }) {
       </AnimatePresence>
 
       <button className="quiz-btn-back" onClick={() => { playBack(); onBack() }}>
-        ← back to results
+        ← Back
       </button>
     </div>
   )

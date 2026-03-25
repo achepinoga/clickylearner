@@ -440,7 +440,7 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
       <div className="typer-footer">
         <p className="hint-text">Type the words · backspace to correct</p>
         <button className="btn-stop" onClick={(e) => { e.stopPropagation(); playBack(); handleStop() }}>
-          ■ Stop
+          ← Back
         </button>
       </div>
 
