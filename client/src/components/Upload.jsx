@@ -44,6 +44,11 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
   const [status, setStatus] = useState('idle')
   const [error, setError] = useState('')
   const [infoOpen, setInfoOpen] = useState(false)
+  const [truncationWarning, setTruncationWarning] = useState(null)
+  const [continuation, setContinuation] = useState(() => {
+    try { const s = localStorage.getItem('cl_continuation'); return s ? JSON.parse(s) : null } catch { return null }
+  })
+  const pendingNotesRef = useRef(null)
   const inputRef = useRef()
   const infoRef = useRef()
 
@@ -104,7 +109,69 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
       const notesData = await notesRes.json()
       if (!notesRes.ok) throw new Error(notesData.error || 'Failed to generate notes')
 
-      onNotesReady(notesData.notes, file.name)
+      if (notesData.truncated) {
+        pendingNotesRef.current = { notes: notesData.notes, name: file.name }
+        const warning = {
+          cutoffPage: notesData.cutoffPage,
+          totalPages: notesData.totalPages,
+          cutoffPreview: notesData.cutoffPreview,
+        }
+        setTruncationWarning(warning)
+        // Store continuation for next session
+        const cont = {
+          filename: file.name,
+          nextPage: notesData.cutoffPage + 1,
+          totalPages: notesData.totalPages,
+          remainingText: notesData.remainingText,
+        }
+        localStorage.setItem('cl_continuation', JSON.stringify(cont))
+        setContinuation(cont)
+        setStatus('idle')
+      } else {
+        localStorage.removeItem('cl_continuation')
+        setContinuation(null)
+        onNotesReady(notesData.notes, file.name)
+      }
+    } catch (err) {
+      setError(err.message)
+      setStatus('idle')
+    }
+  }
+
+  const handleContinue = async () => {
+    if (!continuation) return
+    setError('')
+    setStatus('generating')
+    try {
+      const notesRes = await fetch('/api/notes/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: continuation.remainingText })
+      })
+      const notesData = await notesRes.json()
+      if (!notesRes.ok) throw new Error(notesData.error || 'Failed to generate notes')
+
+      if (notesData.truncated) {
+        const cont = {
+          filename: continuation.filename,
+          nextPage: continuation.nextPage + notesData.cutoffPage,
+          totalPages: continuation.totalPages,
+          remainingText: notesData.remainingText,
+        }
+        localStorage.setItem('cl_continuation', JSON.stringify(cont))
+        setContinuation(cont)
+        pendingNotesRef.current = { notes: notesData.notes, name: continuation.filename }
+        setTruncationWarning({
+          cutoffPage: continuation.nextPage + notesData.cutoffPage - 1,
+          totalPages: continuation.totalPages,
+          cutoffPreview: notesData.cutoffPreview,
+        })
+        setStatus('idle')
+      } else {
+        localStorage.removeItem('cl_continuation')
+        setContinuation(null)
+        onNotesReady(notesData.notes, continuation.filename)
+      }
     } catch (err) {
       setError(err.message)
       setStatus('idle')
@@ -129,6 +196,32 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
         </motion.button>
       )}
       <div className="upload-eyebrow">Step 1 — Upload your material</div>
+
+      <AnimatePresence>
+        {continuation && !truncationWarning && !isLoading && (
+          <motion.div
+            className="continuation-banner"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25 }}
+          >
+            <div className="cont-left">
+              <span className="cont-label">// Previous session</span>
+              <span className="cont-file">{continuation.filename.replace(/\.[^.]+$/, '')}</span>
+              <span className="cont-pages">Page {continuation.nextPage} of ~{continuation.totalPages}</span>
+            </div>
+            <div className="cont-actions">
+              <button className="cont-btn cont-btn--primary" onClick={() => { playClick(); handleContinue() }}>
+                Continue →
+              </button>
+              <button className="cont-btn cont-btn--dismiss" onClick={() => { playBack(); localStorage.removeItem('cl_continuation'); setContinuation(null) }}>
+                Dismiss
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <motion.div
         className={`dropzone ${dragging ? 'dragging' : ''} ${file ? 'has-file' : ''}`}
@@ -299,6 +392,46 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
               <path d="M8.5 1.5l1.6 4.8L15 8.5l-4.9 2.2-1.6 4.8-1.6-4.8L2 8.5l4.9-2.2 1.6-4.8z" fill="currentColor" />
             </svg>
           </motion.button>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {truncationWarning && (
+          <motion.div
+            className="truncation-warning"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="trunc-icon">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path d="M9 2L16.5 15H1.5L9 2Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+                <path d="M9 7v4M9 13v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <div className="trunc-body">
+              <p className="trunc-title">Document too long — only the first ~{truncationWarning.cutoffPage} of ~{truncationWarning.totalPages} pages were processed.</p>
+              <p className="trunc-advice">For better recall, we recommend studying in focused sessions rather than processing your entire document at once. Pick up from where this session ends for your next upload.</p>
+              {truncationWarning.cutoffPreview && (
+                <p className="trunc-cutoff">
+                  <span className="trunc-cutoff-label">// This session ends at:</span>
+                  <span className="trunc-cutoff-text">"{truncationWarning.cutoffPreview}"</span>
+                </p>
+              )}
+              <button
+                className="trunc-continue-btn"
+                onClick={() => {
+                  playClick()
+                  const { notes, name } = pendingNotesRef.current
+                  setTruncationWarning(null)
+                  onNotesReady(notes, name)
+                }}
+              >
+                Got it — Start Studying →
+              </button>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
 

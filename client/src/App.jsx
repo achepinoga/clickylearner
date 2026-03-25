@@ -39,7 +39,7 @@ function stripPunctuation(text) {
 
 const STAGE_LABELS_DEFAULT    = ['Mode', 'Upload',     'Practice', 'Results']
 const STAGE_KEYS_DEFAULT      = [STAGES.GAMEMODE, STAGES.UPLOAD,     STAGES.TYPING, STAGES.RESULTS]
-const STAGE_LABELS_FLASHCARDS = ['Mode', 'Sets',       'Practice', 'Results']
+const STAGE_LABELS_FLASHCARDS = ['Mode', 'Upload',     'Practice', 'Results']
 const STAGE_KEYS_FLASHCARDS   = [STAGES.GAMEMODE, STAGES.FLASHCARDS, STAGES.TYPING, STAGES.RESULTS]
 
 const pageVariants = {
@@ -84,8 +84,8 @@ export default function App() {
   const [settings, setSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('cl_settings')
-      return saved ? JSON.parse(saved) : { allowBackspace: true, punctuation: true, menuSounds: true, completionSound: true }
-    } catch { return { allowBackspace: true, punctuation: true, menuSounds: true, completionSound: true } }
+      return saved ? JSON.parse(saved) : { allowBackspace: true, punctuation: true, menuSounds: true, completionSound: true, autoAdvance: true }
+    } catch { return { allowBackspace: true, punctuation: true, menuSounds: true, completionSound: true, autoAdvance: true } }
   })
   const [typingKey, setTypingKey] = useState(0)
   const [gameMode, setGameMode] = useState(() => {
@@ -371,7 +371,7 @@ export default function App() {
               <motion.div key="typing" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 {gameMode === 'speed'
                   ? <SpeedTyper key={typingKey} onFinished={handleFinished} onBack={handleRestart} settings={settings} />
-                  : <Typer key={typingKey} notes={notes} onFinished={handleFinished} onBack={handleRestart} settings={settings} flashcardDifficulty={flashcardDifficulty} isFlashcard={gameMode === 'flashcards'} />
+                  : <Typer key={typingKey} notes={notes} onFinished={handleFinished} onBack={handleRestart} settings={settings} flashcardDifficulty={flashcardDifficulty} onDifficultyChange={setFlashcardDifficulty} isFlashcard={gameMode === 'flashcards'} />
                 }
               </motion.div>
             )}

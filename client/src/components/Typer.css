@@ -339,3 +339,56 @@
   color: var(--accent);
   box-shadow: 0 0 10px var(--accent-glow);
 }
+
+/* Manual advance button */
+.btn-manual-advance {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 10px 28px;
+  cursor: pointer;
+  margin-top: 12px;
+  box-shadow: 0 0 14px var(--accent-glow);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.btn-manual-advance:hover {
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 24px var(--accent-glow);
+}
+
+/* In-session difficulty controls */
+.fc-difficulty-inline {
+  display: flex;
+  gap: 6px;
+  margin-top: 14px;
+  align-items: center;
+}
+
+.fc-diff-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.fc-diff-btn:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: var(--text);
+}
+
+.fc-diff-btn--active {
+  border-color: #f59e0b;
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.06);
+}

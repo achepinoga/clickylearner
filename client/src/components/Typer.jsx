@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import FallingText from './FallingText'
-import { playBack, playChime } from '../sounds'
+import { playBack, playChime, playClick, playToggle } from '../sounds'
 import './Typer.css'
 
 function computeBlackoutRanges(text, difficulty = 2) {
@@ -105,8 +105,10 @@ function computeBlackoutRanges(text, difficulty = 2) {
   const minPriority = thresholds[difficulty] ?? 40
   const maxFraction = fractions[difficulty] ?? 0.55
 
-  const eligible = scored.filter(w => w.priority >= minPriority)
+  let eligible = scored.filter(w => w.priority >= minPriority)
   const cap = Math.max(1, Math.ceil(scored.length * maxFraction))
+  // Fallback: if no words meet the threshold, take top-scored words so something always gets blacked out
+  if (eligible.length === 0 && scored.length > 0) eligible = scored
   const chosen = eligible.slice(0, cap)
 
   // Return sorted by position for fast range lookup
@@ -115,7 +117,7 @@ function computeBlackoutRanges(text, difficulty = 2) {
     .map(w => [w.start, w.end])
 }
 
-export default function Typer({ notes, onFinished, onBack, settings, flashcardDifficulty = 2, isFlashcard }) {
+export default function Typer({ notes, onFinished, onBack, settings, flashcardDifficulty = 2, onDifficultyChange, isFlashcard }) {
   const [currentNoteIndex, setCurrentNoteIndex] = useState(0)
   const fullText = useMemo(() => notes[currentNoteIndex] || '', [notes, currentNoteIndex])
   const [completedChars, setCompletedChars] = useState(0)
@@ -132,6 +134,7 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
   const [cardPhase, setCardPhase] = useState('study') // 'study' | 'recall'
   const [flipped, setFlipped] = useState(false)
   const [cardSuccess, setCardSuccess] = useState(false)
+  const [awaitingFlip, setAwaitingFlip] = useState(false) // waiting for manual flip/advance
 
   const inputRef = useRef()
   const cursorRef = useRef(null)
@@ -213,6 +216,16 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
     return currentBlackout.some(([s, e]) => i >= s && i < e)
   }
 
+  const resetNote = useCallback(() => {
+    typedRef.current = ''
+    if (inputRef.current) inputRef.current.value = ''
+    setTyped('')
+    setPendingWrong(false)
+    setFailedIndices(new Set())
+    noteErrorsRef.current = 0
+    noteStartTimeRef.current = null
+  }, [])
+
   const advanceNote = useCallback((currentFullText, currentCompletedChars, currentErrors, currentStartTime) => {
     const noteElapsed = noteStartTimeRef.current ? (Date.now() - noteStartTimeRef.current) / 60000 : 0.001
     const noteWpm = Math.round((currentFullText.length / 5) / noteElapsed)
@@ -220,59 +233,50 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
     const thisNoteResult = { wpm: noteWpm, accuracy: noteAcc, errors: noteErrorsRef.current, chars: currentFullText.length, ...(isFlashcard && { phase: cardPhase }) }
     noteResultsRef.current = [...noteResultsRef.current, thisNoteResult]
 
-    const resetNote = () => {
-      typedRef.current = ''
-      if (inputRef.current) inputRef.current.value = ''
-      setTyped('')
-      setPendingWrong(false)
-      setFailedIndices(new Set())
-      noteErrorsRef.current = 0
-      noteStartTimeRef.current = null
-    }
-
     if (isFlashcard) {
+      const autoAdv = settings?.autoAdvance ?? true
       if (cardPhase === 'study') {
-        // Green flash + chime, then flip
         setCardSuccess(true)
         if (settings?.completionSound ?? true) playChime()
         setCompletedChars(p => p + currentFullText.length)
-        setTimeout(() => {
-          setCardSuccess(false)
-          setIsTransitioning(true)
-          setFlipped(true)
-          // Switch content at halfway point (card edge-on, nothing visible)
+        if (autoAdv) {
           setTimeout(() => {
-            resetNote()
-            setCardPhase('recall')
-          }, 300)
-          setTimeout(() => {
-            setIsTransitioning(false)
-          }, 650)
-        }, 350)
+            setCardSuccess(false)
+            setIsTransitioning(true)
+            setFlipped(true)
+            setTimeout(() => { resetNote(); setCardPhase('recall') }, 300)
+            setTimeout(() => setIsTransitioning(false), 650)
+          }, 350)
+        } else {
+          setAwaitingFlip(true)
+        }
       } else {
-        // Recall complete — green flash + chime, then exit card and advance
         setCardSuccess(true)
         if (settings?.completionSound ?? true) playChime()
         setCompletedChars(p => p + currentFullText.length)
-        setTimeout(() => {
-          setCardSuccess(false)
-          setIsTransitioning(true)
-          if (currentNoteIndex < notes.length - 1) {
-            setTimeout(() => {
-              setCurrentNoteIndex(p => p + 1)
-              setCardPhase('study')
-              setFlipped(false)
-              resetNote()
-              setIsTransitioning(false)
-            }, 550)
-          } else {
-            const finalTotalChars = currentCompletedChars + currentFullText.length
-            const elapsed = currentStartTime ? (Date.now() - currentStartTime - totalPausedRef.current) / 60000 : 0.001
-            const finalWpm = Math.round((finalTotalChars / 5) / elapsed)
-            const accuracy = Math.max(0, Math.round(((finalTotalChars - currentErrors) / finalTotalChars) * 100))
-            setTimeout(() => onFinished({ wpm: finalWpm, accuracy, errors: currentErrors, totalChars: finalTotalChars, notes: notes.length, noteResults: noteResultsRef.current }), 550)
-          }
-        }, 350)
+        if (autoAdv) {
+          setTimeout(() => {
+            setCardSuccess(false)
+            setIsTransitioning(true)
+            if (currentNoteIndex < notes.length - 1) {
+              setTimeout(() => {
+                setCurrentNoteIndex(p => p + 1)
+                setCardPhase('study')
+                setFlipped(false)
+                resetNote()
+                setIsTransitioning(false)
+              }, 550)
+            } else {
+              const finalTotalChars = currentCompletedChars + currentFullText.length
+              const elapsed = currentStartTime ? (Date.now() - currentStartTime - totalPausedRef.current) / 60000 : 0.001
+              const finalWpm = Math.round((finalTotalChars / 5) / elapsed)
+              const accuracy = Math.max(0, Math.round(((finalTotalChars - currentErrors) / finalTotalChars) * 100))
+              setTimeout(() => onFinished({ wpm: finalWpm, accuracy, errors: currentErrors, totalChars: finalTotalChars, notes: notes.length, noteResults: noteResultsRef.current }), 550)
+            }
+          }, 350)
+        } else {
+          setAwaitingFlip(true)
+        }
       }
     } else {
       setCardSuccess(true)
@@ -296,7 +300,7 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
         }, 1500)
       }, 350)
     }
-  }, [isFlashcard, cardPhase, currentNoteIndex, notes.length, onFinished])
+  }, [isFlashcard, cardPhase, currentNoteIndex, notes.length, onFinished, resetNote, settings])
 
   const handleInput = useCallback((e) => {
     if (isFalling || isTransitioning) return
@@ -343,6 +347,35 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
       advanceNote(fullText, completedChars, errors, startTime)
     }
   }, [isFalling, isTransitioning, fullText, startTime, completedChars, errors, advanceNote])
+
+  const doManualAdvance = useCallback(() => {
+    setAwaitingFlip(false)
+    setCardSuccess(false)
+    inputRef.current?.focus()
+    if (cardPhase === 'study') {
+      setIsTransitioning(true)
+      setFlipped(true)
+      setTimeout(() => { resetNote(); setCardPhase('recall') }, 300)
+      setTimeout(() => setIsTransitioning(false), 650)
+    } else {
+      setIsTransitioning(true)
+      if (currentNoteIndex < notes.length - 1) {
+        setTimeout(() => {
+          setCurrentNoteIndex(p => p + 1)
+          setCardPhase('study')
+          setFlipped(false)
+          resetNote()
+          setIsTransitioning(false)
+        }, 550)
+      } else {
+        const finalTotalChars = completedChars
+        const elapsed = startTime ? (Date.now() - startTime - totalPausedRef.current) / 60000 : 0.001
+        const finalWpm = Math.round((finalTotalChars / 5) / elapsed)
+        const accuracy = Math.max(0, Math.round(((finalTotalChars - errors) / finalTotalChars) * 100))
+        onFinished({ wpm: finalWpm, accuracy, errors, totalChars: finalTotalChars, notes: notes.length, noteResults: noteResultsRef.current })
+      }
+    }
+  }, [cardPhase, currentNoteIndex, notes.length, completedChars, startTime, errors, onFinished, resetNote])
 
   const handleForgot = useCallback(() => {
     inputRef.current?.focus()
@@ -516,7 +549,21 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
               </AnimatePresence>
             </div>
             <AnimatePresence>
-              {cardPhase === 'recall' && !isTransitioning && (
+              {awaitingFlip && (
+                <motion.button
+                  className="btn-manual-advance"
+                  onClick={(e) => { e.stopPropagation(); playClick(); doManualAdvance() }}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  {cardPhase === 'study' ? 'Flip Card →' : currentNoteIndex < notes.length - 1 ? 'Next Card →' : 'Finish →'}
+                </motion.button>
+              )}
+            </AnimatePresence>
+            <AnimatePresence>
+              {cardPhase === 'recall' && !isTransitioning && !awaitingFlip && (
                 <motion.button
                   className="btn-forgot"
                   tabIndex={-1}
@@ -530,6 +577,18 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
                 </motion.button>
               )}
             </AnimatePresence>
+            {onDifficultyChange && (
+              <div className="fc-difficulty-inline">
+                {[{v:1,l:'I'},{v:2,l:'II'},{v:3,l:'III'},{v:4,l:'IV'}].map(({v,l}) => (
+                  <button
+                    key={v}
+                    className={`fc-diff-btn${flashcardDifficulty === v ? ' fc-diff-btn--active' : ''}`}
+                    onClick={(e) => { e.stopPropagation(); playToggle(); onDifficultyChange(v) }}
+                    tabIndex={-1}
+                  >{l}</button>
+                ))}
+              </div>
+            )}
           </>
         ) : (
           <div className="rows-viewport">

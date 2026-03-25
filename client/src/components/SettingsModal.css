@@ -140,12 +140,12 @@
 }
 
 input:checked+.toggle-slider {
-  background-color: var(--accent);
-  border-color: var(--accent);
+  background-color: rgba(52, 211, 153, 0.85);
+  border-color: rgba(52, 211, 153, 0.6);
 }
 
 input:focus+.toggle-slider {
-  box-shadow: 0 0 8px var(--accent-glow);
+  box-shadow: 0 0 8px rgba(52, 211, 153, 0.3);
 }
 
 input:checked+.toggle-slider:before {
