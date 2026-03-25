@@ -48,14 +48,15 @@
 .logo-mark {
   width: 44px;
   height: 44px;
-  background: transparent;
-  border: 1px solid var(--accent);
-  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--accent);
-  box-shadow: 0 0 8px var(--accent-glow), inset 0 0 8px rgba(255, 255, 255, 0.05);
+}
+
+.logo-img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
 }
 
 .logo-text {

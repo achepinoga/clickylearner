@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { playBack, playToggle, updateSoundSettings } from './sounds'
+import { playBack, playClick, playToggle, updateSoundSettings } from './sounds'
 import { supabase } from './lib/supabase'
 import Upload from './components/Upload'
 import Typer from './components/Typer'
@@ -271,7 +271,7 @@ export default function App() {
           <div className="header-inner">
             {/* Hamburger menu — left side */}
             <div className="header-menu-wrap" ref={menuRef}>
-              <button className="btn-hamburger" onClick={() => setShowMenu(v => !v)} aria-label="Menu">
+              <button className="btn-hamburger" onClick={() => { playToggle(); setShowMenu(v => !v) }} aria-label="Menu">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="8" r="4" />
                   <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
@@ -290,11 +290,11 @@ export default function App() {
                       <>
                         <span className="dropdown-email">{user.email}</span>
                         <div className="dropdown-divider" />
-                        <button className="dropdown-item" onClick={() => { setShowMenu(false); setShowHistory(true) }}>History</button>
-                        <button className="dropdown-item dropdown-item--danger" onClick={() => { setShowMenu(false); handleSignOut() }}>Sign Out</button>
+                        <button className="dropdown-item" onClick={() => { playClick(); setShowMenu(false); setShowHistory(true) }}>History</button>
+                        <button className="dropdown-item dropdown-item--danger" onClick={() => { playBack(); setShowMenu(false); handleSignOut() }}>Sign Out</button>
                       </>
                     ) : (
-                      <button className="dropdown-item dropdown-item--accent" onClick={() => { setShowMenu(false); setShowAuth(true) }}>Sign In</button>
+                      <button className="dropdown-item dropdown-item--accent" onClick={() => { playClick(); setShowMenu(false); setShowAuth(true) }}>Sign In</button>
                     )}
                   </motion.div>
                 )}
@@ -303,10 +303,7 @@ export default function App() {
 
             <div className="logo" onClick={() => { playBack(); handleRestart() }} style={{ cursor: 'pointer' }} title="Return Home">
               <div className="logo-mark">
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                  <rect x="1" y="5" width="20" height="13" rx="3" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M5 9h2M9 9h2M13 9h2M17 9h2M5 13h2M9 13h2M13 13h2M5 17h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                </svg>
+                <img src="/logo.png" alt="cL" className="logo-img" />
               </div>
               <span className="logo-text">Clickylearner</span>
             </div>
