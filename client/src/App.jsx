@@ -78,6 +78,8 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [showAuth, setShowAuth] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
+  const menuRef = useRef(null)
   const [user, setUser] = useState(null)
   const [settings, setSettings] = useState(() => {
     try {
@@ -107,6 +109,13 @@ export default function App() {
     })
     return () => subscription.unsubscribe()
   }, [])
+
+  useEffect(() => {
+    if (!showMenu) return
+    const handler = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setShowMenu(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showMenu])
 
   useEffect(() => { localStorage.setItem('cl_settings', JSON.stringify(settings)) }, [settings])
   useEffect(() => { updateSoundSettings(settings) }, [settings])
@@ -260,23 +269,36 @@ export default function App() {
           transition={{ duration: 0.6, ease: 'easeOut' }}
         >
           <div className="header-inner">
-            {/* Auth section — left side */}
-            <div className="header-auth">
-              {user ? (
-                <>
-                  <span className="auth-user-email">{displayEmail}</span>
-                  <button className="btn-header-auth btn-history" onClick={() => setShowHistory(true)}>
-                    History
-                  </button>
-                  <button className="btn-header-auth btn-signout" onClick={handleSignOut}>
-                    Sign Out
-                  </button>
-                </>
-              ) : (
-                <button className="btn-header-auth btn-signin" onClick={() => setShowAuth(true)}>
-                  Sign In
-                </button>
-              )}
+            {/* Hamburger menu — left side */}
+            <div className="header-menu-wrap" ref={menuRef}>
+              <button className="btn-hamburger" onClick={() => setShowMenu(v => !v)} aria-label="Menu">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                </svg>
+              </button>
+              <AnimatePresence>
+                {showMenu && (
+                  <motion.div
+                    className="header-dropdown"
+                    initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                    transition={{ duration: 0.15 }}
+                  >
+                    {user ? (
+                      <>
+                        <span className="dropdown-email">{user.email}</span>
+                        <div className="dropdown-divider" />
+                        <button className="dropdown-item" onClick={() => { setShowMenu(false); setShowHistory(true) }}>History</button>
+                        <button className="dropdown-item dropdown-item--danger" onClick={() => { setShowMenu(false); handleSignOut() }}>Sign Out</button>
+                      </>
+                    ) : (
+                      <button className="dropdown-item dropdown-item--accent" onClick={() => { setShowMenu(false); setShowAuth(true) }}>Sign In</button>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <div className="logo" onClick={() => { playBack(); handleRestart() }} style={{ cursor: 'pointer' }} title="Return Home">
