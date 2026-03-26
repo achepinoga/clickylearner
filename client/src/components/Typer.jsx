@@ -399,6 +399,13 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
   }, [fullText.length])
 
   const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Enter' && awaitingFlip) {
+      e.preventDefault()
+      playClick()
+      doManualAdvance()
+      return
+    }
+
     const strict = settings && !settings.allowBackspace
 
     if (strict) {
