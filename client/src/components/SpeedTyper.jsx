@@ -113,6 +113,7 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
   const [wpm, setWpm] = useState(0)
   const [elapsed, setElapsed] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const [isCompleting, setIsCompleting] = useState(false)
   const [pendingWrong, setPendingWrong] = useState(false)
   const [failedIndices, setFailedIndices] = useState(() => new Set())
   const [screenSuccess, setScreenSuccess] = useState(false)
@@ -158,7 +159,7 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
 
   // Pause time tracking
   useEffect(() => {
-    if (isTransitioning) {
+    if (isTransitioning || isCompleting) {
       pauseStartRef.current = Date.now()
     } else {
       if (pauseStartRef.current !== null) {
@@ -166,11 +167,11 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
         pauseStartRef.current = null
       }
     }
-  }, [isTransitioning])
+  }, [isTransitioning, isCompleting])
 
   // WPM ticker
   useEffect(() => {
-    if (!startTime || isTransitioning) return
+    if (!startTime || isTransitioning || isCompleting) return
     const id = setInterval(() => {
       const completedChars = screenResultsRef.current.reduce((s, r) => s + r.chars, 0)
       const totalChars = completedChars + typedRef.current.length
@@ -178,7 +179,7 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
       setWpm(el > 0 ? Math.round((totalChars / 5) / el) : 0)
     }, 200)
     return () => clearInterval(id)
-  }, [startTime, isTransitioning])
+  }, [startTime, isTransitioning, isCompleting])
 
   // Elapsed timer
   useEffect(() => {
@@ -211,6 +212,12 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
     const screenElapsed = screenStartRef.current
       ? (Date.now() - screenStartRef.current) / 60000
       : 0.001
+    const totalCharsBeforeReset = screenResultsRef.current.reduce((s, r) => s + r.chars, 0) + screenText.length
+    const overallElapsed = startTimeRef.current
+      ? (Date.now() - startTimeRef.current - totalPausedRef.current) / 60000
+      : 0.001
+    setWpm(Math.round((totalCharsBeforeReset / 5) / overallElapsed))
+    setIsCompleting(true)
     const result = {
       wpm: Math.round((screenText.length / 5) / screenElapsed),
       accuracy: Math.max(0, Math.round(((screenText.length - screenErrorsRef.current) / screenText.length) * 100)),
@@ -237,7 +244,10 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
       setFailedIndices(new Set())
       screenErrorsRef.current = 0
       screenStartRef.current = null
-      setTimeout(() => setIsTransitioning(false), 320)
+      setTimeout(() => {
+        setIsTransitioning(false)
+        setIsCompleting(false)
+      }, 320)
     }, 350)
   }, [nextScreen, settings])
 
