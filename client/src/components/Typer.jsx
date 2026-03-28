@@ -126,6 +126,7 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
   const [startTime, setStartTime] = useState(null)
   const [errors, setErrors] = useState(0)
   const [wpm, setWpm] = useState(0)
+  const [noteStartTime, setNoteStartTime] = useState(null)
   const [isFalling, setIsFalling] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [pendingWrong, setPendingWrong] = useState(false)
@@ -186,15 +187,15 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
     }
   }, [isFalling, isTransitioning])
 
-  // WPM ticker — pauses during falling/transitioning
+  // WPM ticker — per-note, resets on each new card/note
   useEffect(() => {
-    if (!startTime || isFalling || isTransitioning) return
+    if (!noteStartTime || isFalling || isTransitioning) return
     const interval = setInterval(() => {
-      const elapsed = (Date.now() - startTime - totalPausedRef.current) / 60000
-      setWpm(elapsed > 0 ? Math.round(((completedChars + typed.length) / 5) / elapsed) : 0)
+      const elapsed = (Date.now() - noteStartTime) / 60000
+      setWpm(elapsed > 0 ? Math.round((typed.length / 5) / elapsed) : 0)
     }, 200)
     return () => clearInterval(interval)
-  }, [startTime, typed, completedChars, isFalling, isTransitioning])
+  }, [noteStartTime, typed, isFalling, isTransitioning])
 
   const currentBlackout = useMemo(() => {
     if (!isFlashcard || cardPhase !== 'recall') return null
@@ -224,6 +225,8 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
     setFailedIndices(new Set())
     noteErrorsRef.current = 0
     noteStartTimeRef.current = null
+    setNoteStartTime(null)
+    setWpm(0)
   }, [])
 
   const advanceNote = useCallback((currentFullText, currentCompletedChars, currentErrors, currentStartTime) => {
@@ -308,7 +311,10 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
     const value = e.target.value
 
     if (!startTime && value.length > 0) setStartTime(Date.now())
-    if (!noteStartTimeRef.current && value.length > 0) noteStartTimeRef.current = Date.now()
+    if (!noteStartTimeRef.current && value.length > 0) {
+      noteStartTimeRef.current = Date.now()
+      setNoteStartTime(Date.now())
+    }
 
     if (value.length > typed.length) {
       if (value[typed.length] !== fullText[typed.length]) {
@@ -328,7 +334,10 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
     if (pos >= fullText.length) return
 
     if (!startTime) setStartTime(Date.now())
-    if (!noteStartTimeRef.current) noteStartTimeRef.current = Date.now()
+    if (!noteStartTimeRef.current) {
+      noteStartTimeRef.current = Date.now()
+      setNoteStartTime(Date.now())
+    }
 
     if (key !== fullText[pos]) {
       setErrors(p => p + 1)

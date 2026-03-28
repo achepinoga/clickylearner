@@ -40,7 +40,7 @@ const DIFFICULTY_LEVELS = [
   { value: 4, label: 'IV',  name: 'Brutal' },
 ]
 
-export default function Results({ stats, onRetry, onUpload, onNew, onTest, isFlashcard, isSpeed, flashcardDifficulty, onDifficultyChange }) {
+export default function Results({ stats, onRetry, onUpload, onNew, onTest, isFlashcard, isSpeed, flashcardDifficulty, onDifficultyChange, hasContinuation, onContinueDocument, isContinuing, continueError }) {
   const { wpm, accuracy, errors, totalChars, notes, noteResults = [] } = stats
 
   const grade = getGrade(accuracy)
@@ -186,7 +186,7 @@ export default function Results({ stats, onRetry, onUpload, onNew, onTest, isFla
               >
                 Type Again
               </motion.button>
-              {!isSpeed && (
+              {!isSpeed && !hasContinuation && (
                 <motion.button
                   className="btn-action"
                   onClick={() => { playClick(); onUpload() }}
@@ -195,6 +195,20 @@ export default function Results({ stats, onRetry, onUpload, onNew, onTest, isFla
                 >
                   Upload Notes
                 </motion.button>
+              )}
+              {isFlashcard && hasContinuation && (
+                <motion.button
+                  className="btn-action btn-action--primary"
+                  onClick={() => { playClick(); onContinueDocument() }}
+                  disabled={isContinuing}
+                  whileHover={!isContinuing ? { scale: 1.04, y: -2 } : {}}
+                  whileTap={!isContinuing ? { scale: 0.97 } : {}}
+                >
+                  <span>{isContinuing ? 'Generating next section...' : 'Continue Document →'}</span>
+                </motion.button>
+              )}
+              {continueError && (
+                <p style={{ fontSize: '0.72rem', color: 'var(--incorrect)', margin: 0 }}>{continueError}</p>
               )}
               {isFlashcard && (
                 <motion.button

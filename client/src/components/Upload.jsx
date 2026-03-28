@@ -136,26 +136,14 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
       if (!notesRes.ok) throw new Error(notesData.error || 'Failed to generate notes')
 
       if (notesData.truncated) {
-        pendingNotesRef.current = { notes: notesData.notes, name: file.name }
-        const warning = {
-          cutoffPage: notesData.cutoffPage,
-          totalPages: notesData.totalPages,
-          cutoffPreview: notesData.cutoffPreview,
-        }
-        setTruncationWarning(warning)
-        const cont = {
-          filename: file.name,
-          nextPage: notesData.cutoffPage + 1,
-          totalPages: notesData.totalPages,
-          remainingText: notesData.remainingText,
-        }
-        localStorage.setItem('cl_continuation', JSON.stringify(cont))
-        setContinuation(cont)
-        setStatus('idle')
+        // Flashcard mode: skip warning, pass remaining text to parent for post-session continuation
+        localStorage.removeItem('cl_continuation')
+        setContinuation(null)
+        onNotesReady(notesData.notes, file.name, notesData.remainingText)
       } else {
         localStorage.removeItem('cl_continuation')
         setContinuation(null)
-        onNotesReady(notesData.notes, file.name)
+        onNotesReady(notesData.notes, file.name, null)
       }
     } catch (err) {
       setError(err.message)
