@@ -44,6 +44,7 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
   const [status, setStatus] = useState('idle')
   const [error, setError] = useState('')
   const [infoOpen, setInfoOpen] = useState(false)
+  const [sizeWarning, setSizeWarning] = useState('')
   const [truncationWarning, setTruncationWarning] = useState(null)
   const [continuation, setContinuation] = useState(() => {
     try { const s = localStorage.getItem('cl_continuation'); return s ? JSON.parse(s) : null } catch { return null }
@@ -79,6 +80,11 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
       return
     }
     setError('')
+    if (f.size > 4 * 1024 * 1024) {
+      setSizeWarning('This file is large (over 4 MB). The upload may fail — try a smaller file if it does.')
+    } else {
+      setSizeWarning('')
+    }
     setFile(f)
   }
 
@@ -115,8 +121,18 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
       formData.append('file', file)
 
       const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData })
+      if (!uploadRes.ok) {
+        if (uploadRes.status === 413) {
+          throw new Error('File too large for the server to process. Please use a file under 4 MB.')
+        }
+        const ct = uploadRes.headers.get('content-type') || ''
+        if (ct.includes('application/json')) {
+          const errData = await uploadRes.json()
+          throw new Error(errData.error || 'Upload failed')
+        }
+        throw new Error(`Upload failed (${uploadRes.status})`)
+      }
       const uploadData = await uploadRes.json()
-      if (!uploadRes.ok) throw new Error(uploadData.error || 'Upload failed')
 
       // Standard mode: skip AI, split raw text directly
       if (gameMode === 'standard') {
@@ -306,7 +322,7 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
                 <UploadIcon />
               </motion.div>
               <p className="drop-title">Drop your study material here</p>
-              <p className="drop-sub">PDF or TXT · up to 10 MB</p>
+              <p className="drop-sub">PDF or TXT · up to 4 MB</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -366,6 +382,24 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
                 </button>
               ))}
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {sizeWarning && !error && (
+          <motion.div
+            className="size-warning-msg"
+            initial={{ opacity: 0, y: -6, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto' }}
+            exit={{ opacity: 0, y: -6, height: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+              <path d="M7.5 1.5L13.5 13.5H1.5L7.5 1.5Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+              <path d="M7.5 6v3.5M7.5 11v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            {sizeWarning}
           </motion.div>
         )}
       </AnimatePresence>
