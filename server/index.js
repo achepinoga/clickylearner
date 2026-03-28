@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 const rateLimit = require('express-rate-limit');
 const uploadRoute = require('./routes/upload');
 const notesRoute = require('./routes/notes');
@@ -43,12 +42,6 @@ app.use('/api/upload', uploadLimiter, uploadRoute);
 app.use('/api/notes', aiLimiter, notesRoute);
 app.use('/api/quiz', aiLimiter, quizRoute);
 
-// Serve frontend in production
-if (process.env.NODE_ENV === 'production') {
-  const clientDist = path.join(__dirname, '../client/dist')
-  app.use(express.static(clientDist))
-  app.get('*', (req, res) => res.sendFile(path.join(clientDist, 'index.html')))
-}
 
 if (require.main === module) {
   app.listen(PORT, () => {
