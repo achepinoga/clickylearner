@@ -94,6 +94,10 @@ export default function App() {
     try { return localStorage.getItem('cl_game_mode') || 'standard' } catch { return 'standard' }
   })
   const [flashcardDifficulty, setFlashcardDifficulty] = useState(2)
+  const [pendingRemainingText, setPendingRemainingText] = useState(null)
+  const [isContinuing, setIsContinuing] = useState(false)
+  const [continueError, setContinueError] = useState('')
+  const currentDocTitleRef = useRef('')
   const settingsInitialized = useRef(false)
 
   const notes = useMemo(
@@ -178,20 +182,54 @@ export default function App() {
     return merged
   }
 
-  const handleNotesReady = async (generatedNotes, title = 'Untitled Set') => {
+  const handleNotesReady = async (generatedNotes, title = 'Untitled Set', remainingText = null) => {
     const chunked = chunkNotes(generatedNotes)
     setRawNotes(chunked)
+    setPendingRemainingText(remainingText)
+    currentDocTitleRef.current = title
     setStage(STAGES.TYPING)
     currentSetIdRef.current = null
 
     if (user && gameMode === 'flashcards') {
       const { data, error } = await supabase
         .from('flashcard_sets')
-        .insert({ user_id: user.id, title, notes: chunked })
+        .insert({ user_id: user.id, title, notes: chunked, remaining_text: remainingText || null })
         .select('id')
         .single()
       if (!error && data) currentSetIdRef.current = data.id
     }
+  }
+
+  const handleContinueDocument = async () => {
+    if (!pendingRemainingText) return
+    setIsContinuing(true)
+    setContinueError('')
+    try {
+      const res = await fetch('/api/notes/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: pendingRemainingText })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to generate notes')
+      // Clear remaining_text from old set in Supabase
+      if (user && currentSetIdRef.current) {
+        await supabase.from('flashcard_sets').update({ remaining_text: null }).eq('id', currentSetIdRef.current)
+      }
+      setTypingKey(k => k + 1)
+      await handleNotesReady(data.notes, currentDocTitleRef.current + ' (cont.)', data.truncated ? data.remainingText : null)
+    } catch (err) {
+      setContinueError(err.message)
+    } finally {
+      setIsContinuing(false)
+    }
+  }
+
+  const handleDiscardContinuation = async () => {
+    if (user && currentSetIdRef.current) {
+      await supabase.from('flashcard_sets').update({ remaining_text: null }).eq('id', currentSetIdRef.current)
+    }
+    setPendingRemainingText(null)
   }
 
   const handleFinished = async (stats) => {
@@ -229,6 +267,7 @@ export default function App() {
     setResults(null)
     setGameMode('standard')
     currentSetIdRef.current = null
+    setPendingRemainingText(null)
   }
 
   const handleRetry = () => {
@@ -379,7 +418,7 @@ export default function App() {
             )}
             {stage === STAGES.RESULTS && (
               <motion.div key="results" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                <Results stats={results} onRetry={handleRetry} onUpload={handleUpload} onNew={handleRestart} onTest={handleTest} isFlashcard={gameMode === 'flashcards'} isSpeed={gameMode === 'speed'} flashcardDifficulty={flashcardDifficulty} onDifficultyChange={setFlashcardDifficulty} />
+                <Results stats={results} onRetry={handleRetry} onUpload={() => { handleDiscardContinuation(); handleUpload() }} onNew={() => { handleDiscardContinuation(); handleRestart() }} onTest={handleTest} isFlashcard={gameMode === 'flashcards'} isSpeed={gameMode === 'speed'} flashcardDifficulty={flashcardDifficulty} onDifficultyChange={setFlashcardDifficulty} hasContinuation={!!pendingRemainingText} onContinueDocument={handleContinueDocument} isContinuing={isContinuing} continueError={continueError} />
               </motion.div>
             )}
             {stage === STAGES.TEST && (

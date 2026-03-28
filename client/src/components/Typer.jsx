@@ -126,8 +126,10 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
   const [startTime, setStartTime] = useState(null)
   const [errors, setErrors] = useState(0)
   const [wpm, setWpm] = useState(0)
+  const [noteStartTime, setNoteStartTime] = useState(null)
   const [isFalling, setIsFalling] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const [isCompleting, setIsCompleting] = useState(false)
   const [pendingWrong, setPendingWrong] = useState(false)
   const [failedIndices, setFailedIndices] = useState(() => new Set())
   const [encryptTick, setEncryptTick] = useState(0)
@@ -175,7 +177,7 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
 
   // Accumulate paused time so WPM excludes transition delays
   useEffect(() => {
-    const isPaused = isFalling || isTransitioning
+    const isPaused = isFalling || isTransitioning || isCompleting
     if (isPaused) {
       pauseStartRef.current = Date.now()
     } else {
@@ -184,24 +186,19 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
         pauseStartRef.current = null
       }
     }
-  }, [isFalling, isTransitioning])
+  }, [isFalling, isTransitioning, isCompleting])
 
-  // Reset WPM to 0 at the start of each transition
+  // WPM ticker — per-note, fires every 200ms using refs to avoid stale closures
+  // Does NOT depend on `typed` — the interval reads typedRef.current directly
   useEffect(() => {
-    if (isFalling || isTransitioning) setWpm(0)
-  }, [isFalling, isTransitioning])
-
-  // WPM ticker — shows per-note speed to avoid spikes during note transitions
-  useEffect(() => {
-    if (!startTime || isFalling || isTransitioning) return
+    if (!noteStartTime || isFalling || isTransitioning || isCompleting) return
     const interval = setInterval(() => {
-      const noteStart = noteStartTimeRef.current
-      if (!noteStart) { setWpm(0); return }
-      const elapsed = (Date.now() - noteStart) / 60000
-      setWpm(elapsed > 0 ? Math.round((typed.length / 5) / elapsed) : 0)
+      if (!noteStartTimeRef.current) return
+      const elapsed = (Date.now() - noteStartTimeRef.current) / 60000
+      setWpm(elapsed > 0 ? Math.round((typedRef.current.length / 5) / elapsed) : 0)
     }, 200)
     return () => clearInterval(interval)
-  }, [startTime, typed, isFalling, isTransitioning])
+  }, [noteStartTime, isFalling, isTransitioning, isCompleting])
 
   const currentBlackout = useMemo(() => {
     if (!isFlashcard || cardPhase !== 'recall') return null
@@ -231,12 +228,17 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
     setFailedIndices(new Set())
     noteErrorsRef.current = 0
     noteStartTimeRef.current = null
+    setNoteStartTime(null)
+    setWpm(0)
+    setIsCompleting(false)
   }, [])
 
   const advanceNote = useCallback((currentFullText, currentCompletedChars, currentErrors, currentStartTime) => {
     const noteElapsed = noteStartTimeRef.current ? (Date.now() - noteStartTimeRef.current) / 60000 : 0.001
     const noteWpm = Math.round((currentFullText.length / 5) / noteElapsed)
     const noteAcc = Math.max(0, Math.round(((currentFullText.length - noteErrorsRef.current) / currentFullText.length) * 100))
+    setWpm(noteWpm)
+    setIsCompleting(true)
     const thisNoteResult = { wpm: noteWpm, accuracy: noteAcc, errors: noteErrorsRef.current, chars: currentFullText.length, ...(isFlashcard && { phase: cardPhase }) }
     noteResultsRef.current = [...noteResultsRef.current, thisNoteResult]
 
@@ -314,7 +316,10 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
     const value = e.target.value
 
     if (!startTime && value.length > 0) setStartTime(Date.now())
-    if (!noteStartTimeRef.current && value.length > 0) noteStartTimeRef.current = Date.now()
+    if (!noteStartTimeRef.current && value.length > 0) {
+      noteStartTimeRef.current = Date.now()
+      setNoteStartTime(Date.now())
+    }
 
     if (value.length > typed.length) {
       if (value[typed.length] !== fullText[typed.length]) {
@@ -322,6 +327,7 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
         noteErrorsRef.current++
       }
     }
+    typedRef.current = value
     setTyped(value)
     if (value === fullText) {
       advanceNote(fullText, completedChars, errors, startTime)
@@ -334,7 +340,10 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
     if (pos >= fullText.length) return
 
     if (!startTime) setStartTime(Date.now())
-    if (!noteStartTimeRef.current) noteStartTimeRef.current = Date.now()
+    if (!noteStartTimeRef.current) {
+      noteStartTimeRef.current = Date.now()
+      setNoteStartTime(Date.now())
+    }
 
     if (key !== fullText[pos]) {
       setErrors(p => p + 1)
@@ -379,6 +388,7 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
         const elapsed = startTime ? (Date.now() - startTime - totalPausedRef.current) / 60000 : 0.001
         const finalWpm = Math.round((finalTotalChars / 5) / elapsed)
         const accuracy = Math.max(0, Math.round(((finalTotalChars - errors) / finalTotalChars) * 100))
+        setIsCompleting(false)
         onFinished({ wpm: finalWpm, accuracy, errors, totalChars: finalTotalChars, notes: notes.length, noteResults: noteResultsRef.current })
       }
     }

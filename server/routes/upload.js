@@ -6,8 +6,10 @@ const fs = require('fs');
 
 const router = express.Router();
 
+const uploadDir = process.env.VERCEL ? '/tmp' : path.join(__dirname, '../uploads')
+
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, '../uploads')),
+  destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
 });
 

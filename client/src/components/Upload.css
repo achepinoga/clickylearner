@@ -210,6 +210,22 @@
   box-shadow: 0 0 24px var(--accent-glow);
 }
 
+/* Size warning */
+.size-warning-msg {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #f59e0b;
+  font-size: 0.8rem;
+  background: rgba(245, 158, 11, 0.06);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  padding: 10px 16px;
+  border-radius: 0;
+  max-width: 560px;
+  width: 100%;
+  letter-spacing: 0.03em;
+}
+
 /* Error */
 .error-msg {
   display: flex;
