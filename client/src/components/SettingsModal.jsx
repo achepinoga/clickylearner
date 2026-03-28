@@ -84,6 +84,21 @@ export default function SettingsModal({ isOpen, onClose, settings, setSettings }
                 <span className="toggle-slider"></span>
               </label>
             </div>
+
+            <div className="setting-row">
+              <div className="setting-info">
+                <span className="setting-label">Automatic Flashcards</span>
+                <span className="setting-desc">Flashcards flip by themselves</span>
+              </div>
+              <label className="setting-toggle">
+                <input
+                  type="checkbox"
+                  checked={settings.autoAdvance ?? true}
+                  onChange={(e) => { playToggle(); setSettings({ ...settings, autoAdvance: e.target.checked }) }}
+                />
+                <span className="toggle-slider"></span>
+              </label>
+            </div>
           </div>
         </motion.div>
       </motion.div>

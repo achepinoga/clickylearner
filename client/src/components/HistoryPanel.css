@@ -96,7 +96,7 @@
 
 .run-entry {
   display: grid;
-  grid-template-columns: 90px 1fr auto auto;
+  grid-template-columns: 90px 130px 28px 1fr;
   align-items: center;
   gap: 12px;
   padding: 12px 14px;

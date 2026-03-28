@@ -17,6 +17,35 @@
   padding: 12px 0 0;
 }
 
+/* Inline timer input — invisible, looks like a stat */
+.stat-item--timer {
+  min-width: 60px;
+}
+
+.timer-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.4rem;
+  font-weight: 300;
+  width: 72px;
+  text-align: center;
+  padding: 0;
+  caret-color: rgba(255, 255, 255, 0.5);
+}
+
+.timer-input:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+/* Countdown urgency */
+.stat-num--urgent {
+  color: #fb7185 !important;
+}
+
 .btn-stop {
   background: transparent;
   border: 1px solid rgba(251, 113, 133, 0.25);

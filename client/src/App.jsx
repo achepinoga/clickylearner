@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { playBack, playToggle, updateSoundSettings } from './sounds'
+import { playBack, playClick, playToggle, updateSoundSettings } from './sounds'
 import { supabase } from './lib/supabase'
 import Upload from './components/Upload'
 import Typer from './components/Typer'
@@ -39,7 +39,7 @@ function stripPunctuation(text) {
 
 const STAGE_LABELS_DEFAULT    = ['Mode', 'Upload',     'Practice', 'Results']
 const STAGE_KEYS_DEFAULT      = [STAGES.GAMEMODE, STAGES.UPLOAD,     STAGES.TYPING, STAGES.RESULTS]
-const STAGE_LABELS_FLASHCARDS = ['Mode', 'Sets',       'Practice', 'Results']
+const STAGE_LABELS_FLASHCARDS = ['Mode', 'Upload',     'Practice', 'Results']
 const STAGE_KEYS_FLASHCARDS   = [STAGES.GAMEMODE, STAGES.FLASHCARDS, STAGES.TYPING, STAGES.RESULTS]
 
 const pageVariants = {
@@ -78,12 +78,14 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [showAuth, setShowAuth] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
+  const menuRef = useRef(null)
   const [user, setUser] = useState(null)
   const [settings, setSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('cl_settings')
-      return saved ? JSON.parse(saved) : { allowBackspace: true, punctuation: true, menuSounds: true, completionSound: true }
-    } catch { return { allowBackspace: true, punctuation: true, menuSounds: true, completionSound: true } }
+      return saved ? JSON.parse(saved) : { allowBackspace: true, punctuation: true, menuSounds: true, completionSound: true, autoAdvance: true }
+    } catch { return { allowBackspace: true, punctuation: true, menuSounds: true, completionSound: true, autoAdvance: true } }
   })
   const [typingKey, setTypingKey] = useState(0)
   const [gameMode, setGameMode] = useState(() => {
@@ -107,6 +109,13 @@ export default function App() {
     })
     return () => subscription.unsubscribe()
   }, [])
+
+  useEffect(() => {
+    if (!showMenu) return
+    const handler = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setShowMenu(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showMenu])
 
   useEffect(() => { localStorage.setItem('cl_settings', JSON.stringify(settings)) }, [settings])
   useEffect(() => { updateSoundSettings(settings) }, [settings])
@@ -260,31 +269,41 @@ export default function App() {
           transition={{ duration: 0.6, ease: 'easeOut' }}
         >
           <div className="header-inner">
-            {/* Auth section — left side */}
-            <div className="header-auth">
-              {user ? (
-                <>
-                  <span className="auth-user-email">{displayEmail}</span>
-                  <button className="btn-header-auth btn-history" onClick={() => setShowHistory(true)}>
-                    History
-                  </button>
-                  <button className="btn-header-auth btn-signout" onClick={handleSignOut}>
-                    Sign Out
-                  </button>
-                </>
-              ) : (
-                <button className="btn-header-auth btn-signin" onClick={() => setShowAuth(true)}>
-                  Sign In
-                </button>
-              )}
+            {/* Hamburger menu — left side */}
+            <div className="header-menu-wrap" ref={menuRef}>
+              <button className="btn-hamburger" onClick={() => { playToggle(); setShowMenu(v => !v) }} aria-label="Menu">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                </svg>
+              </button>
+              <AnimatePresence>
+                {showMenu && (
+                  <motion.div
+                    className="header-dropdown"
+                    initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                    transition={{ duration: 0.15 }}
+                  >
+                    {user ? (
+                      <>
+                        <span className="dropdown-email">{user.email}</span>
+                        <div className="dropdown-divider" />
+                        <button className="dropdown-item" onClick={() => { playClick(); setShowMenu(false); setShowHistory(true) }}>History</button>
+                        <button className="dropdown-item dropdown-item--danger" onClick={() => { playBack(); setShowMenu(false); handleSignOut() }}>Sign Out</button>
+                      </>
+                    ) : (
+                      <button className="dropdown-item dropdown-item--accent" onClick={() => { playClick(); setShowMenu(false); setShowAuth(true) }}>Sign In</button>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <div className="logo" onClick={() => { playBack(); handleRestart() }} style={{ cursor: 'pointer' }} title="Return Home">
               <div className="logo-mark">
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                  <rect x="1" y="5" width="20" height="13" rx="3" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M5 9h2M9 9h2M13 9h2M17 9h2M5 13h2M9 13h2M13 13h2M5 17h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                </svg>
+                <img src="/logo.png" alt="cL" className="logo-img" />
               </div>
               <span className="logo-text">Clickylearner</span>
             </div>
@@ -352,7 +371,7 @@ export default function App() {
               <motion.div key="typing" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 {gameMode === 'speed'
                   ? <SpeedTyper key={typingKey} onFinished={handleFinished} onBack={handleRestart} settings={settings} />
-                  : <Typer key={typingKey} notes={notes} onFinished={handleFinished} onBack={handleRestart} settings={settings} flashcardDifficulty={flashcardDifficulty} isFlashcard={gameMode === 'flashcards'} />
+                  : <Typer key={typingKey} notes={notes} onFinished={handleFinished} onBack={handleRestart} settings={settings} flashcardDifficulty={flashcardDifficulty} onDifficultyChange={setFlashcardDifficulty} isFlashcard={gameMode === 'flashcards'} />
                 }
               </motion.div>
             )}

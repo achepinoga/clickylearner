@@ -99,7 +99,7 @@ function generateScreen(punctuation = true) {
   const pick = () => SENTENCES[Math.floor(Math.random() * SENTENCES.length)]
   const parts = [pick(), pick()]
   if (!punctuation) return parts.join(' ')
-  return parts.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('. ')
+  return parts.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('. ') + '.'
 }
 
 export default function SpeedTyper({ onFinished, onBack, settings }) {
@@ -116,6 +116,10 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
   const [pendingWrong, setPendingWrong] = useState(false)
   const [failedIndices, setFailedIndices] = useState(() => new Set())
   const [screenSuccess, setScreenSuccess] = useState(false)
+  const [timerInput, setTimerInput] = useState('TIMER')
+  const [timerDuration, setTimerDuration] = useState(null) // seconds, null = unlimited
+  const [timeRemaining, setTimeRemaining] = useState(null)
+  const timerInputRef = useRef()
 
   const inputRef = useRef()
   const screenStartRef = useRef(null)
@@ -182,6 +186,24 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
     }, 500)
     return () => clearInterval(id)
   }, [startTime])
+
+  // Countdown timer
+  useEffect(() => {
+    if (!startTime || timerDuration === null) return
+    const id = setInterval(() => {
+      const el = Math.floor((Date.now() - startTime - totalPausedRef.current) / 1000)
+      const remaining = timerDuration - el
+      if (remaining <= 0) {
+        setTimeRemaining(0)
+        clearInterval(id)
+        handleStop()
+      } else {
+        setTimeRemaining(remaining)
+      }
+    }, 200)
+    return () => clearInterval(id)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startTime, timerDuration])
 
   const advanceScreen = useCallback((screenText) => {
     const screenElapsed = screenStartRef.current
@@ -393,6 +415,23 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
     return m > 0 ? `${m}:${String(sec).padStart(2, '0')}` : `${sec}s`
   }
 
+  const parseHMS = (str) => {
+    const parts = str.trim().split(':').map(p => parseInt(p, 10))
+    if (parts.some(isNaN)) return null
+    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2]
+    if (parts.length === 2) return parts[0] * 60 + parts[1]
+    if (parts.length === 1) return parts[0]
+    return null
+  }
+
+  const formatTimeHMS = (s) => {
+    const h = Math.floor(s / 3600)
+    const m = Math.floor((s % 3600) / 60)
+    const sec = s % 60
+    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+    return `${m}:${String(sec).padStart(2, '0')}`
+  }
+
   return (
     <div className="speed-container" onClick={() => inputRef.current?.focus()}>
       <motion.div
@@ -420,6 +459,39 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
           <span className="stat-num">{formatTime(elapsed)}</span>
           <span className="stat-lbl">time</span>
         </div>
+        <div className="stat-divider" />
+        <div className="stat-item stat-item--timer">
+          {startTime && timerDuration !== null && timeRemaining !== null ? (
+            <span className={`stat-num${timeRemaining <= 10 ? ' stat-num--urgent' : ''}`}>{formatTimeHMS(timeRemaining)}</span>
+          ) : (
+            <input
+              ref={timerInputRef}
+              className="timer-input"
+              type="text"
+              value={timerInput}
+              disabled={!!startTime}
+              onClick={e => {
+                e.stopPropagation()
+                if (timerInput === 'TIMER') { setTimerInput(''); setTimerDuration(null); setTimeRemaining(null) }
+              }}
+              onBlur={() => {
+                if (!timerInput.trim()) { setTimerInput('TIMER'); setTimerDuration(null); setTimeRemaining(null) }
+              }}
+              onChange={e => {
+                const val = e.target.value
+                setTimerInput(val)
+                const secs = parseHMS(val)
+                if (secs !== null && secs > 0) {
+                  setTimerDuration(secs)
+                  setTimeRemaining(secs)
+                } else {
+                  setTimerDuration(null)
+                  setTimeRemaining(null)
+                }
+              }}
+            />
+          )}
+        </div>
       </motion.div>
 
       <div className="speed-text-zone">
@@ -440,7 +512,7 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
       <div className="typer-footer">
         <p className="hint-text">Type the words · backspace to correct</p>
         <button className="btn-stop" onClick={(e) => { e.stopPropagation(); playBack(); handleStop() }}>
-          ← Back
+          {startTime ? 'Finish' : '← Back'}
         </button>
       </div>
 
