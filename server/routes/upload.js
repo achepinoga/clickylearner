@@ -6,7 +6,9 @@ const fs = require('fs');
 
 const router = express.Router();
 
-const uploadDir = process.env.VERCEL ? '/tmp' : path.join(__dirname, '../uploads')
+const uploadDir = (process.env.VERCEL || process.env.RENDER || process.env.NODE_ENV === 'production')
+  ? '/tmp'
+  : path.join(__dirname, '../uploads')
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
