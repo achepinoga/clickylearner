@@ -436,18 +436,12 @@
 }
 
 /* Move dropdown */
-.set-move-wrap {
-  position: relative;
-}
-
 .move-dropdown {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 4px);
+  position: fixed;
   background: #0f0f0f;
   border: 1px solid rgba(255,255,255,0.15);
   min-width: 160px;
-  z-index: 50;
+  z-index: 9999;
   display: flex;
   flex-direction: column;
 }

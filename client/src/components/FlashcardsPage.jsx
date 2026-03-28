@@ -29,14 +29,29 @@ function FolderIcon({ open }) {
 
 function SetRow({ set, folders, onStudy, onDelete, onMove }) {
   const [showMove, setShowMove] = useState(false)
-  const moveRef = useRef()
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 })
+  const btnRef = useRef()
+  const dropdownRef = useRef()
 
   useEffect(() => {
     if (!showMove) return
-    const handler = (e) => { if (moveRef.current && !moveRef.current.contains(e.target)) setShowMove(false) }
+    const handler = (e) => {
+      if (
+        btnRef.current && !btnRef.current.contains(e.target) &&
+        dropdownRef.current && !dropdownRef.current.contains(e.target)
+      ) setShowMove(false)
+    }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [showMove])
+
+  const handleMoveClick = () => {
+    if (!showMove && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect()
+      setDropdownPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
+    }
+    setShowMove(v => !v)
+  }
 
   const title = set.title.replace(/\.[^.]+$/, '')
 
@@ -51,8 +66,8 @@ function SetRow({ set, folders, onStudy, onDelete, onMove }) {
           Study →
         </button>
         {folders.length > 0 && (
-          <div className="set-move-wrap" ref={moveRef}>
-            <button className="set-btn set-btn-move" onClick={() => setShowMove(v => !v)} title="Move to folder">
+          <>
+            <button ref={btnRef} className="set-btn set-btn-move" onClick={handleMoveClick} title="Move to folder">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path d="M1 3a1 1 0 011-1h2.5l.8 1.2H10a1 1 0 011 1V9a1 1 0 01-1 1H2a1 1 0 01-1-1V3z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
               </svg>
@@ -60,7 +75,9 @@ function SetRow({ set, folders, onStudy, onDelete, onMove }) {
             <AnimatePresence>
               {showMove && (
                 <motion.div
+                  ref={dropdownRef}
                   className="move-dropdown"
+                  style={{ top: dropdownPos.top, right: dropdownPos.right }}
                   initial={{ opacity: 0, y: -4, scale: 0.97 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -4, scale: 0.97 }}
@@ -79,7 +96,7 @@ function SetRow({ set, folders, onStudy, onDelete, onMove }) {
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
+          </>
         )}
         <button className="set-btn set-btn-delete" onClick={() => onDelete(set.id)} aria-label="Delete">
           <svg width="11" height="11" viewBox="0 0 11 11" fill="none">

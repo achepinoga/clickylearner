@@ -88,6 +88,24 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
     handleFile(e.dataTransfer.files[0])
   }
 
+  const splitRawText = (text) => {
+    // Mark paragraph breaks, then collapse all other whitespace (handles PDF soft-wraps)
+    const normalized = text
+      .replace(/\r\n/g, '\n')
+      .replace(/\n{2,}/g, '\x00')
+      .replace(/\s+/g, ' ')
+      .replace(/\x00/g, '\n\n')
+
+    return normalized
+      .split(/\n{2,}/)
+      .flatMap(para => {
+        const trimmed = para.trim()
+        if (!trimmed) return []
+        return trimmed.split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(s => s.length > 10)
+      })
+      .filter(s => s.length > 0)
+  }
+
   const handleSubmit = async () => {
     if (!file) return
     setError('')
@@ -99,6 +117,14 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
       const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData })
       const uploadData = await uploadRes.json()
       if (!uploadRes.ok) throw new Error(uploadData.error || 'Upload failed')
+
+      // Standard mode: skip AI, split raw text directly
+      if (gameMode === 'standard') {
+        localStorage.removeItem('cl_continuation')
+        setContinuation(null)
+        onNotesReady(splitRawText(uploadData.text), file.name)
+        return
+      }
 
       setStatus('generating')
       const notesRes = await fetch('/api/notes/generate', {
@@ -117,7 +143,6 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
           cutoffPreview: notesData.cutoffPreview,
         }
         setTruncationWarning(warning)
-        // Store continuation for next session
         const cont = {
           filename: file.name,
           nextPage: notesData.cutoffPage + 1,
@@ -387,7 +412,7 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
             whileHover={{ scale: 1.03, y: -2 }}
             whileTap={{ scale: 0.97 }}
           >
-            <span>Generate Study Notes</span>
+            <span>{gameMode === 'standard' ? 'Start Typing' : 'Generate Study Notes'}</span>
             <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
               <path d="M8.5 1.5l1.6 4.8L15 8.5l-4.9 2.2-1.6 4.8-1.6-4.8L2 8.5l4.9-2.2 1.6-4.8z" fill="currentColor" />
             </svg>
@@ -463,7 +488,7 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
                 exit={{ opacity: 0, y: -5 }}
                 transition={{ duration: 0.22 }}
               >
-                {status === 'uploading' ? 'Reading your file...' : 'AI is crafting your study notes...'}
+                {status === 'uploading' ? 'Reading your file...' : gameMode === 'standard' ? 'Processing text...' : 'AI is crafting your study notes...'}
               </motion.p>
             </AnimatePresence>
           </motion.div>

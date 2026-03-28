@@ -111,6 +111,34 @@
   text-transform: uppercase;
 }
 
+.mode-card--recommended {
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 0 24px rgba(255, 255, 255, 0.05);
+}
+
+.mode-card--recommended::before,
+.mode-card--recommended::after {
+  opacity: 1 !important;
+}
+
+.mode-card--recommended .mode-recommended-label {
+  display: block;
+}
+
+.mode-recommended-label {
+  display: none;
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.52rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
 .mode-name {
   font-family: 'JetBrains Mono', monospace;
   font-size: 1.3rem;

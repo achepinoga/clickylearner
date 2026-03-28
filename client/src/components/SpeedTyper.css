@@ -41,6 +41,15 @@
   cursor: default;
 }
 
+.timer-input--locked {
+  cursor: text;
+  caret-color: transparent;
+}
+
+.timer-input--locked:focus {
+  caret-color: transparent;
+}
+
 /* Countdown urgency */
 .stat-num--urgent {
   color: #fb7185 !important;

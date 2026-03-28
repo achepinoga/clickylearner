@@ -7,25 +7,28 @@ const MODES = [
     id: 'standard',
     name: 'Standard',
     tag: '[ CLASSIC ]',
-    description: 'Type through all your notes from start to finish. Backspace and settings apply as configured.',
+    description: 'Upload any document and type through it directly. No AI, no tokens — your text exactly as it appears.',
     keys: ['A', 'B', 'C'],
     available: true,
+    recommended: false,
   },
   {
     id: 'flashcards',
     name: 'Flashcards',
     tag: '[ RECALL ]',
-    description: 'Type your notes twice — second pass blacks out key words for active recall. Finish and unlock an AI-generated test: true/false and multiple choice, with a retype penalty for wrong answers.',
+    description: 'AI condenses your document — PDFs, slides, notes — into focused study cards. Type through them twice, with key terms blacked out on the second pass. Ends with an AI-generated quiz.',
     keys: ['A', '█', '?'],
     available: true,
+    recommended: true,
   },
   {
     id: 'speed',
     name: 'Speed',
     tag: '[ ENDLESS ]',
-    description: 'Pure speed training. Random words keep coming until you stop. No notes needed — just type as fast as you can.',
+    description: 'Pure typing practice. Random sentences keep coming until you stop. No upload needed.',
     keys: ['go', '→', '∞'],
     available: true,
+    recommended: false,
   },
 ]
 
@@ -45,7 +48,7 @@ export default function GameMode({ onSelect }) {
         {MODES.map((mode, i) => (
           <motion.button
             key={mode.id}
-            className={`mode-card ${!mode.available ? 'mode-card--disabled' : ''}`}
+            className={`mode-card ${!mode.available ? 'mode-card--disabled' : ''} ${mode.recommended ? 'mode-card--recommended' : ''}`}
             onClick={() => { if (mode.available) { playClick(); onSelect(mode.id) } }}
             disabled={!mode.available}
             initial={{ opacity: 0, y: 20 }}
@@ -54,6 +57,7 @@ export default function GameMode({ onSelect }) {
             whileHover={mode.available ? { y: -4 } : {}}
             whileTap={mode.available ? { scale: 0.97 } : {}}
           >
+            <span className="mode-recommended-label">recommended</span>
             <div className="mode-keys">
               {mode.keys.map((k, j) => (
                 <span key={j} className="mode-key">{k}</span>

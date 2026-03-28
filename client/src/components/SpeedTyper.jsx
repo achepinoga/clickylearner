@@ -116,7 +116,9 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
   const [pendingWrong, setPendingWrong] = useState(false)
   const [failedIndices, setFailedIndices] = useState(() => new Set())
   const [screenSuccess, setScreenSuccess] = useState(false)
-  const [timerInput, setTimerInput] = useState('TIMER')
+  const [timerLabel, setTimerLabel] = useState('TIMER')
+  const [timerUnlocked, setTimerUnlocked] = useState(false)
+  const [timerInput, setTimerInput] = useState('')
   const [timerDuration, setTimerDuration] = useState(null) // seconds, null = unlimited
   const [timeRemaining, setTimeRemaining] = useState(null)
   const timerInputRef = useRef()
@@ -463,6 +465,29 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
         <div className="stat-item stat-item--timer">
           {startTime && timerDuration !== null && timeRemaining !== null ? (
             <span className={`stat-num${timeRemaining <= 10 ? ' stat-num--urgent' : ''}`}>{formatTimeHMS(timeRemaining)}</span>
+          ) : !timerUnlocked ? (
+            <input
+              ref={timerInputRef}
+              className="timer-input timer-input--locked"
+              type="text"
+              value={timerLabel}
+              readOnly
+              disabled={!!startTime}
+              onClick={e => { e.stopPropagation(); timerInputRef.current?.focus() }}
+              onKeyDown={e => {
+                if (e.key === 'Backspace') {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  const next = timerLabel.slice(0, -1)
+                  if (next.length === 0) {
+                    setTimerUnlocked(true)
+                    setTimeout(() => timerInputRef.current?.focus(), 0)
+                  } else {
+                    setTimerLabel(next)
+                  }
+                }
+              }}
+            />
           ) : (
             <input
               ref={timerInputRef}
@@ -470,13 +495,6 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
               type="text"
               value={timerInput}
               disabled={!!startTime}
-              onClick={e => {
-                e.stopPropagation()
-                if (timerInput === 'TIMER') { setTimerInput(''); setTimerDuration(null); setTimeRemaining(null) }
-              }}
-              onBlur={() => {
-                if (!timerInput.trim()) { setTimerInput('TIMER'); setTimerDuration(null); setTimeRemaining(null) }
-              }}
               onChange={e => {
                 const val = e.target.value
                 setTimerInput(val)
@@ -510,7 +528,6 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
       </div>
 
       <div className="typer-footer">
-        <p className="hint-text">Type the words · backspace to correct</p>
         <button className="btn-stop" onClick={(e) => { e.stopPropagation(); playBack(); handleStop() }}>
           {startTime ? 'Finish' : '← Back'}
         </button>
