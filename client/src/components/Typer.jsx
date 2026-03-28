@@ -187,15 +187,17 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
     }
   }, [isFalling, isTransitioning])
 
-  // WPM ticker — per-note, resets on each new card/note
+  // WPM ticker — per-note, fires every 200ms using refs to avoid stale closures
+  // Does NOT depend on `typed` — the interval reads typedRef.current directly
   useEffect(() => {
     if (!noteStartTime || isFalling || isTransitioning) return
     const interval = setInterval(() => {
-      const elapsed = (Date.now() - noteStartTime) / 60000
-      setWpm(elapsed > 0 ? Math.round((typed.length / 5) / elapsed) : 0)
+      if (!noteStartTimeRef.current) return
+      const elapsed = (Date.now() - noteStartTimeRef.current) / 60000
+      setWpm(elapsed > 0 ? Math.round((typedRef.current.length / 5) / elapsed) : 0)
     }, 200)
     return () => clearInterval(interval)
-  }, [noteStartTime, typed, isFalling, isTransitioning])
+  }, [noteStartTime, isFalling, isTransitioning])
 
   const currentBlackout = useMemo(() => {
     if (!isFlashcard || cardPhase !== 'recall') return null
@@ -322,6 +324,7 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
         noteErrorsRef.current++
       }
     }
+    typedRef.current = value
     setTyped(value)
     if (value === fullText) {
       advanceNote(fullText, completedChars, errors, startTime)
