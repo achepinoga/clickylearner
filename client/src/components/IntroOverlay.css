@@ -1,0 +1,107 @@
+.intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+/* Radial glow behind the logo */
+.intro-backdrop {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 60% 50% at 50% 50%,
+    rgba(255, 255, 255, 0.04) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+/* Subtle grid lines */
+.intro-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+}
+
+/* Center block */
+.intro-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+  padding: 0 24px;
+}
+
+/* Logo image */
+.intro-logo {
+  margin-bottom: 4px;
+}
+
+.intro-logo-img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.25));
+}
+
+/* Wordmark */
+.intro-wordmark {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(1.6rem, 5vw, 2.4rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow:
+    0 0 24px rgba(255, 255, 255, 0.2),
+    0 0 60px rgba(255, 255, 255, 0.06);
+  white-space: nowrap;
+}
+
+/* Accent line beneath wordmark */
+.intro-line {
+  width: 100%;
+  max-width: 320px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.6) 50%,
+    transparent 100%
+  );
+  transform-origin: center;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+/* Tagline */
+.intro-tagline {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+@media (max-width: 480px) {
+  .intro-logo-img {
+    width: 44px;
+    height: 44px;
+  }
+
+  .intro-wordmark {
+    font-size: 1.4rem;
+  }
+}

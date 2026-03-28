@@ -12,6 +12,7 @@ import FlashcardTest from './components/FlashcardTest'
 import AuthModal from './components/AuthModal'
 import HistoryPanel from './components/HistoryPanel'
 import FlashcardsPage from './components/FlashcardsPage'
+import IntroOverlay from './components/IntroOverlay'
 import './App.css'
 
 const STAGES = { GAMEMODE: 'gamemode', FLASHCARDS: 'flashcards', UPLOAD: 'upload', TYPING: 'typing', RESULTS: 'results', TEST: 'test' }
@@ -75,6 +76,7 @@ export default function App() {
   const [results, setResults] = useState(() => {
     try { const s = localStorage.getItem('cl_results'); return s ? JSON.parse(s) : null } catch { return null }
   })
+  const [showIntro, setShowIntro] = useState(() => !sessionStorage.getItem('cl_intro_seen'))
   const [showSettings, setShowSettings] = useState(false)
   const [showAuth, setShowAuth] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
@@ -406,6 +408,15 @@ export default function App() {
         onClose={() => setShowHistory(false)}
         user={user}
       />
+
+      {showIntro && (
+        <IntroOverlay
+          onComplete={() => {
+            sessionStorage.setItem('cl_intro_seen', '1')
+            setShowIntro(false)
+          }}
+        />
+      )}
     </>
   )
 }
