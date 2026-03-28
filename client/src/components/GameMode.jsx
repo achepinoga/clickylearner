@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { playClick } from '../sounds'
 import './GameMode.css'
@@ -32,7 +33,30 @@ const MODES = [
   },
 ]
 
+const AVAILABLE = MODES.filter(m => m.available)
+
 export default function GameMode({ onSelect }) {
+  const [focusedIndex, setFocusedIndex] = useState(null)
+  const focusedRef = useRef(null)
+  focusedRef.current = focusedIndex
+
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault()
+        setFocusedIndex(i => i === null ? 0 : (i + 1) % AVAILABLE.length)
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault()
+        setFocusedIndex(i => i === null ? AVAILABLE.length - 1 : (i - 1 + AVAILABLE.length) % AVAILABLE.length)
+      } else if (e.key === 'Enter' && focusedRef.current !== null) {
+        playClick()
+        onSelect(AVAILABLE[focusedRef.current].id)
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [onSelect])
+
   return (
     <div className="gamemode-container">
       <motion.p
@@ -45,15 +69,18 @@ export default function GameMode({ onSelect }) {
       </motion.p>
 
       <div className="gamemode-grid">
-        {MODES.map((mode, i) => (
+        {MODES.map((mode, i) => {
+          const availIdx = AVAILABLE.indexOf(mode)
+          const isFocused = availIdx !== -1 && focusedIndex === availIdx
+          return (
           <motion.button
             key={mode.id}
-            className={`mode-card ${!mode.available ? 'mode-card--disabled' : ''} ${mode.recommended ? 'mode-card--recommended' : ''}`}
+            className={`mode-card ${!mode.available ? 'mode-card--disabled' : ''} ${mode.recommended ? 'mode-card--recommended' : ''} ${isFocused ? 'mode-card--focused' : ''}`}
             onClick={() => { if (mode.available) { playClick(); onSelect(mode.id) } }}
             disabled={!mode.available}
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: 0.08 + i * 0.09 }}
+            animate={{ opacity: 1, y: isFocused ? -4 : 0 }}
+            transition={{ duration: 0.35, delay: isFocused ? 0 : 0.08 + i * 0.09 }}
             whileHover={mode.available ? { y: -4 } : {}}
             whileTap={mode.available ? { scale: 0.97 } : {}}
           >
@@ -68,7 +95,8 @@ export default function GameMode({ onSelect }) {
             <p className="mode-desc">{mode.description}</p>
             {mode.available && <span className="mode-arrow">→</span>}
           </motion.button>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

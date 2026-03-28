@@ -186,15 +186,22 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
     }
   }, [isFalling, isTransitioning])
 
-  // WPM ticker — pauses during falling/transitioning
+  // Reset WPM to 0 at the start of each transition
+  useEffect(() => {
+    if (isFalling || isTransitioning) setWpm(0)
+  }, [isFalling, isTransitioning])
+
+  // WPM ticker — shows per-note speed to avoid spikes during note transitions
   useEffect(() => {
     if (!startTime || isFalling || isTransitioning) return
     const interval = setInterval(() => {
-      const elapsed = (Date.now() - startTime - totalPausedRef.current) / 60000
-      setWpm(elapsed > 0 ? Math.round(((completedChars + typed.length) / 5) / elapsed) : 0)
+      const noteStart = noteStartTimeRef.current
+      if (!noteStart) { setWpm(0); return }
+      const elapsed = (Date.now() - noteStart) / 60000
+      setWpm(elapsed > 0 ? Math.round((typed.length / 5) / elapsed) : 0)
     }, 200)
     return () => clearInterval(interval)
-  }, [startTime, typed, completedChars, isFalling, isTransitioning])
+  }, [startTime, typed, isFalling, isTransitioning])
 
   const currentBlackout = useMemo(() => {
     if (!isFlashcard || cardPhase !== 'recall') return null
@@ -238,13 +245,12 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
       if (cardPhase === 'study') {
         setCardSuccess(true)
         if (settings?.completionSound ?? true) playChime()
-        setCompletedChars(p => p + currentFullText.length)
         if (autoAdv) {
           setTimeout(() => {
             setCardSuccess(false)
             setIsTransitioning(true)
             setFlipped(true)
-            setTimeout(() => { resetNote(); setCardPhase('recall') }, 300)
+            setTimeout(() => { setCompletedChars(p => p + currentFullText.length); resetNote(); setCardPhase('recall') }, 300)
             setTimeout(() => setIsTransitioning(false), 650)
           }, 350)
         } else {
@@ -253,7 +259,6 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
       } else {
         setCardSuccess(true)
         if (settings?.completionSound ?? true) playChime()
-        setCompletedChars(p => p + currentFullText.length)
         if (autoAdv) {
           setTimeout(() => {
             setCardSuccess(false)
@@ -263,6 +268,7 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
                 setCurrentNoteIndex(p => p + 1)
                 setCardPhase('study')
                 setFlipped(false)
+                setCompletedChars(p => p + currentFullText.length)
                 resetNote()
                 setIsTransitioning(false)
               }, 550)
@@ -355,7 +361,7 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
     if (cardPhase === 'study') {
       setIsTransitioning(true)
       setFlipped(true)
-      setTimeout(() => { resetNote(); setCardPhase('recall') }, 300)
+      setTimeout(() => { setCompletedChars(p => p + fullText.length); resetNote(); setCardPhase('recall') }, 300)
       setTimeout(() => setIsTransitioning(false), 650)
     } else {
       setIsTransitioning(true)
@@ -364,18 +370,19 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
           setCurrentNoteIndex(p => p + 1)
           setCardPhase('study')
           setFlipped(false)
+          setCompletedChars(p => p + fullText.length)
           resetNote()
           setIsTransitioning(false)
         }, 550)
       } else {
-        const finalTotalChars = completedChars
+        const finalTotalChars = completedChars + fullText.length
         const elapsed = startTime ? (Date.now() - startTime - totalPausedRef.current) / 60000 : 0.001
         const finalWpm = Math.round((finalTotalChars / 5) / elapsed)
         const accuracy = Math.max(0, Math.round(((finalTotalChars - errors) / finalTotalChars) * 100))
         onFinished({ wpm: finalWpm, accuracy, errors, totalChars: finalTotalChars, notes: notes.length, noteResults: noteResultsRef.current })
       }
     }
-  }, [cardPhase, currentNoteIndex, notes.length, completedChars, startTime, errors, onFinished, resetNote])
+  }, [cardPhase, currentNoteIndex, notes.length, completedChars, fullText, startTime, errors, onFinished, resetNote])
 
   const handleForgot = useCallback(() => {
     inputRef.current?.focus()

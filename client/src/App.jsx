@@ -307,6 +307,7 @@ export default function App() {
                 <img src="/logo.png" alt="cL" className="logo-img" />
               </div>
               <span className="logo-text">Clickylearner</span>
+              <span className="logo-beta">beta</span>
             </div>
 
             <nav className="stage-nav" aria-label="Progress">
