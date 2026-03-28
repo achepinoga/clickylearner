@@ -1,6 +1,4 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-
-const API_BASE = import.meta.env.VITE_API_URL || ''
 import { AnimatePresence, motion } from 'framer-motion'
 import { playBack, playClick, playToggle, updateSoundSettings } from './sounds'
 import { supabase } from './lib/supabase'
@@ -16,6 +14,8 @@ import HistoryPanel from './components/HistoryPanel'
 import FlashcardsPage from './components/FlashcardsPage'
 import IntroOverlay from './components/IntroOverlay'
 import './App.css'
+
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
 
 const STAGES = { GAMEMODE: 'gamemode', FLASHCARDS: 'flashcards', UPLOAD: 'upload', TYPING: 'typing', RESULTS: 'results', TEST: 'test' }
 

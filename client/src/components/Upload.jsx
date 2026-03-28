@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
-
-const API_BASE = import.meta.env.VITE_API_URL || ''
 import { motion, AnimatePresence, useMotionValue, useMotionTemplate } from 'framer-motion'
 import { playClick, playToggle, playBack } from '../sounds'
 import './Upload.css'
+
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
 
 function UploadIcon() {
   return (

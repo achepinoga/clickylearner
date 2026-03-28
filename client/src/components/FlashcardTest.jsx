@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-
-const API_BASE = import.meta.env.VITE_API_URL || ''
 import { motion, AnimatePresence } from 'framer-motion'
 import { playChime, playClick, playBack, playWrong } from '../sounds'
 import './FlashcardTest.css'
+
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
 
 export default function FlashcardTest({ notes, onBack, settings }) {
   const [phase, setPhase] = useState('loading') // loading | question | penalty | failed-intro | done | error
