@@ -38,6 +38,10 @@ app.use('/api/upload', uploadLimiter, uploadRoute);
 app.use('/api/notes', aiLimiter, notesRoute);
 app.use('/api/quiz', aiLimiter, quizRoute);
 
-app.listen(PORT, () => {
-  console.log(`StudyTyper server running on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`StudyTyper server running on http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;
