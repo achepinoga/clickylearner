@@ -10,7 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? (process.env.ALLOWED_ORIGIN ? [process.env.ALLOWED_ORIGIN] : [])
+  ? (process.env.ALLOWED_ORIGIN ? [process.env.ALLOWED_ORIGIN] : true)
   : ['http://localhost:5173', 'http://localhost:5174']
 
 app.use(cors({ origin: allowedOrigins, credentials: true }));
