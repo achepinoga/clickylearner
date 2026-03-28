@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
+
+const API_BASE = import.meta.env.VITE_API_URL || ''
 import { motion, AnimatePresence, useMotionValue, useMotionTemplate } from 'framer-motion'
 import { playClick, playToggle, playBack } from '../sounds'
 import './Upload.css'
@@ -120,7 +122,7 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
       const formData = new FormData()
       formData.append('file', file)
 
-      const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData })
+      const uploadRes = await fetch(`${API_BASE}/api/upload`, { method: 'POST', body: formData })
       if (!uploadRes.ok) {
         if (uploadRes.status === 413) {
           throw new Error('File too large for the server to process. Please use a file under 4 MB.')
@@ -143,7 +145,7 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
       }
 
       setStatus('generating')
-      const notesRes = await fetch('/api/notes/generate', {
+      const notesRes = await fetch(`${API_BASE}/api/notes/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: uploadData.text })
@@ -172,7 +174,7 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
     setError('')
     setStatus('generating')
     try {
-      const notesRes = await fetch('/api/notes/generate', {
+      const notesRes = await fetch(`${API_BASE}/api/notes/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: continuation.remainingText })

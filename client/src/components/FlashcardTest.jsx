@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+
+const API_BASE = import.meta.env.VITE_API_URL || ''
 import { motion, AnimatePresence } from 'framer-motion'
 import { playChime, playClick, playBack, playWrong } from '../sounds'
 import './FlashcardTest.css'
@@ -52,7 +54,7 @@ export default function FlashcardTest({ notes, onBack, settings }) {
 
   async function fetchQuiz() {
     try {
-      const res = await fetch('/api/quiz/generate', {
+      const res = await fetch(`${API_BASE}/api/quiz/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notes }),

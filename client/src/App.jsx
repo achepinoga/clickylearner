@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
+
+const API_BASE = import.meta.env.VITE_API_URL || ''
 import { AnimatePresence, motion } from 'framer-motion'
 import { playBack, playClick, playToggle, updateSoundSettings } from './sounds'
 import { supabase } from './lib/supabase'
@@ -205,7 +207,7 @@ export default function App() {
     setIsContinuing(true)
     setContinueError('')
     try {
-      const res = await fetch('/api/notes/generate', {
+      const res = await fetch(`${API_BASE}/api/notes/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: pendingRemainingText })
