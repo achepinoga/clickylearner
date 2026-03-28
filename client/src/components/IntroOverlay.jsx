@@ -11,14 +11,7 @@ export default function IntroOverlay({ onComplete }) {
     setIsExiting(true)
   }, [isExiting])
 
-  // Auto-complete timer
-  useEffect(() => {
-    const duration = prefersReducedMotion ? 400 : 1800
-    const t = setTimeout(handleSkip, duration)
-    return () => clearTimeout(t)
-  }, [prefersReducedMotion, handleSkip])
-
-  // Skip on click or keypress
+  // Any keypress skips
   useEffect(() => {
     const onKey = () => handleSkip()
     window.addEventListener('keydown', onKey)
@@ -113,6 +106,16 @@ export default function IntroOverlay({ onComplete }) {
               transition={{ duration: 0.35, delay: 1.0 }}
             >
               type to remember
+            </motion.div>
+
+            {/* Prompt */}
+            <motion.div
+              className="intro-prompt"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.35, delay: 1.3 }}
+            >
+              click or press any key
             </motion.div>
           </div>
         </motion.div>

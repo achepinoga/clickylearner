@@ -95,6 +95,16 @@
   color: rgba(255, 255, 255, 0.3);
 }
 
+/* Prompt */
+.intro-prompt {
+  margin-top: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.18);
+}
+
 @media (max-width: 480px) {
   .intro-logo-img {
     width: 44px;
