@@ -4,7 +4,9 @@
   "scripts": {
     "dev:server": "cd server && npm run dev",
     "dev:client": "cd client && npm run dev",
-    "install:all": "cd server && npm install && cd ../client && npm install"
+    "install:all": "cd server && npm install && cd ../client && npm install",
+    "build": "cd client && npm install && npm run build",
+    "start": "NODE_ENV=production node server/index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
