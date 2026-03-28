@@ -419,16 +419,16 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
 
     if (e.key === 'Backspace' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault()
-      setTyped(prev => {
-        if (prev.length === 0) return prev
-        let deleteToIndex = prev.lastIndexOf(' ', prev.length - 1)
-        if (prev.length > 0 && prev[prev.length - 1] === ' ') {
-          deleteToIndex = prev.lastIndexOf(' ', prev.length - 2)
-        }
-        deleteToIndex = Math.max(0, deleteToIndex)
-        if (deleteToIndex > 0 && prev[deleteToIndex] === ' ') deleteToIndex++
-        return prev.slice(0, deleteToIndex)
-      })
+      if (typed.length === 0) return
+      let deleteToIndex = typed.lastIndexOf(' ', typed.length - 1)
+      if (typed[typed.length - 1] === ' ') {
+        deleteToIndex = typed.lastIndexOf(' ', typed.length - 2)
+      }
+      deleteToIndex = Math.max(0, deleteToIndex)
+      if (deleteToIndex > 0 && typed[deleteToIndex] === ' ') deleteToIndex++
+      const next = typed.slice(0, deleteToIndex)
+      setTyped(next)
+      if (inputRef.current) inputRef.current.value = next
     }
   }, [settings, advanceStrict]);
 

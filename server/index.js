@@ -8,7 +8,11 @@ const quizRoute = require('./routes/quiz');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? (process.env.ALLOWED_ORIGIN ? [process.env.ALLOWED_ORIGIN] : [])
+  : ['http://localhost:5173', 'http://localhost:5174']
+
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json({ limit: '50mb' }));
 
 app.use('/api/upload', uploadRoute);

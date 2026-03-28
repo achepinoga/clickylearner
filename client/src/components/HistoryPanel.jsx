@@ -23,20 +23,22 @@ function getGrade(accuracy) {
   return 'D'
 }
 
-export default function HistoryPanel({ isOpen, onClose }) {
+export default function HistoryPanel({ isOpen, onClose, user }) {
   const [runs, setRuns] = useState([])
   const [loading, setLoading] = useState(false)
 
   const fetchRuns = useCallback(async () => {
+    if (!user) return
     setLoading(true)
     const { data } = await supabase
       .from('runs')
       .select('*')
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(100)
     setRuns(data || [])
     setLoading(false)
-  }, [])
+  }, [user])
 
   useEffect(() => {
     if (isOpen) fetchRuns()

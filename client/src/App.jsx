@@ -404,6 +404,7 @@ export default function App() {
       <HistoryPanel
         isOpen={showHistory}
         onClose={() => setShowHistory(false)}
+        user={user}
       />
     </>
   )

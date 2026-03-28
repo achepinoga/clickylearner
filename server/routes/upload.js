@@ -22,6 +22,7 @@ const upload = multer({
 });
 
 router.post('/', upload.single('file'), async (req, res) => {
+  let filePath = req.file?.path ?? null;
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
@@ -35,19 +36,16 @@ router.post('/', upload.single('file'), async (req, res) => {
       text = fs.readFileSync(req.file.path, 'utf8');
     }
 
-    // Clean up uploaded file
-    try {
-      fs.unlinkSync(req.file.path);
-    } catch (e) {
-      console.warn('Could not delete temp file', e);
-    }
-
     if (!text.trim()) return res.status(400).json({ error: 'Could not extract text from file' });
 
     res.json({ text: text.trim() });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || 'Failed to process file' });
+  } finally {
+    if (filePath) {
+      try { fs.unlinkSync(filePath); } catch (e) { console.warn('Could not delete temp file', e); }
+    }
   }
 });
 
