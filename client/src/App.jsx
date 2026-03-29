@@ -431,6 +431,14 @@ export default function App() {
             )}
           </AnimatePresence>
         </div>
+        <footer className="app-footer">
+          <span>© 2026 Clickylearner. All rights reserved.</span>
+          <span className="app-footer-links">
+            <a href="/privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+            <span className="app-footer-dot">·</span>
+            <a href="/terms.html" target="_blank" rel="noopener noreferrer">Terms of Service</a>
+          </span>
+        </footer>
       </div>
 
       <SettingsModal
