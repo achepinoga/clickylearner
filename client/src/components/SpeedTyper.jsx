@@ -427,6 +427,14 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
     return m > 0 ? `${m}:${String(sec).padStart(2, '0')}` : `${sec}s`
   }
 
+  const handleTimerBlur = () => {
+    if (timerDuration === null) {
+      setTimerUnlocked(false)
+      setTimerLabel('TIMER')
+      setTimerInput('')
+    }
+  }
+
   const parseHMS = (str) => {
     const parts = str.trim().split(':').map(p => parseInt(p, 10))
     if (parts.some(isNaN)) return null
@@ -484,6 +492,7 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
               readOnly
               disabled={!!startTime}
               onClick={e => { e.stopPropagation(); timerInputRef.current?.focus() }}
+              onBlur={handleTimerBlur}
               onKeyDown={e => {
                 if (e.key === 'Backspace') {
                   e.preventDefault()
@@ -505,6 +514,14 @@ export default function SpeedTyper({ onFinished, onBack, settings }) {
               type="text"
               value={timerInput}
               disabled={!!startTime}
+              onClick={e => e.stopPropagation()}
+              onBlur={handleTimerBlur}
+              onKeyDown={e => {
+                e.stopPropagation()
+                const allowed = /^[0-9:]$/.test(e.key)
+                const control = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'].includes(e.key)
+                if (!allowed && !control && !e.ctrlKey && !e.metaKey) e.preventDefault()
+              }}
               onChange={e => {
                 const val = e.target.value
                 setTimerInput(val)
