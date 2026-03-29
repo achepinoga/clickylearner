@@ -1,7 +1,7 @@
 .history-backdrop {
   position: fixed;
   inset: 0;
-  background: #000;
+  background: var(--bg);
   z-index: 150;
 }
 
@@ -12,8 +12,8 @@
   bottom: 0;
   width: 100%;
   max-width: 400px;
-  background: #080808;
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--surface);
+  border-left: 1px solid var(--glass-border);
   z-index: 151;
   display: flex;
   flex-direction: column;
@@ -22,7 +22,7 @@
 
 .history-header {
   padding: 24px 24px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid var(--border-soft);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -38,7 +38,7 @@
 
 .history-close {
   background: none;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
   color: var(--text-dim);
   width: 26px;
   height: 26px;
@@ -64,7 +64,7 @@
 
 .history-body::-webkit-scrollbar { width: 4px; }
 .history-body::-webkit-scrollbar-track { background: transparent; }
-.history-body::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); }
+.history-body::-webkit-scrollbar-thumb { background: var(--scrollbar); }
 
 .history-loading {
   display: flex;
@@ -100,14 +100,14 @@
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid var(--border-faint);
+  background: var(--glass);
   transition: border-color 0.15s, background 0.15s;
 }
 
 .run-entry:hover {
-  border-color: rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--glass-border);
+  background: var(--glass-hover);
 }
 
 .run-mode-badge {
@@ -115,14 +115,14 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   padding: 3px 7px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--border);
   color: var(--text-dim);
   white-space: nowrap;
 }
 
-.run-mode-badge.mode-flashcards { border-color: rgba(255,255,255,0.2); color: var(--accent); }
+.run-mode-badge.mode-flashcards { border-color: var(--border-strong); color: var(--accent); }
 .run-mode-badge.mode-speed      { border-color: rgba(255,200,0,0.2);   color: #fbbf24; }
-.run-mode-badge.mode-standard   { border-color: rgba(255,255,255,0.12); color: var(--text-dim); }
+.run-mode-badge.mode-standard   { border-color: var(--border); color: var(--text-dim); }
 
 .run-stats {
   display: flex;

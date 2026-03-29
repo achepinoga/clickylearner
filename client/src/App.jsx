@@ -78,7 +78,10 @@ export default function App() {
   const [results, setResults] = useState(() => {
     try { const s = localStorage.getItem('cl_results'); return s ? JSON.parse(s) : null } catch { return null }
   })
-  const [showIntro, setShowIntro] = useState(() => !sessionStorage.getItem('cl_intro_seen'))
+  const [theme, setTheme] = useState(() => {
+    try { return localStorage.getItem('cl_theme') || 'dark' } catch { return 'dark' }
+  })
+  const [showIntro, setShowIntro] = useState(() => !localStorage.getItem('cl_intro_seen'))
   const [showSettings, setShowSettings] = useState(false)
   const [showAuth, setShowAuth] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
@@ -125,6 +128,10 @@ export default function App() {
     return () => document.removeEventListener('mousedown', handler)
   }, [showMenu])
 
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    try { localStorage.setItem('cl_theme', theme) } catch {}
+  }, [theme])
   useEffect(() => { localStorage.setItem('cl_settings', JSON.stringify(settings)) }, [settings])
   useEffect(() => { updateSoundSettings(settings) }, [settings])
   useEffect(() => { try { localStorage.removeItem('cl_stage') } catch {} }, [])
@@ -446,6 +453,8 @@ export default function App() {
         onClose={() => setShowSettings(false)}
         settings={settings}
         setSettings={setSettings}
+        theme={theme}
+        setTheme={setTheme}
       />
 
       <AuthModal
@@ -462,7 +471,7 @@ export default function App() {
       {showIntro && (
         <IntroOverlay
           onComplete={() => {
-            sessionStorage.setItem('cl_intro_seen', '1')
+            localStorage.setItem('cl_intro_seen', '1')
             setShowIntro(false)
           }}
         />

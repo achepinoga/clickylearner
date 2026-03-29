@@ -2,19 +2,19 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { playBack, playToggle } from '../sounds'
 import './SettingsModal.css'
 
-export default function SettingsModal({ isOpen, onClose, settings, setSettings }) {
+export default function SettingsModal({ isOpen, onClose, settings, setSettings, theme, setTheme }) {
   if (!isOpen) return null
 
   return (
     <AnimatePresence>
-      <motion.div 
+      <motion.div
         className="modal-overlay"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
       >
-        <motion.div 
+        <motion.div
           className="modal-content"
           initial={{ y: 20, opacity: 0, scale: 0.95 }}
           animate={{ y: 0, opacity: 1, scale: 1 }}
@@ -98,6 +98,23 @@ export default function SettingsModal({ isOpen, onClose, settings, setSettings }
                 />
                 <span className="toggle-slider"></span>
               </label>
+            </div>
+
+            <div className="setting-row">
+              <div className="setting-info">
+                <span className="setting-label">Theme</span>
+                <span className="setting-desc">Interface color scheme</span>
+              </div>
+              <div className="theme-toggle-group">
+                <button
+                  className={`theme-btn${theme === 'dark' ? ' theme-btn--active' : ''}`}
+                  onClick={() => { playToggle(); setTheme('dark') }}
+                >Dark</button>
+                <button
+                  className={`theme-btn${theme === 'light' ? ' theme-btn--active' : ''}`}
+                  onClick={() => { playToggle(); setTheme('light') }}
+                >Light</button>
+              </div>
             </div>
           </div>
         </motion.div>

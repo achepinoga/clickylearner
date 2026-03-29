@@ -47,8 +47,6 @@ export default function IntroOverlay({ onComplete }) {
       {!isExiting && (
         <motion.div
           className="intro-overlay"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
           exit={{ opacity: 0, filter: 'blur(8px)' }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
           onClick={handleSkip}

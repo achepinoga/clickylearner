@@ -8,9 +8,9 @@ const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
 function UploadIcon() {
   return (
     <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
-      <circle cx="26" cy="26" r="24" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" />
-      <path d="M26 35V22M19 28l7-7 7 7" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M18 38h16" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="26" cy="26" r="24" fill="currentColor" fillOpacity="0.04" stroke="currentColor" strokeOpacity="0.15" strokeWidth="1.5" />
+      <path d="M26 35V22M19 28l7-7 7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M18 38h16" stroke="currentColor" strokeOpacity="0.35" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   )
 }
@@ -19,16 +19,16 @@ function FileIcon({ type }) {
   if (type === 'application/pdf') {
     return (
       <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
-        <rect x="6" y="3" width="26" height="32" rx="4" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" />
-        <path d="M24 3v8a1 1 0 001 1h7" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" />
-        <text x="19" y="27" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="7" fontWeight="700" fill="#ffffff">PDF</text>
+        <rect x="6" y="3" width="26" height="32" rx="4" fill="currentColor" fillOpacity="0.05" stroke="currentColor" strokeOpacity="0.35" strokeWidth="1.5" />
+        <path d="M24 3v8a1 1 0 001 1h7" stroke="currentColor" strokeOpacity="0.35" strokeWidth="1.5" strokeLinecap="round" />
+        <text x="19" y="27" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="7" fontWeight="700" fill="currentColor">PDF</text>
       </svg>
     )
   }
   return (
     <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
-      <rect x="6" y="3" width="26" height="32" rx="4" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" />
-      <path d="M13 15h12M13 21h8M13 27h10" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" />
+      <rect x="6" y="3" width="26" height="32" rx="4" fill="currentColor" fillOpacity="0.05" stroke="currentColor" strokeOpacity="0.35" strokeWidth="1.5" />
+      <path d="M13 15h12M13 21h8M13 27h10" stroke="currentColor" strokeOpacity="0.5" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   )
 }

@@ -8,7 +8,7 @@
 
 .upload-back-btn {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--border-medium);
   color: var(--text-dim);
   font-size: 0.75rem;
   font-family: 'JetBrains Mono', monospace;
@@ -43,7 +43,7 @@
 .dropzone {
   width: 100%;
   max-width: 560px;
-  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border: 1px dashed var(--border-strong);
   border-radius: 0;
   padding: 64px 44px;
   text-align: center;
@@ -85,7 +85,7 @@
 
 .dropzone.dragging {
   border-color: var(--accent);
-  box-shadow: 0 0 20px var(--accent-glow), inset 0 0 20px rgba(255, 255, 255, 0.03);
+  box-shadow: 0 0 20px var(--accent-glow), inset 0 0 20px var(--glass);
   cursor: copy;
 }
 
@@ -154,7 +154,7 @@
 
 .remove-btn {
   background: none;
-  border: 1px solid rgba(255, 49, 49, 0.15);
+  border: 1px solid var(--error-border);
   color: var(--text-dim);
   padding: 8px;
   border-radius: 0;
@@ -166,7 +166,7 @@
 }
 
 .remove-btn:hover {
-  background: rgba(255, 49, 49, 0.08);
+  background: var(--error-tint);
   border-color: var(--incorrect);
   color: var(--incorrect);
 }
@@ -186,7 +186,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  box-shadow: 0 0 14px var(--accent-glow), inset 0 0 14px rgba(255, 255, 255, 0.03);
+  box-shadow: 0 0 14px var(--accent-glow), inset 0 0 14px var(--glass);
   transition: all 0.2s;
   position: relative;
   overflow: hidden;
@@ -196,7 +196,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, var(--glass-hover) 50%, transparent 100%);
   transform: translateX(-100%);
   transition: transform 0.5s ease;
 }
@@ -206,7 +206,7 @@
 }
 
 .btn-generate:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--glass-hover);
   box-shadow: 0 0 24px var(--accent-glow);
 }
 
@@ -215,10 +215,10 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #f59e0b;
+  color: var(--warning);
   font-size: 0.8rem;
-  background: rgba(245, 158, 11, 0.06);
-  border: 1px solid rgba(245, 158, 11, 0.25);
+  background: var(--warning-tint);
+  border: 1px solid var(--warning-border);
   padding: 10px 16px;
   border-radius: 0;
   max-width: 560px;
@@ -233,8 +233,8 @@
   gap: 8px;
   color: var(--incorrect);
   font-size: 0.8rem;
-  background: rgba(255, 49, 49, 0.04);
-  border: 1px solid rgba(255, 49, 49, 0.2);
+  background: var(--error-tint);
+  border: 1px solid var(--error-border);
   padding: 10px 16px;
   border-radius: 0;
   max-width: 560px;
@@ -312,7 +312,7 @@
 
 .difficulty-info-btn {
   background: none;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--border);
   color: var(--text-dim);
   width: 20px;
   height: 20px;
@@ -334,8 +334,8 @@
   left: 0;
   top: calc(100% + 8px);
   width: 300px;
-  background: #111;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--surface-3);
+  border: 1px solid var(--border-medium);
   padding: 16px 18px;
   z-index: 100;
   display: flex;
@@ -375,13 +375,13 @@
   font-size: 0.72rem;
   color: var(--text-dim);
   line-height: 1.6;
-  border-top: 1px solid rgba(255,255,255,0.07);
+  border-top: 1px solid var(--border-soft);
   padding-top: 10px;
   opacity: 0.85;
 }
 
 .tooltip-tip strong {
-  color: #f59e0b;
+  color: var(--warning);
 }
 
 /* Difficulty scale steps */
@@ -392,8 +392,8 @@
 }
 
 .diff-step {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
   color: var(--text-dim);
   padding: 10px 8px;
   display: flex;
@@ -406,13 +406,13 @@
 }
 
 .diff-step:hover {
-  border-color: rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border-hover);
+  background: var(--glass-hover);
 }
 
 .diff-step--active {
   border-color: var(--accent);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--glass-hover);
   box-shadow: 0 0 10px var(--accent-glow);
 }
 
@@ -451,15 +451,15 @@
 .truncation-warning {
   display: flex;
   gap: 16px;
-  background: rgba(245, 158, 11, 0.05);
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  background: var(--warning-tint);
+  border: 1px solid var(--warning-border);
   padding: 20px 24px;
   max-width: 540px;
   width: 100%;
 }
 
 .trunc-icon {
-  color: #f59e0b;
+  color: var(--warning);
   flex-shrink: 0;
   margin-top: 2px;
 }
@@ -473,7 +473,7 @@
 .trunc-title {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.72rem;
-  color: #f59e0b;
+  color: var(--warning);
   letter-spacing: 0.06em;
   line-height: 1.5;
 }
@@ -490,8 +490,8 @@
   flex-direction: column;
   gap: 4px;
   padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border-left: 2px solid rgba(245, 158, 11, 0.4);
+  background: var(--glass);
+  border-left: 2px solid var(--warning-border);
 }
 
 .trunc-cutoff-label {
@@ -512,8 +512,8 @@
 
 .trunc-continue-btn {
   background: transparent;
-  border: 1px solid rgba(245, 158, 11, 0.4);
-  color: #f59e0b;
+  border: 1px solid var(--warning-border);
+  color: var(--warning);
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
   letter-spacing: 0.12em;
@@ -525,8 +525,8 @@
 }
 
 .trunc-continue-btn:hover {
-  background: rgba(245, 158, 11, 0.08);
-  border-color: rgba(245, 158, 11, 0.7);
+  background: var(--warning-tint);
+  border-color: var(--warning);
 }
 
 /* Continuation banner */
@@ -535,8 +535,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--glass);
+  border: 1px solid var(--border);
   padding: 14px 20px;
   max-width: 540px;
   width: 100%;
@@ -588,7 +588,7 @@
 }
 
 .cont-btn--primary {
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid var(--border-strong);
   color: var(--accent);
 }
 
@@ -598,11 +598,11 @@
 }
 
 .cont-btn--dismiss {
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-soft);
   color: var(--text-dim);
 }
 
 .cont-btn--dismiss:hover {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--border-strong);
   color: var(--text);
 }

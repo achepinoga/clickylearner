@@ -2,7 +2,7 @@
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: #000;
+  background: var(--bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -16,7 +16,7 @@
   inset: 0;
   background: radial-gradient(
     ellipse 60% 50% at 50% 50%,
-    rgba(255, 255, 255, 0.04) 0%,
+    var(--accent-glow) 0%,
     transparent 70%
   );
   pointer-events: none;
@@ -27,8 +27,8 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    linear-gradient(var(--border-faint) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-faint) 1px, transparent 1px);
   background-size: 48px 48px;
   pointer-events: none;
   mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
@@ -54,7 +54,7 @@
   width: 56px;
   height: 56px;
   object-fit: contain;
-  filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.25));
+  filter: drop-shadow(0 0 16px var(--accent-glow));
 }
 
 /* Wordmark */
@@ -64,10 +64,10 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #fff;
+  color: var(--text);
   text-shadow:
-    0 0 24px rgba(255, 255, 255, 0.2),
-    0 0 60px rgba(255, 255, 255, 0.06);
+    0 0 24px var(--accent-glow),
+    0 0 60px var(--accent-glow);
   white-space: nowrap;
 }
 
@@ -79,11 +79,11 @@
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.6) 50%,
+    var(--border-accent) 50%,
     transparent 100%
   );
   transform-origin: center;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 8px var(--accent-glow);
 }
 
 /* Tagline */
@@ -92,7 +92,7 @@
   font-size: 0.7rem;
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--text-dim);
 }
 
 /* Prompt */
@@ -102,7 +102,7 @@
   font-size: 0.6rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.18);
+  color: var(--text-faint);
 }
 
 @media (max-width: 480px) {

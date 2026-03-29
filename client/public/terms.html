@@ -4,6 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Terms of Service — Clickylearner</title>
+  <script>
+    try {
+      var t = localStorage.getItem('cl_theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', t);
+    } catch(e) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -29,6 +37,23 @@
     a { color: #f59e0b; text-decoration: none; }
     a:hover { text-decoration: underline; }
     .divider { border: none; border-top: 1px solid #1a1a1a; margin: 40px 0; }
+
+    [data-theme="light"] body {
+      background: #f6f4ef;
+      color: #2a2520;
+    }
+    [data-theme="light"] .back { color: #6a655d; }
+    [data-theme="light"] .back:hover { color: #141414; }
+    [data-theme="light"] .logo { color: #141414; }
+    [data-theme="light"] .badge { color: #b7791f; }
+    [data-theme="light"] h1 { color: #141414; }
+    [data-theme="light"] .updated { color: #8a8070; }
+    [data-theme="light"] h2 { color: #141414; }
+    [data-theme="light"] h2::before { color: #9a9080; }
+    [data-theme="light"] p { color: #4a4540; }
+    [data-theme="light"] ul { color: #4a4540; }
+    [data-theme="light"] a { color: #b7791f; }
+    [data-theme="light"] .divider { border-top-color: #ddd6ca; }
   </style>
 </head>
 <body>

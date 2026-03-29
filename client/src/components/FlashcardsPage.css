@@ -47,7 +47,7 @@
 }
 
 .fc-new-btn:hover {
-  background: rgba(255,255,255,0.05);
+  background: var(--glass-hover);
   box-shadow: 0 0 20px var(--accent-glow);
 }
 
@@ -63,7 +63,7 @@
 
 .fc-body::-webkit-scrollbar { width: 4px; }
 .fc-body::-webkit-scrollbar-track { background: transparent; }
-.fc-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
+.fc-body::-webkit-scrollbar-thumb { background: var(--scrollbar); }
 
 /* Guest state */
 .fc-guest {
@@ -83,7 +83,7 @@
 
 .fc-signin-btn {
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid var(--border-strong);
   color: var(--accent);
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.72rem;
@@ -127,7 +127,7 @@
   justify-content: space-between;
   gap: 12px;
   padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid var(--border-faint);
 }
 
 .fc-section-label {
@@ -140,14 +140,14 @@
 .fc-section-count {
   font-size: 0.6rem;
   color: var(--text-dim);
-  background: rgba(255,255,255,0.06);
+  background: var(--glass-hover);
   padding: 2px 7px;
   letter-spacing: 0.05em;
 }
 
 .fc-add-folder-btn {
   background: none;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid var(--glass-border);
   color: var(--text-dim);
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
@@ -160,7 +160,7 @@
 }
 
 .fc-add-folder-btn:hover {
-  border-color: rgba(255,255,255,0.3);
+  border-color: var(--border-hover);
   color: var(--text);
 }
 
@@ -173,8 +173,8 @@
 
 .fc-folder-input {
   flex: 1;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.15);
+  background: var(--glass);
+  border: 1px solid var(--border-medium);
   color: var(--text);
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.8rem;
@@ -185,7 +185,7 @@
 }
 
 .fc-folder-input:focus {
-  border-color: rgba(255,255,255,0.35);
+  border-color: var(--border-hover);
 }
 
 .fc-folder-input::placeholder {
@@ -195,7 +195,7 @@
 
 .fc-folder-create-btn {
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid var(--border-strong);
   color: var(--text-dim);
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.7rem;
@@ -234,7 +234,7 @@
 }
 
 .fc-folder {
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid var(--border-faint);
   overflow: hidden;
 }
 
@@ -244,13 +244,13 @@
   justify-content: space-between;
   padding: 11px 14px;
   cursor: pointer;
-  background: rgba(255,255,255,0.02);
+  background: var(--glass);
   transition: background 0.15s;
   user-select: none;
 }
 
 .fc-folder-header:hover {
-  background: rgba(255,255,255,0.04);
+  background: var(--glass-hover);
 }
 
 .fc-folder-left {
@@ -279,7 +279,7 @@
 .fc-folder-count {
   font-size: 0.6rem;
   color: var(--text-dim);
-  background: rgba(255,255,255,0.06);
+  background: var(--glass-hover);
   padding: 1px 6px;
   letter-spacing: 0.05em;
 }
@@ -304,12 +304,12 @@
 }
 
 .fc-folder-delete:hover {
-  border-color: rgba(255,49,49,0.4);
+  border-color: var(--error-border);
   color: var(--incorrect);
 }
 
 .fc-folder-sets {
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid var(--border-faint);
   overflow: hidden;
 }
 
@@ -334,8 +334,8 @@
   justify-content: space-between;
   gap: 12px;
   padding: 11px 14px;
-  border: 1px solid rgba(255,255,255,0.04);
-  background: rgba(255,255,255,0.01);
+  border: 1px solid var(--border-faint);
+  background: var(--glass);
   transition: border-color 0.15s, background 0.15s;
 }
 
@@ -343,7 +343,7 @@
   border-left: none;
   border-right: none;
   border-top: none;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid var(--border-faint);
 }
 
 .fc-folder-sets .set-row:last-child {
@@ -351,8 +351,8 @@
 }
 
 .set-row:hover {
-  border-color: rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.03);
+  border-color: var(--glass-border);
+  background: var(--glass-hover);
 }
 
 .set-row-info {
@@ -387,7 +387,7 @@
 
 .set-btn {
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid var(--glass-border);
   color: var(--text-dim);
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.62rem;
@@ -420,7 +420,7 @@
 }
 
 .set-btn-move:hover {
-  border-color: rgba(255,255,255,0.3);
+  border-color: var(--border-hover);
   color: var(--text);
 }
 
@@ -431,15 +431,15 @@
 }
 
 .set-btn-delete:hover {
-  border-color: rgba(255,49,49,0.4);
+  border-color: var(--error-border);
   color: var(--incorrect);
 }
 
 /* Move dropdown */
 .move-dropdown {
   position: fixed;
-  background: #0f0f0f;
-  border: 1px solid rgba(255,255,255,0.15);
+  background: var(--surface-2);
+  border: 1px solid var(--border-medium);
   min-width: 160px;
   z-index: 9999;
   display: flex;
@@ -461,20 +461,20 @@
 }
 
 .move-option:hover {
-  background: rgba(255,255,255,0.05);
+  background: var(--glass-hover);
   color: var(--text);
 }
 
 /* Footer */
 .fc-footer {
   padding-top: 24px;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid var(--border-faint);
   margin-top: 24px;
 }
 
 .fc-back-btn {
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid var(--border);
   color: var(--text-dim);
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.7rem;

@@ -32,8 +32,8 @@
 }
 
 .mode-card--focused {
-  border-color: rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border-hover);
+  background: var(--glass-hover);
 }
 
 .mode-card--focused::before,
@@ -54,8 +54,8 @@
 }
 
 .mode-card {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
   padding: 32px 28px;
   display: flex;
   flex-direction: column;
@@ -92,8 +92,8 @@
 }
 
 .mode-card:hover {
-  border-color: rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border-hover);
+  background: var(--glass-hover);
 }
 
 .mode-card:hover::before,
@@ -111,8 +111,8 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.8rem;
   color: var(--accent);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--glass-hover);
+  border: 1px solid var(--border-medium);
   padding: 4px 10px;
   min-width: 32px;
   text-align: center;
@@ -128,8 +128,8 @@
 }
 
 .mode-card--recommended {
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 0 24px rgba(255, 255, 255, 0.05);
+  border-color: var(--border-accent);
+  box-shadow: 0 0 0 1px var(--glass-border), 0 0 24px var(--accent-glow);
 }
 
 .mode-card--recommended::before,

@@ -26,7 +26,7 @@
 /* Card */
 .results-card {
   background: var(--surface);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-strong);
   border-radius: 0;
   padding: 28px 36px;
   display: flex;
@@ -65,7 +65,7 @@
   transform: translateX(-50%);
   width: 55%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  background: linear-gradient(90deg, transparent, var(--border-hover), transparent);
 }
 
 /* Two-column body */
@@ -142,8 +142,8 @@
 }
 
 .stat-box {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
   border-radius: 0;
   padding: 10px 12px;
   display: flex;
@@ -153,18 +153,18 @@
 }
 
 .stat-box:hover {
-  border-color: rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border-hover);
+  background: var(--glass-hover);
 }
 
 .accent-box {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--glass-hover);
+  border-color: var(--border-strong);
 }
 
 .accent-box:hover {
-  border-color: rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--border-hover);
+  background: var(--glass-hover);
 }
 
 .sbox-val {
@@ -173,7 +173,7 @@
   font-weight: 700;
   color: var(--text);
   line-height: 1;
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+  text-shadow: 0 0 8px var(--accent-glow);
 }
 
 .accent-val {
@@ -198,7 +198,7 @@
 
 .btn-action {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--border-medium);
   color: var(--text-dim);
   font-size: 0.72rem;
   font-weight: 400;
@@ -214,7 +214,7 @@
 }
 
 .btn-action:hover {
-  border-color: rgba(255, 255, 255, 0.4);
+  border-color: var(--border-hover);
   color: var(--accent);
 }
 
@@ -225,7 +225,7 @@
 }
 
 .btn-action--primary:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--glass-hover);
   box-shadow: 0 0 24px var(--accent-glow);
 }
 
@@ -250,7 +250,7 @@
 }
 
 .results-right::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--scrollbar);
   border-radius: 0;
 }
 
@@ -278,22 +278,22 @@
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid var(--border-faint);
+  background: var(--glass);
   transition: background 0.15s;
 }
 
 .breakdown-row:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--glass-hover);
 }
 
 .breakdown-row--recall {
-  border-color: rgba(245, 158, 11, 0.25);
-  background: rgba(245, 158, 11, 0.03);
+  border-color: var(--warning-border);
+  background: var(--warning-tint);
 }
 
 .breakdown-row--recall:hover {
-  background: rgba(245, 158, 11, 0.06);
+  background: var(--warning-tint);
 }
 
 .breakdown-num {
@@ -325,7 +325,7 @@
 
 .breakdown-bar-wrap {
   height: 3px;
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--border-soft);
   overflow: hidden;
 }
 
@@ -337,7 +337,7 @@
 
 /* Vertical divider between columns */
 .results-right {
-  border-left: 1px solid rgba(255, 255, 255, 0.07);
+  border-left: 1px solid var(--border-soft);
   padding-left: 32px;
 }
 
@@ -370,20 +370,20 @@
   gap: 3px;
   padding: 8px 4px;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
   color: var(--text-dim);
   transition: all 0.18s;
 }
 
 .rdiff-btn:hover {
-  border-color: rgba(255, 255, 255, 0.3);
+  border-color: var(--border-hover);
   color: var(--text);
 }
 
 .rdiff-btn--active {
-  border-color: #f59e0b;
-  color: #f59e0b;
-  background: rgba(245, 158, 11, 0.06);
+  border-color: var(--warning);
+  color: var(--warning);
+  background: var(--warning-tint);
 }
 
 .rdiff-roman {
@@ -412,7 +412,7 @@
 
   .results-right {
     border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    border-top: 1px solid var(--border-soft);
     padding-left: 0;
     padding-top: 20px;
     max-height: none;

@@ -15,7 +15,7 @@
 .progress-track {
   width: 100%;
   height: 2px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--border-soft);
   flex-shrink: 0;
 }
 
@@ -31,7 +31,7 @@
   align-items: center;
   gap: 24px;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--border-medium);
   padding: 10px 28px;
   flex-shrink: 0;
   align-self: center;
@@ -47,7 +47,7 @@
 .stat-divider {
   width: 1px;
   height: 22px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--glass-border);
 }
 
 .stat-item {
@@ -93,8 +93,8 @@
 }
 
 .note-display--success .char {
-  color: rgba(52, 211, 153, 0.9) !important;
-  text-shadow: 0 0 8px rgba(52, 211, 153, 0.4) !important;
+  color: var(--success) !important;
+  text-shadow: 0 0 8px var(--success-tint) !important;
   background: transparent !important;
   transition: color 0.05s ease, text-shadow 0.05s ease;
 }
@@ -117,26 +117,26 @@
 }
 
 /* Character states */
-.char.pending  { color: rgba(255, 255, 255, 0.14); }
-.char.correct  { color: var(--correct); text-shadow: 0 0 6px rgba(255,255,255,0.3); }
-.char.incorrect { color: var(--incorrect); background: rgba(255,49,49,0.1); text-shadow: 0 0 6px rgba(255,49,49,0.4); }
-.char.cursor       { color: #000; background: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
-.char.cursor.wrong { background: var(--incorrect); box-shadow: 0 0 10px rgba(251, 113, 133, 0.4); }
-.char.encrypted { color: rgba(255, 255, 255, 0.18); user-select: none; }
+.char.pending  { color: var(--pending); }
+.char.correct  { color: var(--correct); text-shadow: 0 0 6px var(--accent-glow); }
+.char.incorrect { color: var(--incorrect); background: var(--error-tint); text-shadow: 0 0 6px var(--error-border); }
+.char.cursor       { color: var(--bg); background: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
+.char.cursor.wrong { background: var(--incorrect); box-shadow: 0 0 10px var(--error-border); }
+.char.encrypted { color: var(--pending); user-select: none; }
 
 /* Recall phase badge */
 .recall-badge {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.55rem;
   letter-spacing: 0.14em;
-  color: #f59e0b;
-  border: 1px solid #f59e0b44;
+  color: var(--warning);
+  border: 1px solid var(--warning-border);
   padding: 2px 7px;
   margin-right: 4px;
 }
 
 .stats-row--recall {
-  border-color: #f59e0b44;
+  border-color: var(--warning-border);
 }
 
 /* ─── Flashcard deck ─── */
@@ -153,8 +153,8 @@
 .flashcard-ghost {
   position: absolute;
   inset: 0;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid var(--border-faint);
+  background: var(--glass);
   pointer-events: none;
 }
 
@@ -186,8 +186,8 @@
 .flashcard-face {
   grid-area: 1 / 1;
   width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: #1c1c1e;
+  border: 1px solid var(--border-medium);
+  background: var(--card-face);
   padding: 32px 48px 40px;
   display: flex;
   flex-direction: column;
@@ -195,26 +195,26 @@
   cursor: text;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: var(--card-face-shadow);
 }
 
 /* Success flash — green border before flip */
 .flashcard-face--success {
-  border-color: rgba(52, 211, 153, 0.9) !important;
-  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.4), 0 0 24px rgba(52, 211, 153, 0.25), 0 4px 32px rgba(0, 0, 0, 0.35) !important;
+  border-color: var(--success-border) !important;
+  box-shadow: 0 0 0 1px var(--success-tint), 0 0 24px var(--success-tint), var(--card-face-shadow) !important;
   transition: border-color 0.05s ease, box-shadow 0.05s ease;
 }
 
 .flashcard-face--success .flashcard-corner {
-  border-color: rgba(52, 211, 153, 0.9) !important;
+  border-color: var(--success-border) !important;
 }
 
 /* Back face — RECALL (rotated 180deg, stacked in same grid cell) */
 .flashcard-face--back {
   transform: rotateY(180deg);
-  background: #1e1a12;
-  border-color: rgba(245, 158, 11, 0.22);
-  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(245, 158, 11, 0.07);
+  background: var(--card-face-back);
+  border-color: var(--warning-border);
+  box-shadow: var(--card-face-back-shadow);
 }
 
 .flashcard-corner {
@@ -224,8 +224,8 @@
   border-style: solid;
 }
 
-.flashcard-face--front .flashcard-corner { border-color: rgba(255, 255, 255, 0.28); }
-.flashcard-face--back  .flashcard-corner { border-color: rgba(245, 158, 11, 0.45); }
+.flashcard-face--front .flashcard-corner { border-color: var(--border-strong); }
+.flashcard-face--back  .flashcard-corner { border-color: var(--warning-border); }
 
 .fc-tl { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
 .fc-tr { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
@@ -242,12 +242,12 @@
 .flashcard-rule {
   width: 100%;
   height: 1px;
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--border-soft);
   flex-shrink: 0;
 }
 
 .flashcard-rule--recall {
-  background: rgba(245, 158, 11, 0.18);
+  background: var(--warning-border);
 }
 
 .flashcard-counter {
@@ -265,8 +265,8 @@
   text-transform: uppercase;
 }
 
-.phase-study { color: rgba(255, 255, 255, 0.25); }
-.phase-recall { color: #f59e0b; }
+.phase-study { color: var(--border-strong); }
+.phase-recall { color: var(--warning); }
 
 .flashcard-text {
   white-space: pre-wrap;
@@ -278,8 +278,8 @@
 .btn-forgot {
   align-self: flex-start;
   background: transparent;
-  border: 1px solid rgba(245, 158, 11, 0.2);
-  color: rgba(245, 158, 11, 0.55);
+  border: 1px solid var(--warning-border);
+  color: var(--warning);
   font-size: 0.65rem;
   font-family: 'JetBrains Mono', monospace;
   letter-spacing: 0.1em;
@@ -288,12 +288,14 @@
   transition: all 0.2s;
   cursor: pointer;
   margin-top: 4px;
+  opacity: 0.65;
 }
 
 .btn-forgot:hover {
-  border-color: rgba(245, 158, 11, 0.5);
-  color: #f59e0b;
-  background: rgba(245, 158, 11, 0.04);
+  border-color: var(--warning);
+  color: var(--warning);
+  background: var(--warning-tint);
+  opacity: 1;
 }
 
 .hidden-input {
@@ -323,7 +325,7 @@
 
 .btn-back {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--border-medium);
   color: var(--text-dim);
   font-size: 0.9rem;
   font-family: 'JetBrains Mono', monospace;
@@ -357,7 +359,7 @@
 }
 
 .btn-manual-advance:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--glass-hover);
   box-shadow: 0 0 24px var(--accent-glow);
 }
 
@@ -371,7 +373,7 @@
 
 .fc-diff-btn {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
   color: var(--text-dim);
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
@@ -383,12 +385,12 @@
 }
 
 .fc-diff-btn:hover {
-  border-color: rgba(255, 255, 255, 0.3);
+  border-color: var(--border-hover);
   color: var(--text);
 }
 
 .fc-diff-btn--active {
-  border-color: #f59e0b;
-  color: #f59e0b;
-  background: rgba(245, 158, 11, 0.06);
+  border-color: var(--warning);
+  color: var(--warning);
+  background: var(--warning-tint);
 }

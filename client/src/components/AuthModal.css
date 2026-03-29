@@ -1,7 +1,7 @@
 .auth-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: var(--overlay);
   backdrop-filter: blur(4px);
   z-index: 200;
   display: flex;
@@ -15,13 +15,13 @@
   z-index: 201;
   width: 100%;
   max-width: 420px;
-  background: #080808;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--surface);
+  border: 1px solid var(--border);
   padding: 32px;
   display: flex;
   flex-direction: column;
   gap: 24px;
-  box-shadow: 0 0 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255,255,255,0.04);
+  box-shadow: var(--panel-shadow);
 }
 
 /* Corner decorations */
@@ -54,7 +54,7 @@
 
 .auth-modal-close {
   background: none;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
   color: var(--text-dim);
   width: 26px;
   height: 26px;
@@ -80,8 +80,8 @@
 }
 
 .auth-oauth-btn {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
   color: var(--text-dim);
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.78rem;
@@ -97,9 +97,9 @@
 }
 
 .auth-oauth-btn:hover:not(:disabled) {
-  border-color: rgba(255, 255, 255, 0.3);
+  border-color: var(--border-hover);
   color: var(--text);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--glass-hover);
 }
 
 .auth-oauth-btn:disabled {
@@ -123,7 +123,7 @@
   content: '';
   flex: 1;
   height: 1px;
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--border-soft);
 }
 
 /* Form */
@@ -147,8 +147,8 @@
 }
 
 .auth-input {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
   color: var(--text);
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.85rem;
@@ -160,8 +160,8 @@
 }
 
 .auth-input:focus {
-  border-color: rgba(255, 255, 255, 0.35);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
+  border-color: var(--border-hover);
+  box-shadow: 0 0 0 1px var(--border-soft);
 }
 
 .auth-input::placeholder {
@@ -172,8 +172,8 @@
 .auth-error {
   font-size: 0.72rem;
   color: var(--incorrect);
-  background: rgba(255, 49, 49, 0.06);
-  border: 1px solid rgba(255, 49, 49, 0.2);
+  background: var(--error-tint);
+  border: 1px solid var(--error-border);
   padding: 8px 12px;
   letter-spacing: 0.03em;
 }
@@ -181,8 +181,8 @@
 .auth-message {
   font-size: 0.72rem;
   color: var(--text-dim);
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
   padding: 8px 12px;
   letter-spacing: 0.03em;
   line-height: 1.5;
@@ -205,7 +205,7 @@
 }
 
 .auth-submit:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--glass-hover);
   box-shadow: 0 0 20px var(--accent-glow);
 }
 
@@ -241,19 +241,20 @@
 
 .auth-legal {
   font-size: 0.6rem;
-  color: #444;
+  color: var(--text-dim);
   text-align: center;
   line-height: 1.6;
   letter-spacing: 0.03em;
   margin-top: 4px;
+  opacity: 0.7;
 }
 
 .auth-legal a {
-  color: #666;
+  color: var(--text-dim);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
 .auth-legal a:hover {
-  color: #aaa;
+  color: var(--text);
 }

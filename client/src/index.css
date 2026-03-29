@@ -4,27 +4,163 @@
   padding: 0;
 }
 
-:root {
-  --bg: #000000;
+:root,
+[data-theme="dark"] {
+  /* Page backgrounds */
+  --bg: #0d0d0d;
   --surface: #080808;
-  --surface2: #0f0f0f;
+  --surface-2: #0f0f0f;
+  --surface-3: #111111;
+  --surface2: #0f0f0f; /* legacy alias */
+
+  /* Overlays */
+  --overlay: rgba(0, 0, 0, 0.7);
+  --overlay-heavy: rgba(6, 6, 6, 0.96);
+
+  /* Glass fills */
   --glass: rgba(255, 255, 255, 0.02);
+  --glass-hover: rgba(255, 255, 255, 0.04);
+
+  /* Borders */
   --glass-border: rgba(255, 255, 255, 0.1);
-  --border-hover: rgba(255, 255, 255, 0.4);
-  --accent: #ffffff;
-  --accent-glow: rgba(255, 255, 255, 0.15);
-  --teal: #ffffff;
-  --teal-glow: rgba(255, 255, 255, 0.15);
-  --correct: #ffffff;
-  --incorrect: #ff4444;
-  --pending: #1c1c1c;
+  --border-faint: rgba(255, 255, 255, 0.05);
+  --border-soft: rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.12);
+  --border-medium: rgba(255, 255, 255, 0.15);
+  --border-strong: rgba(255, 255, 255, 0.2);
+  --border-hover: rgba(255, 255, 255, 0.35);
+  --border-accent: rgba(255, 255, 255, 0.5);
+
+  /* Text */
   --text: #ffffff;
   --text-dim: #444444;
+  --text-faint: rgba(255, 255, 255, 0.14);
+
+  /* Accent */
+  --accent: #ffffff;
+  --accent-glow: rgba(255, 255, 255, 0.15);
+
+  /* Teal (same as accent in this monochrome scheme) */
+  --teal: #ffffff;
+  --teal-glow: rgba(255, 255, 255, 0.15);
+
+  /* Semantic states */
+  --correct: #ffffff;
+  --incorrect: #ff4444;
+  --warning: #f59e0b;
+  --success: #34d399;
+
+  /* State tints */
+  --warning-tint: rgba(245, 158, 11, 0.05);
+  --warning-border: rgba(245, 158, 11, 0.28);
+  --success-tint: rgba(52, 211, 153, 0.08);
+  --success-border: rgba(52, 211, 153, 0.4);
+  --error-tint: rgba(255, 49, 49, 0.04);
+  --error-border: rgba(255, 49, 49, 0.2);
+
+  /* Shadows */
+  --panel-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+
+  /* Scrollbar */
+  --scrollbar: rgba(255, 255, 255, 0.1);
+
+  /* Flashcard faces */
+  --card-face: #1c1c1e;
+  --card-face-back: #1e1a12;
+  --card-face-shadow: 0 4px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --card-face-back-shadow: 0 4px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(245, 158, 11, 0.07);
+
+  /* Toggle */
+  --toggle-off: #333333;
+  --toggle-knob: #ffffff;
+  --toggle-active: rgba(52, 211, 153, 0.85);
+  --toggle-active-border: rgba(52, 211, 153, 0.6);
+  --toggle-active-glow: rgba(52, 211, 153, 0.3);
+
+  /* Misc */
+  --pending: rgba(255, 255, 255, 0.14);
+  --radius: 0px;
+}
+
+[data-theme="light"] {
+  /* Page backgrounds */
+  --bg: #f6f4ef;
+  --surface: #fffdf8;
+  --surface-2: #f2eee6;
+  --surface-3: #ebe5db;
+  --surface2: #f2eee6; /* legacy alias */
+
+  /* Overlays */
+  --overlay: rgba(245, 241, 233, 0.76);
+  --overlay-heavy: rgba(246, 244, 239, 0.96);
+
+  /* Glass fills */
+  --glass: rgba(17, 17, 17, 0.025);
+  --glass-hover: rgba(17, 17, 17, 0.04);
+
+  /* Borders */
+  --glass-border: rgba(17, 17, 17, 0.1);
+  --border-faint: rgba(17, 17, 17, 0.05);
+  --border-soft: rgba(17, 17, 17, 0.07);
+  --border: rgba(17, 17, 17, 0.12);
+  --border-medium: rgba(17, 17, 17, 0.15);
+  --border-strong: rgba(17, 17, 17, 0.2);
+  --border-hover: rgba(17, 17, 17, 0.3);
+  --border-accent: rgba(17, 17, 17, 0.4);
+
+  /* Text */
+  --text: #141414;
+  --text-dim: #6a655d;
+  --text-faint: rgba(20, 20, 20, 0.28);
+
+  /* Accent */
+  --accent: #141414;
+  --accent-glow: rgba(20, 20, 20, 0.12);
+
+  /* Teal */
+  --teal: #141414;
+  --teal-glow: rgba(20, 20, 20, 0.12);
+
+  /* Semantic states */
+  --correct: #141414;
+  --incorrect: #d63d3d;
+  --warning: #b7791f;
+  --success: #1f9d6a;
+
+  /* State tints */
+  --warning-tint: rgba(183, 121, 31, 0.07);
+  --warning-border: rgba(183, 121, 31, 0.28);
+  --success-tint: rgba(31, 157, 106, 0.08);
+  --success-border: rgba(31, 157, 106, 0.35);
+  --error-tint: rgba(214, 61, 61, 0.06);
+  --error-border: rgba(214, 61, 61, 0.22);
+
+  /* Shadows */
+  --panel-shadow: 0 10px 32px rgba(32, 24, 16, 0.12);
+
+  /* Scrollbar */
+  --scrollbar: rgba(20, 20, 20, 0.15);
+
+  /* Flashcard faces */
+  --card-face: #f5f0e8;
+  --card-face-back: #ede7d9;
+  --card-face-shadow: 0 4px 32px rgba(32, 24, 16, 0.08), inset 0 1px 0 rgba(17, 17, 17, 0.04);
+  --card-face-back-shadow: 0 4px 32px rgba(32, 24, 16, 0.08), inset 0 1px 0 rgba(183, 121, 31, 0.07);
+
+  /* Toggle */
+  --toggle-off: #ccc5bb;
+  --toggle-knob: #141414;
+  --toggle-active: rgba(31, 157, 106, 0.85);
+  --toggle-active-border: rgba(31, 157, 106, 0.6);
+  --toggle-active-glow: rgba(31, 157, 106, 0.3);
+
+  /* Misc */
+  --pending: rgba(20, 20, 20, 0.28);
   --radius: 0px;
 }
 
 body {
-  background: #0d0d0d;
+  background: var(--bg);
   color: var(--text);
   font-family: 'JetBrains Mono', 'Courier New', monospace;
   height: 100vh;
@@ -50,4 +186,4 @@ button {
 
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--text-dim); }
+::-webkit-scrollbar-thumb { background: var(--scrollbar); }

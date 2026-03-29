@@ -348,3 +348,440 @@ If the next task is implementation, follow this order:
 6. Test desktop and mobile
 7. Adjust timing to avoid overlap with existing page transitions
 
+## Light Mode Goal
+
+Create a light mode for this app that preserves the exact same product identity as the current dark mode.
+
+Non-negotiable requirement:
+
+- dark mode must remain visually unchanged
+- light mode must keep the same layout, spacing, typography, motion, borders, shadows, and component structure
+- the only intended difference is color treatment
+- the logo must not be recolored or restyled
+
+For this project, "looks the same" means:
+
+- same composition
+- same hierarchy
+- same rhythm
+- same interaction states
+- same animation timing
+- same component density
+
+The light mode is not a redesign. It is a palette translation.
+
+## Core Rule
+
+Do not edit the dark mode design directly.
+
+Instead:
+
+1. Preserve the current dark values as the `dark` theme source of truth.
+2. Introduce a parallel `light` theme using semantic CSS variables.
+3. Migrate hardcoded dark colors to variables.
+4. Switch theme by changing tokens, not by changing component geometry.
+
+If a style change affects shape, spacing, sizing, animation, or logo appearance, it is the wrong change.
+
+## Best Approach For This Repo
+
+This codebase already has a partial token layer in `client/src/index.css`, but many component CSS files still contain hardcoded dark colors like:
+
+- `#000`
+- `#080808`
+- `#111`
+- `rgba(255, 255, 255, ...)`
+- fixed amber / green / red literals
+
+Because of that, the correct implementation is:
+
+- centralize theme tokens in `client/src/index.css`
+- attach the theme at the document or app root using `data-theme`
+- replace hardcoded component colors with semantic variables
+
+Do not:
+
+- use CSS `filter: invert()`
+- create a second copy of every stylesheet
+- fork components just for theme
+- patch only the obvious screens and leave dialogs/tests/history inconsistent
+
+## Files That Should Drive The Theme
+
+Primary files:
+
+- `client/src/index.css`
+- `client/src/App.jsx`
+- `client/src/components/SettingsModal.jsx`
+
+Component CSS files that likely need token cleanup:
+
+- `client/src/App.css`
+- `client/src/components/AuthModal.css`
+- `client/src/components/Upload.css`
+- `client/src/components/Typer.css`
+- `client/src/components/SpeedTyper.css`
+- `client/src/components/Results.css`
+- `client/src/components/GameMode.css`
+- `client/src/components/FlashcardsPage.css`
+- `client/src/components/HistoryPanel.css`
+- `client/src/components/FlashcardTest.css`
+- `client/src/components/SettingsModal.css`
+- `client/src/components/RecallTransition.css`
+- `client/src/components/IntroOverlay.css` if the intro remains part of the product flow
+
+## Theme Architecture
+
+Use one theme attribute at the root:
+
+- `document.documentElement.dataset.theme = 'dark'`
+- `document.documentElement.dataset.theme = 'light'`
+
+Recommended source of truth:
+
+- store the selected theme in React state in `client/src/App.jsx`
+- persist it in `localStorage`, for example `cl_theme`
+- sync the root `data-theme` attribute in an effect
+
+Recommended state shape:
+
+- `theme`
+- `setTheme`
+
+Recommended default:
+
+- default to `dark`
+- restore from `localStorage` if present
+
+This keeps dark mode unchanged while allowing light mode to be introduced cleanly.
+
+## Required Token Strategy
+
+You need semantic variables, not one-off hex swaps.
+
+Keep existing dark-mode values as the `dark` token set, then define a `light` token set with the same semantic names.
+
+At minimum, define tokens for:
+
+- page background
+- primary surface
+- secondary surface
+- glass background
+- glass border
+- regular border
+- hover border
+- primary text
+- muted text
+- accent
+- accent glow
+- correct state
+- incorrect state
+- warning
+- warning background
+- success glow
+- scrollbar thumb
+- panel shadow
+- overlay background
+- subtle highlight lines
+- disabled text
+- pending text
+
+Do not rely only on:
+
+- `--bg`
+- `--surface`
+- `--text`
+- `--accent`
+
+That is not enough for this app because many UI states depend on alpha-treated borders, panel depth, and status colors.
+
+## Recommended Token Shape
+
+Use a structure like this in `client/src/index.css`:
+
+```css
+:root,
+[data-theme="dark"] {
+  --bg: #000000;
+  --surface: #080808;
+  --surface-2: #0f0f0f;
+  --surface-3: #111111;
+  --overlay: rgba(0, 0, 0, 0.7);
+  --glass: rgba(255, 255, 255, 0.02);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --border-soft: rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.2);
+  --border-hover: rgba(255, 255, 255, 0.35);
+  --text: #ffffff;
+  --text-dim: #444444;
+  --text-faint: rgba(255, 255, 255, 0.18);
+  --accent: #ffffff;
+  --accent-glow: rgba(255, 255, 255, 0.15);
+  --correct: #ffffff;
+  --incorrect: #ff4444;
+  --warning: #f59e0b;
+  --success: #34d399;
+  --panel-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="light"] {
+  --bg: #f6f4ef;
+  --surface: #fffdf8;
+  --surface-2: #f2eee6;
+  --surface-3: #ebe5db;
+  --overlay: rgba(245, 241, 233, 0.76);
+  --glass: rgba(17, 17, 17, 0.025);
+  --glass-border: rgba(17, 17, 17, 0.08);
+  --border-soft: rgba(17, 17, 17, 0.06);
+  --border: rgba(17, 17, 17, 0.12);
+  --border-strong: rgba(17, 17, 17, 0.18);
+  --border-hover: rgba(17, 17, 17, 0.28);
+  --text: #141414;
+  --text-dim: #6a655d;
+  --text-faint: rgba(20, 20, 20, 0.28);
+  --accent: #141414;
+  --accent-glow: rgba(20, 20, 20, 0.12);
+  --correct: #141414;
+  --incorrect: #d63d3d;
+  --warning: #b7791f;
+  --success: #1f9d6a;
+  --panel-shadow: 0 10px 32px rgba(32, 24, 16, 0.12);
+}
+```
+
+The exact light palette can change, but the intent should remain:
+
+- warm paper background
+- dark ink foreground
+- restrained glow
+- same contrast logic as dark mode
+
+## Logo Rule
+
+The logo must remain unchanged across themes.
+
+For this repo, treat both of these as part of the logo:
+
+- the image mark
+- the `Clickylearner` wordmark
+
+That means:
+
+- do not recolor `client/public/logo.png`
+- do not remap the logo text to the light theme accent if that changes its appearance
+- keep the current logo styling visually identical in both themes
+
+If needed, hard-pin logo styling to the current dark-mode visual values rather than theme variables.
+
+This is the one deliberate exception to the palette swap.
+
+## Implementation Rules
+
+When implementing light mode:
+
+1. Add theme state in `client/src/App.jsx`.
+2. Persist it in `localStorage`.
+3. Apply a root `data-theme` attribute.
+4. Add a theme toggle in `client/src/components/SettingsModal.jsx`.
+5. Move all reusable color decisions into semantic variables.
+6. Replace hardcoded dark values in component CSS with theme tokens.
+7. Leave all non-color styling alone.
+
+The toggle belongs in settings, not as a floating redesign element.
+
+## How To Replace Existing Colors
+
+When you find this pattern:
+
+- `background: #080808`
+- `border: 1px solid rgba(255,255,255,0.12)`
+- `color: #fff`
+
+Do not directly invent new per-file light values.
+
+Instead:
+
+1. create or choose a semantic token
+2. map the current dark value to the dark token
+3. define the light counterpart once
+4. replace the component style with the token
+
+Example:
+
+```css
+background: var(--surface);
+border: 1px solid var(--border);
+color: var(--text);
+```
+
+That is the correct migration path.
+
+## Status Colors
+
+Some colors are semantic and should remain semantically consistent across themes:
+
+- success
+- error
+- warning
+- score grades
+- quiz right/wrong states
+- flashcard recall emphasis
+
+Do not blindly invert them.
+
+Instead:
+
+- keep the same hue family
+- slightly tune depth and alpha for the light background
+- preserve visual priority relative to the surrounding UI
+
+For example:
+
+- red stays red, but the background wash and border alpha should be lighter and cleaner in light mode
+- amber stays amber, but must not overpower the page
+- green success glows should be reduced so they do not bloom too hard on a pale surface
+
+## Light Mode Must Mirror Dark Mode
+
+These things must stay identical between themes:
+
+- spacing
+- sizing
+- border thickness
+- shape language
+- hover behavior
+- focus behavior
+- animation durations
+- page flow
+- component hierarchy
+- copy
+
+Only these things should change:
+
+- background colors
+- surface colors
+- border colors
+- text colors
+- glow values
+- alpha overlays
+- status color tuning
+
+## Settings Integration
+
+Add a setting for theme selection in `client/src/components/SettingsModal.jsx`.
+
+Preferred UX:
+
+- `Theme`
+- options: `Dark` and `Light`
+
+Implementation expectations:
+
+- theme change should be instant
+- selection should persist
+- dark remains default
+
+Do not:
+
+- hide the toggle somewhere unrelated
+- create a separate page for theme
+- require reload
+
+## Important Constraint For This App
+
+This app uses a very high amount of monochrome borders, transparent fills, and glow-based emphasis.
+
+That means light mode will fail if you only switch:
+
+- page background
+- text color
+- accent color
+
+You must also retune:
+
+- all `rgba(255,255,255,...)` borders
+- all near-black panel backgrounds
+- all shadows designed for black surfaces
+- all faint pending text colors
+- all overlay backdrops
+
+Without that, light mode will look washed out, too faint, or visually broken.
+
+## Suggested Light Palette Direction
+
+Do not build a pure white clinical theme.
+
+Better direction for this app:
+
+- paper-like background
+- soft ivory surfaces
+- charcoal text
+- subtle graphite borders
+- warm gray secondary text
+
+This preserves the editorial / terminal-like feel of the current UI much better than flat white.
+
+## Testing Checklist
+
+A light mode implementation is not finished until all of these are checked:
+
+- `GameMode`
+- `Upload`
+- `Typer`
+- `SpeedTyper`
+- `Results`
+- `FlashcardTest`
+- `FlashcardsPage`
+- `HistoryPanel`
+- `AuthModal`
+- `SettingsModal`
+- intro overlay if still active
+
+Check each for:
+
+- default state
+- hover state
+- active state
+- disabled state
+- error state
+- success state
+- mobile layout
+
+## Acceptance Criteria
+
+The light mode is complete when:
+
+- dark mode looks exactly as it did before
+- light mode keeps the same design language and layout
+- the logo is unchanged in both themes
+- all major screens and modals are themed consistently
+- there are no stray hardcoded dark backgrounds in light mode
+- there are no unreadable low-contrast text areas
+- theme choice persists across reloads
+
+## What Not To Do For Light Mode
+
+Do not:
+
+- redesign the app
+- swap fonts
+- soften or round the UI differently
+- restyle the logo
+- rely on automatic inversion
+- create a separate light-only component tree
+- leave component-level hardcoded dark colors in place
+- change dark mode values while introducing light mode
+
+## If Asked To Implement Light Mode
+
+Follow this order:
+
+1. Add theme state and persistence in `client/src/App.jsx`.
+2. Apply `data-theme` at the root.
+3. Expand `client/src/index.css` into full dark and light token sets.
+4. Add the theme control to `client/src/components/SettingsModal.jsx`.
+5. Convert shared app-level styles in `client/src/App.css`.
+6. Convert component CSS files from hardcoded colors to tokens.
+7. Lock the logo styling so it remains unchanged across themes.
+8. Test every mode and modal in both themes.
