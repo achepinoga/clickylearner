@@ -175,6 +175,7 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
     return () => document.removeEventListener('click', refocus)
   }, []);
 
+
   // Accumulate paused time so WPM excludes transition delays
   useEffect(() => {
     const isPaused = isFalling || isTransitioning || isCompleting
@@ -393,6 +394,20 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
       }
     }
   }, [cardPhase, currentNoteIndex, notes.length, completedChars, fullText, startTime, errors, onFinished, resetNote])
+
+  // Allow Enter to flip/advance card regardless of which element has focus
+  useEffect(() => {
+    if (!awaitingFlip) return
+    const handler = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        playClick()
+        doManualAdvance()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [awaitingFlip, doManualAdvance])
 
   const handleForgot = useCallback(() => {
     inputRef.current?.focus()
