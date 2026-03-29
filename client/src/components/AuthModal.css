@@ -238,3 +238,22 @@
 .auth-toggle button:hover {
   opacity: 0.75;
 }
+
+.auth-legal {
+  font-size: 0.6rem;
+  color: #444;
+  text-align: center;
+  line-height: 1.6;
+  letter-spacing: 0.03em;
+  margin-top: 4px;
+}
+
+.auth-legal a {
+  color: #666;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.auth-legal a:hover {
+  color: #aaa;
+}

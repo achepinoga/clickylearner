@@ -19,12 +19,13 @@ export default function AuthModal({ isOpen, onClose }) {
   const [mode, setMode] = useState('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [oauthLoading, setOauthLoading] = useState('')
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
 
-  const reset = () => { setError(''); setMessage('') }
+  const reset = () => { setError(''); setMessage(''); setConfirmPassword('') }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -36,6 +37,7 @@ export default function AuthModal({ isOpen, onClose }) {
         if (error) throw error
         onClose()
       } else {
+        if (password !== confirmPassword) throw new Error('Passwords do not match')
         const { error } = await supabase.auth.signUp({ email, password })
         if (error) throw error
         setMessage('Check your email to confirm your account, then sign in.')
@@ -128,6 +130,21 @@ export default function AuthModal({ isOpen, onClose }) {
                   autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
                 />
               </div>
+              {mode === 'signup' && (
+                <div className="auth-field">
+                  <label className="auth-label">// CONFIRM PASSWORD</label>
+                  <input
+                    className="auth-input"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    minLength={6}
+                    autoComplete="new-password"
+                  />
+                </div>
+              )}
 
               <AnimatePresence mode="wait">
                 {error && (
@@ -145,8 +162,16 @@ export default function AuthModal({ isOpen, onClose }) {
               </AnimatePresence>
 
               <button className="auth-submit" type="submit" disabled={loading || !!oauthLoading}>
-                {loading ? '...' : mode === 'signin' ? 'Sign In →' : 'Create Account →'}
+                {loading ? '...' : mode === 'signin' ? 'Sign In →' : 'Continue →'}
               </button>
+              {mode === 'signup' && (
+                <p className="auth-legal">
+                  By clicking 'Continue', you agree to our{' '}
+                  <a href="/terms.html" target="_blank" rel="noopener noreferrer">Terms of Service</a>{' '}
+                  and{' '}
+                  <a href="/privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
+                </p>
+              )}
             </form>
 
             <p className="auth-toggle">
