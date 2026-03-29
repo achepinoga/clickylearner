@@ -149,7 +149,8 @@ export default function App() {
 
   const stageLabels = gameMode === 'flashcards' ? STAGE_LABELS_FLASHCARDS : STAGE_LABELS_DEFAULT
   const stageKeys   = gameMode === 'flashcards' ? STAGE_KEYS_FLASHCARDS   : STAGE_KEYS_DEFAULT
-  const currentStageIndex = stageKeys.indexOf(stage)
+  const navStage = (gameMode === 'flashcards' && stage === STAGES.UPLOAD) ? STAGES.FLASHCARDS : stage
+  const currentStageIndex = stageKeys.indexOf(navStage)
 
   const chunkNotes = (incoming) => {
     const MAX_CHARS = 240
