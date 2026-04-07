@@ -20,10 +20,10 @@ const allowedOrigins = process.env.NODE_ENV === 'production'
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json({ limit: '50mb' }));
 
-const AI_MAX = 20
+const AI_MAX = 25
 const UPLOAD_MAX = 10
-const AI_WINDOW = 60 * 60 * 1000    // 1 hour
-const UPLOAD_WINDOW = 15 * 60 * 1000 // 15 minutes
+const AI_WINDOW = 24 * 60 * 60 * 1000 // 24 hours
+const UPLOAD_WINDOW = 15 * 60 * 1000   // 15 minutes
 
 // Parallel hit tracker — mirrors express-rate-limit windows without touching its internals.
 // Increments on every inbound request to a tracked route (same as the rate limiter does).
@@ -71,7 +71,7 @@ const aiLimiter = rateLimit({
   max: AI_MAX,
   handler: (req, res) => {
     res.status(429).json({
-      error: 'Too many requests. Please wait an hour and try again.',
+      error: 'Daily AI limit reached. Please try again tomorrow.',
       resetTime: req.rateLimit.resetTime,
     })
   },
@@ -101,8 +101,15 @@ app.get('/api/limits', (req, res) => {
 })
 
 app.use('/api/upload',
-  (req, res, next) => { uploadTracker.increment(req.ip ?? ''); next() },
-  uploadLimiter,
+  (req, res, next) => {
+    if (req.query.mode === 'standard') return next()
+    uploadTracker.increment(req.ip ?? '')
+    next()
+  },
+  (req, res, next) => {
+    if (req.query.mode === 'standard') return next()
+    uploadLimiter(req, res, next)
+  },
   uploadRoute,
 )
 app.use('/api/notes',

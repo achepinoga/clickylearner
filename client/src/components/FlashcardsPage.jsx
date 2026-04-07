@@ -27,7 +27,7 @@ function FolderIcon({ open }) {
   )
 }
 
-function SetRow({ set, folders, onStudy, onDelete, onMove }) {
+function SetRow({ set, folders, onStudy, onTest, onDelete, onMove }) {
   const [showMove, setShowMove] = useState(false)
   const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 })
   const btnRef = useRef()
@@ -64,6 +64,9 @@ function SetRow({ set, folders, onStudy, onDelete, onMove }) {
       <div className="set-row-actions">
         <button className="set-btn set-btn-study" onClick={() => { playClick(); onStudy(set) }}>
           Study →
+        </button>
+        <button className="set-btn set-btn-test" onClick={() => { playClick(); onTest(set) }} title="Generate a quiz on this set (uses 1 AI action)">
+          Test
         </button>
         {folders.length > 0 && (
           <>
@@ -108,7 +111,7 @@ function SetRow({ set, folders, onStudy, onDelete, onMove }) {
   )
 }
 
-export default function FlashcardsPage({ user, onNewFile, onStudySet, onBack, onSignIn }) {
+export default function FlashcardsPage({ user, onNewFile, onStudySet, onTestSet, onBack, onSignIn }) {
   const [folders, setFolders] = useState([])
   const [sets, setSets] = useState([])
   const [loading, setLoading] = useState(false)
@@ -298,6 +301,7 @@ export default function FlashcardsPage({ user, onNewFile, onStudySet, onBack, on
                                   set={set}
                                   folders={folders}
                                   onStudy={onStudySet}
+                                  onTest={onTestSet}
                                   onDelete={deleteSet}
                                   onMove={moveSet}
                                 />
@@ -326,6 +330,7 @@ export default function FlashcardsPage({ user, onNewFile, onStudySet, onBack, on
                       set={set}
                       folders={folders}
                       onStudy={onStudySet}
+                      onTest={onTestSet}
                       onDelete={deleteSet}
                       onMove={moveSet}
                     />

@@ -105,8 +105,14 @@ export default function App() {
   const [continueError, setContinueError] = useState('')
   const currentDocTitleRef = useRef('')
   const settingsInitialized = useRef(false)
-  const [limits, setLimits] = useState({ ai: { limit: 20, used: 0, remaining: 20, resetTime: null }, upload: { limit: 10, used: 0, remaining: 10, resetTime: null } })
+  const [limits, setLimits] = useState({ ai: { limit: 25, used: 0, remaining: 25, resetTime: null }, upload: { limit: 10, used: 0, remaining: 10, resetTime: null } })
   const [rateLimitError, setRateLimitError] = useState(null)
+  const [aiBreakdown, setAiBreakdown] = useState({ notes: 0, quiz: 0 })
+  const [showLimitBreakdown, setShowLimitBreakdown] = useState(false)
+  const [badgePos, setBadgePos] = useState({ top: 0, right: 0 })
+  const [testBackStage, setTestBackStage] = useState(STAGES.RESULTS)
+  const [aiCountdown, setAiCountdown] = useState('')
+  const badgeRef = useRef(null)
 
   const notes = useMemo(
     () => settings.punctuation ? rawNotes : rawNotes.map(stripPunctuation),
@@ -122,14 +128,23 @@ export default function App() {
   }, [])
 
   const handleApiUsed = (type) => {
+    const bucket = (type === 'ai-notes' || type === 'ai-quiz') ? 'ai' : type
     setLimits(prev => {
-      const bucket = prev[type]
-      const used = Math.min(bucket.limit, bucket.used + 1)
-      return { ...prev, [type]: { ...bucket, used, remaining: Math.max(0, bucket.limit - used) } }
+      const b = prev[bucket]
+      const used = Math.min(b.limit, b.used + 1)
+      return { ...prev, [bucket]: { ...b, used, remaining: Math.max(0, b.limit - used) } }
     })
+    if (type === 'ai-notes') setAiBreakdown(prev => ({ ...prev, notes: prev.notes + 1 }))
+    if (type === 'ai-quiz') setAiBreakdown(prev => ({ ...prev, quiz: prev.quiz + 1 }))
   }
 
   const handleRateLimit = (type, resetTime) => setRateLimitError({ type, resetTime })
+
+  const handleTestSet = (set) => {
+    setRawNotes(set.notes)
+    setTestBackStage(STAGES.FLASHCARDS)
+    setStage(STAGES.TEST)
+  }
 
   // Auth state listener
   useEffect(() => {
@@ -148,6 +163,28 @@ export default function App() {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [showMenu])
+
+  useEffect(() => {
+    if (!showLimitBreakdown) return
+    const handler = (e) => { if (badgeRef.current && !badgeRef.current.contains(e.target)) setShowLimitBreakdown(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showLimitBreakdown])
+
+  // Countdown ticker for exhausted AI badge
+  useEffect(() => {
+    if (limits.ai.remaining > 0 || !limits.ai.resetTime) { setAiCountdown(''); return }
+    const fmt = (ms) => {
+      if (ms <= 0) return ''
+      const s = Math.ceil(ms / 1000)
+      const m = Math.floor(s / 60)
+      return `${m}:${String(s % 60).padStart(2, '0')}`
+    }
+    const tick = () => setAiCountdown(fmt(new Date(limits.ai.resetTime) - Date.now()))
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [limits.ai.remaining, limits.ai.resetTime])
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -245,7 +282,7 @@ export default function App() {
       const data = await res.json()
       if (res.status === 429) { handleRateLimit('ai', data.resetTime); return }
       if (!res.ok) throw new Error(data.error || 'Failed to generate notes')
-      handleApiUsed('ai')
+      handleApiUsed('ai-notes')
       // Clear remaining_text from old set in Supabase
       if (user && currentSetIdRef.current) {
         await supabase.from('flashcard_sets').update({ remaining_text: null }).eq('id', currentSetIdRef.current)
@@ -315,7 +352,7 @@ export default function App() {
     setStage(STAGES.UPLOAD)
   }
 
-  const handleTest = () => setStage(STAGES.TEST)
+  const handleTest = () => { setTestBackStage(STAGES.RESULTS); setStage(STAGES.TEST) }
 
   const handleReplaySet = (notes) => {
     setRawNotes(notes)
@@ -400,9 +437,23 @@ export default function App() {
             </nav>
 
             <div className="header-right">
-              <div className="limit-badge" title={`${limits.ai.remaining} AI actions left this hour`}>
-                <span className="limit-badge-val">{limits.ai.remaining}/{limits.ai.limit}</span>
-                <span className="limit-badge-label">ai</span>
+              <div className="limit-badge-wrap" ref={badgeRef}>
+                <button
+                  className={`limit-badge${limits.ai.remaining === 0 ? ' limit-badge--exhausted' : ''}`}
+                  onClick={() => {
+                    if (badgeRef.current) {
+                      const r = badgeRef.current.getBoundingClientRect()
+                      setBadgePos({ top: r.bottom + 8, right: window.innerWidth - r.right })
+                    }
+                    setShowLimitBreakdown(v => !v)
+                  }}
+                  title="AI usage breakdown"
+                >
+                  {limits.ai.remaining === 0 && aiCountdown
+                    ? <><span className="limit-badge-val">{aiCountdown}</span><span className="limit-badge-label">reset</span></>
+                    : <><span className="limit-badge-val">{limits.ai.remaining}/{limits.ai.limit}</span><span className="limit-badge-label">ai</span></>
+                  }
+                </button>
               </div>
               <button className="btn-settings" aria-label="Settings" onClick={() => { playToggle(); setShowSettings(true) }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -432,6 +483,7 @@ export default function App() {
                     setTypingKey(k => k + 1)
                     setStage(STAGES.TYPING)
                   }}
+                  onTestSet={handleTestSet}
                   onBack={handleRestart}
                   onSignIn={() => setShowAuth(true)}
                 />
@@ -447,7 +499,7 @@ export default function App() {
                   onBack={() => gameMode === 'flashcards' ? setStage(STAGES.FLASHCARDS) : handleRestart()}
                   onRateLimit={handleRateLimit}
                   onApiUsed={handleApiUsed}
-                  uploadLimits={limits.upload}
+                  uploadLimits={limits.ai}
                 />
               </motion.div>
             )}
@@ -466,7 +518,7 @@ export default function App() {
             )}
             {stage === STAGES.TEST && (
               <motion.div key="test" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden auto' }}>
-                <FlashcardTest notes={notes} onBack={() => setStage(STAGES.RESULTS)} settings={settings} onRateLimit={handleRateLimit} onApiUsed={handleApiUsed} />
+                <FlashcardTest notes={notes} onBack={() => setStage(testBackStage)} settings={settings} onRateLimit={handleRateLimit} onApiUsed={handleApiUsed} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -509,6 +561,41 @@ export default function App() {
           }}
         />
       )}
+
+      <AnimatePresence>
+        {showLimitBreakdown && (
+          <motion.div
+            className="limit-breakdown"
+            style={{ top: badgePos.top, right: badgePos.right }}
+            initial={{ opacity: 0, y: -6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.97 }}
+            transition={{ duration: 0.15 }}
+          >
+            <div className="limit-breakdown-title">This hour</div>
+            <div className="limit-breakdown-row">
+              <span>Used</span>
+              <span>{limits.ai.used}/{limits.ai.limit}</span>
+            </div>
+            {limits.ai.remaining === 0 && aiCountdown && (
+              <div className="limit-breakdown-row limit-breakdown-row--warn">
+                <span>Resets in</span>
+                <span>{aiCountdown}</span>
+              </div>
+            )}
+            <div className="limit-breakdown-divider" />
+            <div className="limit-breakdown-title">This session</div>
+            <div className="limit-breakdown-row">
+              <span>Flashcards</span>
+              <span>{aiBreakdown.notes}</span>
+            </div>
+            <div className="limit-breakdown-row">
+              <span>Tests</span>
+              <span>{aiBreakdown.quiz}</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <RateLimitToast error={rateLimitError} onDismiss={() => setRateLimitError(null)} />
     </>

@@ -42,7 +42,11 @@ export default function FlashcardTest({ notes, onBack, settings, onRateLimit, on
   const q = questions[qIdx]
   const penaltyText = q ? (notes[q.sourceNoteIndex] ?? notes[0] ?? '') : ''
 
-  useEffect(() => { fetchQuiz() }, [])
+  useEffect(() => {
+    const controller = new AbortController()
+    fetchQuiz(controller.signal)
+    return () => controller.abort()
+  }, [])
 
   // Re-focus penalty input whenever a click happens anywhere during penalty phase
   useEffect(() => {
@@ -52,12 +56,13 @@ export default function FlashcardTest({ notes, onBack, settings, onRateLimit, on
     return () => document.removeEventListener('click', refocus)
   }, [phase])
 
-  async function fetchQuiz() {
+  async function fetchQuiz(signal) {
     try {
       const res = await fetch(`${API_BASE}/api/quiz/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notes }),
+        signal,
       })
       const data = await res.json()
       if (res.status === 429) {
@@ -67,12 +72,13 @@ export default function FlashcardTest({ notes, onBack, settings, onRateLimit, on
         return
       }
       if (!res.ok) throw new Error(data.error || 'Failed to generate quiz')
-      onApiUsed?.('ai')
+      onApiUsed?.('ai-quiz')
       setQuestions(data.questions)
       questionsRef.current = data.questions
       setTotalQuestions(data.questions.length)
       setPhase('question')
     } catch (err) {
+      if (err.name === 'AbortError') return
       setLoadError(err.message)
       setPhase('error')
     }

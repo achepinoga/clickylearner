@@ -122,7 +122,7 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
       const formData = new FormData()
       formData.append('file', file)
 
-      const uploadRes = await fetch(`${API_BASE}/api/upload`, { method: 'POST', body: formData })
+      const uploadRes = await fetch(`${API_BASE}/api/upload?mode=${gameMode}`, { method: 'POST', body: formData })
       if (!uploadRes.ok) {
         if (uploadRes.status === 413) {
           throw new Error('File too large for the server to process. Please use a file under 4 MB.')
@@ -135,10 +135,9 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
         }
         throw new Error(`Upload failed (${uploadRes.status})`)
       }
-      onApiUsed?.('upload')
       const uploadData = await uploadRes.json()
 
-      // Standard mode: skip AI, split raw text directly
+      // Standard mode: skip AI, split raw text directly — no upload slot consumed
       if (gameMode === 'standard') {
         localStorage.removeItem('cl_continuation')
         setContinuation(null)
@@ -155,7 +154,9 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
       const notesData = await notesRes.json()
       if (notesRes.status === 429) { onRateLimit?.('ai', notesData.resetTime); setStatus('idle'); return }
       if (!notesRes.ok) throw new Error(notesData.error || 'Failed to generate notes')
-      onApiUsed?.('ai')
+      // Both counters update together after successful AI generation
+      onApiUsed?.('upload')
+      onApiUsed?.('ai-notes')
 
       if (notesData.truncated) {
         // Flashcard mode: skip warning, pass remaining text to parent for post-session continuation
@@ -186,7 +187,7 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
       const notesData = await notesRes.json()
       if (notesRes.status === 429) { onRateLimit?.('ai', notesData.resetTime); setStatus('idle'); return }
       if (!notesRes.ok) throw new Error(notesData.error || 'Failed to generate notes')
-      onApiUsed?.('ai')
+      onApiUsed?.('ai-notes')
 
       if (notesData.truncated) {
         const cont = {
@@ -233,7 +234,7 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
         </motion.button>
       )}
       <div className="upload-eyebrow">Step 1 — Upload your material</div>
-      {uploadLimits && (
+      {uploadLimits && gameMode !== 'standard' && (
         <div className="upload-limit-hint">
           {uploadLimits.remaining}/{uploadLimits.limit} uploads remaining
         </div>

@@ -32,7 +32,7 @@ export default function RateLimitToast({ error, onDismiss }) {
 
   const isUpload = error?.type === 'upload'
   const title = isUpload ? 'Upload limit reached' : 'AI limit reached'
-  const windowHint = isUpload ? '15 minutes' : '1 hour'
+  const windowHint = isUpload ? '15 minutes' : '24 hours'
 
   return (
     <AnimatePresence>
