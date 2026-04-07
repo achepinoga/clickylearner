@@ -430,6 +430,7 @@ export default function App() {
                       <>
                         <span className="dropdown-email">{user.email}</span>
                         <div className="dropdown-divider" />
+                        <button className="dropdown-item" onClick={() => { playClick(); setShowMenu(false); setShowHistory(true) }}>History</button>
                         <button className="dropdown-item dropdown-item--danger" onClick={() => { playBack(); setShowMenu(false); handleSignOut() }}>Sign Out</button>
                       </>
                     ) : (
