@@ -29,7 +29,7 @@
   background-image:
     linear-gradient(var(--border-faint) 1px, transparent 1px),
     linear-gradient(90deg, var(--border-faint) 1px, transparent 1px);
-  background-size: 48px 48px;
+  background-size: 3rem 3rem;
   pointer-events: none;
   mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
 }
@@ -39,20 +39,20 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 1rem;
   position: relative;
   z-index: 1;
-  padding: 0 24px;
+  padding: 0 1.5rem;
 }
 
 /* Logo image */
 .intro-logo {
-  margin-bottom: 4px;
+  margin-bottom: 0.25rem;
 }
 
 .intro-logo-img {
-  width: 56px;
-  height: 56px;
+  width: 3.5rem;
+  height: 3.5rem;
   object-fit: contain;
   filter: drop-shadow(0 0 16px var(--accent-glow));
 }
@@ -74,7 +74,7 @@
 /* Accent line beneath wordmark */
 .intro-line {
   width: 100%;
-  max-width: 320px;
+  max-width: clamp(14rem, 30vw, 20rem);
   height: 1px;
   background: linear-gradient(
     90deg,
@@ -97,7 +97,7 @@
 
 /* Prompt */
 .intro-prompt {
-  margin-top: 8px;
+  margin-top: 0.5rem;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   letter-spacing: 0.22em;
@@ -107,8 +107,8 @@
 
 @media (max-width: 480px) {
   .intro-logo-img {
-    width: 44px;
-    height: 44px;
+    width: 2.75rem;
+    height: 2.75rem;
   }
 
   .intro-wordmark {

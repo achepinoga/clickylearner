@@ -7,20 +7,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 1.5rem;
 }
 
 .auth-modal {
   position: relative;
   z-index: 201;
   width: 100%;
-  max-width: 420px;
+  max-width: clamp(18rem, 40vw, 26.25rem);
   background: var(--surface);
   border: 1px solid var(--border);
-  padding: 32px;
+  padding: 2rem;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 1.5rem;
   box-shadow: var(--panel-shadow);
 }
 
@@ -29,14 +29,14 @@
 .auth-modal::after {
   content: '';
   position: absolute;
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
   border-color: var(--accent);
   border-style: solid;
   opacity: 0.3;
 }
-.auth-modal::before { top: 8px; left: 8px; border-width: 1px 0 0 1px; }
-.auth-modal::after  { bottom: 8px; right: 8px; border-width: 0 1px 1px 0; }
+.auth-modal::before { top: 0.5rem; left: 0.5rem; border-width: 1px 0 0 1px; }
+.auth-modal::after  { bottom: 0.5rem; right: 0.5rem; border-width: 0 1px 1px 0; }
 
 .auth-modal-header {
   display: flex;
@@ -56,8 +56,8 @@
   background: none;
   border: 1px solid var(--glass-border);
   color: var(--text-dim);
-  width: 26px;
-  height: 26px;
+  width: 1.625rem;
+  height: 1.625rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -76,7 +76,7 @@
 .auth-oauth-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .auth-oauth-btn {
@@ -86,12 +86,12 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.78rem;
   letter-spacing: 0.06em;
-  padding: 11px 16px;
+  padding: 0.6875rem 1rem;
   border-radius: 0;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
   transition: border-color 0.15s, color 0.15s, background 0.15s;
   width: 100%;
 }
@@ -111,7 +111,7 @@
 .auth-divider {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0.75rem;
   color: var(--text-dim);
   font-size: 0.65rem;
   letter-spacing: 0.15em;
@@ -130,13 +130,13 @@
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 1rem;
 }
 
 .auth-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 .auth-label {
@@ -152,7 +152,7 @@
   color: var(--text);
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.85rem;
-  padding: 10px 14px;
+  padding: 0.625rem 0.875rem;
   border-radius: 0;
   width: 100%;
   transition: border-color 0.15s, box-shadow 0.15s;
@@ -174,7 +174,7 @@
   color: var(--incorrect);
   background: var(--error-tint);
   border: 1px solid var(--error-border);
-  padding: 8px 12px;
+  padding: 0.5rem 0.75rem;
   letter-spacing: 0.03em;
 }
 
@@ -183,7 +183,7 @@
   color: var(--text-dim);
   background: var(--glass);
   border: 1px solid var(--glass-border);
-  padding: 8px 12px;
+  padding: 0.5rem 0.75rem;
   letter-spacing: 0.03em;
   line-height: 1.5;
 }
@@ -196,12 +196,12 @@
   font-size: 0.78rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  padding: 12px 20px;
+  padding: 0.75rem 1.25rem;
   border-radius: 0;
   cursor: pointer;
   transition: background 0.15s, box-shadow 0.15s;
   box-shadow: 0 0 12px var(--accent-glow);
-  margin-top: 4px;
+  margin-top: 0.25rem;
 }
 
 .auth-submit:hover:not(:disabled) {
@@ -245,7 +245,7 @@
   text-align: center;
   line-height: 1.6;
   letter-spacing: 0.03em;
-  margin-top: 4px;
+  margin-top: 0.25rem;
   opacity: 0.7;
 }
 

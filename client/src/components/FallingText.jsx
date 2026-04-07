@@ -59,7 +59,14 @@ const FallingText = ({
 
     const { Engine, Render, World, Bodies, Runner, Mouse, MouseConstraint } = Matter;
 
-    const containerRect = containerRef.current.getBoundingClientRect();
+    const rawRect = containerRef.current.getBoundingClientRect();
+    const zoom = parseFloat(document.documentElement.style.zoom) || 1;
+    const containerRect = {
+      left: rawRect.left / zoom,
+      top: rawRect.top / zoom,
+      width: rawRect.width / zoom,
+      height: rawRect.height / zoom,
+    };
     const width = containerRect.width;
     const height = containerRect.height;
 
@@ -82,7 +89,14 @@ const FallingText = ({
 
     const wordSpans = textRef.current.querySelectorAll('.word');
     const wordBodies = [...wordSpans].map(elem => {
-      const rect = elem.getBoundingClientRect();
+      const rawWordRect = elem.getBoundingClientRect();
+      const rect = {
+        left: rawWordRect.left / zoom,
+        top: rawWordRect.top / zoom,
+        width: rawWordRect.width / zoom,
+        height: rawWordRect.height / zoom,
+      };
+
       const x = rect.left - containerRect.left + rect.width / 2;
       const y = rect.top - containerRect.top + rect.height / 2;
 

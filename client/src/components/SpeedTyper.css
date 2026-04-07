@@ -4,22 +4,22 @@
   flex: 1;
   overflow: hidden;
   width: 100%;
-  max-width: 1200px;
+  max-width: clamp(20rem, 85vw, 75rem);
   margin: 0 auto;
-  gap: 20px;
-  padding: 4px 48px 0;
+  gap: 1.25rem;
+  padding: 0.25rem 3rem 0;
   cursor: text;
 }
 
 .speed-text-zone {
   position: relative;
   overflow: hidden;
-  padding: 12px 0 0;
+  padding: 0.75rem 0 0;
 }
 
 /* Inline timer input — invisible, looks like a stat */
 .stat-item--timer {
-  min-width: 60px;
+  min-width: 3.75rem;
 }
 
 .timer-input {
@@ -30,7 +30,7 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 1.4rem;
   font-weight: 300;
-  width: 72px;
+  width: 4.5rem;
   text-align: center;
   padding: 0;
   caret-color: var(--text-dim);
@@ -62,7 +62,7 @@
   font-size: 0.9rem;
   font-family: 'JetBrains Mono', monospace;
   letter-spacing: 0.08em;
-  padding: 12px 28px;
+  padding: 0.75rem 1.75rem;
   border-radius: 0;
   text-transform: uppercase;
   transition: all 0.2s;

@@ -159,14 +159,24 @@
   --radius: 0px;
 }
 
+html {
+  /* Fluid root: 14px at 320vw, 16px at 1440vw, 20px at 2560vw */
+  font-size: clamp(0.875rem, 0.75rem + 0.25vw, 1.25rem);
+}
+
 body {
   background: var(--bg);
   color: var(--text);
   font-family: 'JetBrains Mono', 'Courier New', monospace;
+  height: 100dvh;
   height: 100vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+@supports (height: 100dvh) {
+  body { height: 100dvh; }
 }
 
 #root {

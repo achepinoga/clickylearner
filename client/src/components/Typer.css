@@ -4,10 +4,10 @@
   flex: 1;
   overflow: hidden;
   width: 100%;
-  max-width: 1200px;
+  max-width: clamp(20rem, 85vw, 75rem);
   margin: 0 auto;
-  gap: 20px;
-  padding: 4px 48px 0;
+  gap: 1.25rem;
+  padding: 0.25rem 3rem 0;
   cursor: text;
 }
 
@@ -29,10 +29,10 @@
 .stats-row {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 1.5rem;
   background: transparent;
   border: 1px solid var(--border-medium);
-  padding: 10px 28px;
+  padding: 0.625rem 1.75rem;
   flex-shrink: 0;
   align-self: center;
 }
@@ -41,12 +41,12 @@
   content: '> ';
   color: var(--text-dim);
   font-size: 0.75rem;
-  margin-right: -8px;
+  margin-right: -0.5rem;
 }
 
 .stat-divider {
   width: 1px;
-  height: 22px;
+  height: 1.375rem;
   background: var(--glass-border);
 }
 
@@ -54,8 +54,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  min-width: 52px;
+  gap: 0.125rem;
+  min-width: 3.25rem;
 }
 
 .stat-num {
@@ -83,13 +83,13 @@
 .text-zone {
   display: flex;
   flex-direction: column;
-  padding: 12px 0 0;
+  padding: 0.75rem 0 0;
 }
 
 /* ─── Rows viewport: fixed 5-line height ─── */
 .rows-viewport {
   width: 100%;
-  height: calc(5 * 56px);
+  height: calc(5 * 3.5rem);
 }
 
 .note-display--success .char {
@@ -102,7 +102,7 @@
 .note-display {
   font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 1.5rem;
-  line-height: 56px;   /* must match LINE_HEIGHT in Typer.jsx */
+  line-height: 3.5rem;   /* must match LINE_HEIGHT in Typer.jsx */
   letter-spacing: 0.04em;
   word-break: normal;
   overflow-wrap: anywhere;
@@ -131,8 +131,8 @@
   letter-spacing: 0.14em;
   color: var(--warning);
   border: 1px solid var(--warning-border);
-  padding: 2px 7px;
-  margin-right: 4px;
+  padding: 0.125rem 0.4375rem;
+  margin-right: 0.25rem;
 }
 
 .stats-row--recall {
@@ -143,7 +143,7 @@
 .flashcard-scene {
   position: relative;
   width: 100%;
-  min-height: 320px;
+  min-height: clamp(15rem, 40vh, 20rem);
   display: flex;
   align-items: stretch;
   perspective: 1400px;
@@ -188,10 +188,10 @@
   width: 100%;
   border: 1px solid var(--border-medium);
   background: var(--card-face);
-  padding: 32px 48px 40px;
+  padding: 2rem 3rem 2.5rem;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 1.25rem;
   cursor: text;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
@@ -219,8 +219,8 @@
 
 .flashcard-corner {
   position: absolute;
-  width: 12px;
-  height: 12px;
+  width: 0.75rem;
+  height: 0.75rem;
   border-style: solid;
 }
 
@@ -271,7 +271,7 @@
 .flashcard-text {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  min-height: calc(3 * 56px);
+  min-height: calc(3 * 3.5rem);
 }
 
 /* Forgot button — shown during recall phase */
@@ -283,11 +283,11 @@
   font-size: 0.65rem;
   font-family: 'JetBrains Mono', monospace;
   letter-spacing: 0.1em;
-  padding: 7px 16px;
+  padding: 0.4375rem 1rem;
   text-transform: uppercase;
   transition: all 0.2s;
   cursor: pointer;
-  margin-top: 4px;
+  margin-top: 0.25rem;
   opacity: 0.65;
 }
 
@@ -313,8 +313,8 @@
   justify-content: space-between;
   width: 100%;
   flex-shrink: 0;
-  padding-bottom: 16px;
-  margin-top: 8px;
+  padding-bottom: 1rem;
+  margin-top: 0.5rem;
 }
 
 .hint-text {
@@ -330,7 +330,7 @@
   font-size: 0.9rem;
   font-family: 'JetBrains Mono', monospace;
   letter-spacing: 0.08em;
-  padding: 12px 28px;
+  padding: 0.75rem 1.75rem;
   border-radius: 0;
   text-transform: uppercase;
   transition: all 0.2s;
@@ -351,9 +351,9 @@
   font-size: 0.78rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  padding: 10px 28px;
+  padding: 0.625rem 1.75rem;
   cursor: pointer;
-  margin-top: 12px;
+  margin-top: 0.75rem;
   box-shadow: 0 0 14px var(--accent-glow);
   transition: background 0.15s, box-shadow 0.15s;
 }
@@ -366,8 +366,8 @@
 /* In-session difficulty controls */
 .fc-difficulty-inline {
   display: flex;
-  gap: 6px;
-  margin-top: 14px;
+  gap: 0.375rem;
+  margin-top: 0.875rem;
   align-items: center;
 }
 
@@ -379,7 +379,7 @@
   font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.1em;
-  padding: 4px 10px;
+  padding: 0.25rem 0.625rem;
   cursor: pointer;
   transition: all 0.15s;
 }
