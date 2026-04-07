@@ -25,6 +25,15 @@ function FileIcon({ type }) {
       </svg>
     )
   }
+  if (type && type.startsWith('image/')) {
+    return (
+      <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
+        <rect x="4" y="6" width="30" height="26" rx="4" fill="currentColor" fillOpacity="0.05" stroke="currentColor" strokeOpacity="0.35" strokeWidth="1.5" />
+        <circle cx="13" cy="15" r="3" fill="currentColor" fillOpacity="0.4" />
+        <path d="M4 26l8-7 6 5 4-3 8 7" stroke="currentColor" strokeOpacity="0.5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    )
+  }
   return (
     <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
       <rect x="6" y="3" width="26" height="32" rx="4" fill="currentColor" fillOpacity="0.05" stroke="currentColor" strokeOpacity="0.35" strokeWidth="1.5" />
@@ -76,9 +85,9 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
 
   const handleFile = (f) => {
     if (!f) return
-    const allowed = ['application/pdf', 'text/plain']
+    const allowed = ['application/pdf', 'text/plain', 'image/jpeg', 'image/png', 'image/webp', 'image/gif']
     if (!allowed.includes(f.type)) {
-      setError('Only PDF and .txt files are supported.')
+      setError('Supported formats: PDF, TXT, JPEG, PNG, WEBP, GIF.')
       return
     }
     setError('')

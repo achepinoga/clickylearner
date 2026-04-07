@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const pdfParse = require('pdf-parse');
+const OpenAI = require('openai');
 const path = require('path');
 const fs = require('fs');
 
@@ -15,12 +16,13 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
 });
 
+const ALLOWED_TYPES = ['application/pdf', 'text/plain', 'image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
-    const allowed = ['application/pdf', 'text/plain'];
-    if (allowed.includes(file.mimetype)) cb(null, true);
-    else cb(new Error('Only PDF and .txt files are allowed'));
+    if (ALLOWED_TYPES.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Only PDF, .txt, and image files (JPEG, PNG, WEBP, GIF) are allowed'));
   },
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB
 });
@@ -36,6 +38,28 @@ router.post('/', upload.single('file'), async (req, res) => {
       const dataBuffer = fs.readFileSync(req.file.path);
       const pdfData = await pdfParse(dataBuffer);
       text = pdfData.text;
+    } else if (req.file.mimetype.startsWith('image/')) {
+      if (!process.env.OPENAI_API_KEY) return res.status(500).json({ error: 'OpenAI API key not configured' });
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      const base64 = fs.readFileSync(req.file.path).toString('base64');
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image_url',
+              image_url: { url: `data:${req.file.mimetype};base64,${base64}` }
+            },
+            {
+              type: 'text',
+              text: 'Extract all text and key information from this image. Return only the raw content as plain text, preserving structure where possible. If this is a slide, notes page, or document, extract all visible text faithfully.'
+            }
+          ]
+        }],
+        max_tokens: 2000
+      });
+      text = response.choices[0].message.content.trim();
     } else {
       text = fs.readFileSync(req.file.path, 'utf8');
     }
