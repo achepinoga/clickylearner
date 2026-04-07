@@ -65,8 +65,8 @@ function SetRow({ set, folders, onStudy, onTest, onDelete, onMove }) {
         <button className="set-btn set-btn-study" onClick={() => { playClick(); onStudy(set) }}>
           Study →
         </button>
-        <button className="set-btn set-btn-test" onClick={() => { playClick(); onTest(set) }} title="Generate a quiz on this set (uses 1 AI action)">
-          Test
+        <button className="set-btn set-btn-test" onClick={() => { playClick(); onTest(set) }} title="Generate a quiz on this set (costs 1 coin)">
+          Test · 1🪙
         </button>
         {folders.length > 0 && (
           <>

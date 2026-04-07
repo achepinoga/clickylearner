@@ -22,8 +22,17 @@ app.use(express.json({ limit: '50mb' }));
 
 const AI_MAX = 25
 const UPLOAD_MAX = 10
-const AI_WINDOW = 24 * 60 * 60 * 1000 // 24 hours
+const AI_WINDOW = 24 * 60 * 60 * 1000 // 24 hours (used by express-rate-limit)
 const UPLOAD_WINDOW = 15 * 60 * 1000   // 15 minutes
+
+// Returns the timestamp of the next 12:00 noon (local server time)
+function getNextNoon() {
+  const now = new Date()
+  const noon = new Date(now)
+  noon.setHours(12, 0, 0, 0)
+  if (noon <= now) noon.setDate(noon.getDate() + 1)
+  return noon.getTime()
+}
 
 // Parallel hit tracker — mirrors express-rate-limit windows without touching its internals.
 // Increments on every inbound request to a tracked route (same as the rate limiter does).
@@ -48,7 +57,29 @@ function makeTracker(windowMs) {
   }
 }
 
-const aiTracker = makeTracker(AI_WINDOW)
+// AI tracker resets at noon each day instead of a rolling window
+function makeNoonTracker() {
+  const store = new Map()
+  return {
+    increment(key) {
+      const now = Date.now()
+      const entry = store.get(key)
+      if (entry && entry.resetAt > now) {
+        entry.hits++
+      } else {
+        store.set(key, { hits: 1, resetAt: getNextNoon() })
+      }
+    },
+    peek(key) {
+      const now = Date.now()
+      const entry = store.get(key)
+      if (!entry || entry.resetAt <= now) return null
+      return entry
+    },
+  }
+}
+
+const aiTracker = makeNoonTracker()
 const uploadTracker = makeTracker(UPLOAD_WINDOW)
 
 // 10 uploads per IP per 15 minutes
@@ -65,14 +96,14 @@ const uploadLimiter = rateLimit({
   legacyHeaders: false,
 })
 
-// 20 AI calls per IP per hour (notes + quiz share this)
+// 25 coin actions per IP per day, resets at noon (notes + quiz share this)
 const aiLimiter = rateLimit({
   windowMs: AI_WINDOW,
   max: AI_MAX,
   handler: (req, res) => {
     res.status(429).json({
-      error: 'Daily AI limit reached. Please try again tomorrow.',
-      resetTime: req.rateLimit.resetTime,
+      error: 'No coins remaining. Your coins refill at noon.',
+      resetTime: new Date(getNextNoon()).toISOString(),
     })
   },
   standardHeaders: true,

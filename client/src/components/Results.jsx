@@ -205,6 +205,9 @@ export default function Results({ stats, onRetry, onUpload, onNew, onTest, isFla
                   whileTap={!isContinuing ? { scale: 0.97 } : {}}
                 >
                   <span>{isContinuing ? 'Generating next section...' : 'Continue Document →'}</span>
+                  {!isContinuing && (
+                    <span className="btn-coin-cost">1🪙</span>
+                  )}
                 </motion.button>
               )}
               {continueError && (
@@ -218,9 +221,7 @@ export default function Results({ stats, onRetry, onUpload, onNew, onTest, isFla
                   whileTap={{ scale: 0.97 }}
                 >
                   <span>Take the Test</span>
-                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                    <path d="M7.5 1.5v12M1.5 7.5h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  </svg>
+                  <span className="btn-coin-cost">1 <img src="/coin.png" alt="coin" width="14" height="14" style={{ imageRendering: 'pixelated', verticalAlign: 'middle' }} /></span>
                 </motion.button>
               )}
               <motion.button

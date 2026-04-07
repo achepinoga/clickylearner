@@ -234,11 +234,6 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
         </motion.button>
       )}
       <div className="upload-eyebrow">Step 1 — Upload your material</div>
-      {uploadLimits && gameMode !== 'standard' && (
-        <div className="upload-limit-hint">
-          {uploadLimits.remaining}/{uploadLimits.limit} uploads remaining
-        </div>
-      )}
 
       <AnimatePresence>
         {continuation && !truncationWarning && !isLoading && (
@@ -450,9 +445,13 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
             whileTap={{ scale: 0.97 }}
           >
             <span>{gameMode === 'standard' ? 'Start Typing' : 'Generate Study Notes'}</span>
-            <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
-              <path d="M8.5 1.5l1.6 4.8L15 8.5l-4.9 2.2-1.6 4.8-1.6-4.8L2 8.5l4.9-2.2 1.6-4.8z" fill="currentColor" />
-            </svg>
+            {gameMode !== 'standard' ? (
+              <span className="btn-coin-cost">1🪙</span>
+            ) : (
+              <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
+                <path d="M8.5 1.5l1.6 4.8L15 8.5l-4.9 2.2-1.6 4.8-1.6-4.8L2 8.5l4.9-2.2 1.6-4.8z" fill="currentColor" />
+              </svg>
+            )}
           </motion.button>
         )}
       </AnimatePresence>

@@ -112,6 +112,10 @@ export default function App() {
   const [badgePos, setBadgePos] = useState({ top: 0, right: 0 })
   const [testBackStage, setTestBackStage] = useState(STAGES.RESULTS)
   const [aiCountdown, setAiCountdown] = useState('')
+  const [noonCountdown, setNoonCountdown] = useState('')
+  const [showCoinInfo, setShowCoinInfo] = useState(false)
+  const [coinInfoPos, setCoinInfoPos] = useState({ top: 0, right: 0 })
+  const coinInfoBtnRef = useRef(null)
   const badgeRef = useRef(null)
 
   const notes = useMemo(
@@ -171,7 +175,7 @@ export default function App() {
     return () => document.removeEventListener('mousedown', handler)
   }, [showLimitBreakdown])
 
-  // Countdown ticker for exhausted AI badge
+  // Countdown ticker for exhausted coin badge
   useEffect(() => {
     if (limits.ai.remaining > 0 || !limits.ai.resetTime) { setAiCountdown(''); return }
     const fmt = (ms) => {
@@ -185,6 +189,30 @@ export default function App() {
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
   }, [limits.ai.remaining, limits.ai.resetTime])
+
+  // Countdown to next noon (for dropdown — always running)
+  useEffect(() => {
+    function getNextNoon() {
+      const now = new Date()
+      const noon = new Date(now)
+      noon.setHours(12, 0, 0, 0)
+      if (noon <= now) noon.setDate(noon.getDate() + 1)
+      return noon
+    }
+    const fmt = (ms) => {
+      if (ms <= 0) return '0:00'
+      const totalSec = Math.ceil(ms / 1000)
+      const h = Math.floor(totalSec / 3600)
+      const m = Math.floor((totalSec % 3600) / 60)
+      const s = totalSec % 60
+      if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m`
+      return `${m}:${String(s).padStart(2, '0')}`
+    }
+    const tick = () => setNoonCountdown(fmt(getNextNoon() - Date.now()))
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [])
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -447,12 +475,31 @@ export default function App() {
                     }
                     setShowLimitBreakdown(v => !v)
                   }}
-                  title="AI usage breakdown"
+                  title="Coin balance"
                 >
+                  <span className="limit-badge-coin">🪙</span>
                   {limits.ai.remaining === 0 && aiCountdown
-                    ? <><span className="limit-badge-val">{aiCountdown}</span><span className="limit-badge-label">reset</span></>
-                    : <><span className="limit-badge-val">{limits.ai.remaining}/{limits.ai.limit}</span><span className="limit-badge-label">ai</span></>
+                    ? <><span className="limit-badge-val">{aiCountdown}</span><span className="limit-badge-label">refills</span></>
+                    : <span className="limit-badge-val">{limits.ai.remaining}</span>
                   }
+                </button>
+                <button
+                  ref={coinInfoBtnRef}
+                  className="coin-info-btn"
+                  aria-label="What are Clickycoins?"
+                  onMouseEnter={() => {
+                    if (coinInfoBtnRef.current) {
+                      const r = coinInfoBtnRef.current.getBoundingClientRect()
+                      setCoinInfoPos({ top: r.bottom + 8, right: window.innerWidth - r.right })
+                    }
+                    setShowCoinInfo(true)
+                  }}
+                  onMouseLeave={() => setShowCoinInfo(false)}
+                >
+                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                    <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.3" />
+                    <path d="M7 6.3v3.4M7 4.5v.4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                  </svg>
                 </button>
               </div>
               <button className="btn-settings" aria-label="Settings" onClick={() => { playToggle(); setShowSettings(true) }}>
@@ -572,17 +619,15 @@ export default function App() {
             exit={{ opacity: 0, y: -6, scale: 0.97 }}
             transition={{ duration: 0.15 }}
           >
-            <div className="limit-breakdown-title">This hour</div>
+            <div className="limit-breakdown-title">Coins</div>
             <div className="limit-breakdown-row">
-              <span>Used</span>
-              <span>{limits.ai.used}/{limits.ai.limit}</span>
+              <span>Remaining</span>
+              <span>{limits.ai.remaining}/{limits.ai.limit}</span>
             </div>
-            {limits.ai.remaining === 0 && aiCountdown && (
-              <div className="limit-breakdown-row limit-breakdown-row--warn">
-                <span>Resets in</span>
-                <span>{aiCountdown}</span>
-              </div>
-            )}
+            <div className={`limit-breakdown-row${limits.ai.remaining === 0 ? ' limit-breakdown-row--warn' : ''}`}>
+              <span>Refills in</span>
+              <span>{noonCountdown}</span>
+            </div>
             <div className="limit-breakdown-divider" />
             <div className="limit-breakdown-title">This session</div>
             <div className="limit-breakdown-row">
@@ -598,6 +643,22 @@ export default function App() {
       </AnimatePresence>
 
       <RateLimitToast error={rateLimitError} onDismiss={() => setRateLimitError(null)} />
+
+      <AnimatePresence>
+        {showCoinInfo && (
+          <motion.div
+            className="coin-info-tooltip"
+            style={{ top: coinInfoPos.top, right: coinInfoPos.right }}
+            initial={{ opacity: 0, y: -4, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.97 }}
+            transition={{ duration: 0.15 }}
+          >
+            <span className="coin-info-title">Clickycoins</span>
+            <span className="coin-info-body">Coins are the currency for AI actions. Generating flashcards or running a test each costs 1 coin. You get 25 coins, refilling every day.</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   )
 }

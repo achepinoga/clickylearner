@@ -4,6 +4,16 @@
   padding: 0;
 }
 
+.btn-coin-cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  opacity: 0.8;
+}
+
 :root,
 [data-theme="dark"] {
   /* Page backgrounds */
