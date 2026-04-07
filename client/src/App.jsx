@@ -13,6 +13,7 @@ import AuthModal from './components/AuthModal'
 import HistoryPanel from './components/HistoryPanel'
 import FlashcardsPage from './components/FlashcardsPage'
 import IntroOverlay from './components/IntroOverlay'
+import RateLimitToast from './components/RateLimitToast'
 import './App.css'
 
 const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
@@ -104,11 +105,31 @@ export default function App() {
   const [continueError, setContinueError] = useState('')
   const currentDocTitleRef = useRef('')
   const settingsInitialized = useRef(false)
+  const [limits, setLimits] = useState({ ai: { limit: 20, used: 0, remaining: 20, resetTime: null }, upload: { limit: 10, used: 0, remaining: 10, resetTime: null } })
+  const [rateLimitError, setRateLimitError] = useState(null)
 
   const notes = useMemo(
     () => settings.punctuation ? rawNotes : rawNotes.map(stripPunctuation),
     [rawNotes, settings.punctuation]
   )
+
+  // Fetch initial limit state on mount
+  useEffect(() => {
+    fetch(`${API_BASE}/api/limits`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setLimits(data) })
+      .catch(() => {})
+  }, [])
+
+  const handleApiUsed = (type) => {
+    setLimits(prev => {
+      const bucket = prev[type]
+      const used = Math.min(bucket.limit, bucket.used + 1)
+      return { ...prev, [type]: { ...bucket, used, remaining: Math.max(0, bucket.limit - used) } }
+    })
+  }
+
+  const handleRateLimit = (type, resetTime) => setRateLimitError({ type, resetTime })
 
   // Auth state listener
   useEffect(() => {
@@ -132,6 +153,7 @@ export default function App() {
     document.documentElement.dataset.theme = theme
     try { localStorage.setItem('cl_theme', theme) } catch {}
   }, [theme])
+
   useEffect(() => { localStorage.setItem('cl_settings', JSON.stringify(settings)) }, [settings])
   useEffect(() => { updateSoundSettings(settings) }, [settings])
   useEffect(() => { try { localStorage.removeItem('cl_stage') } catch {} }, [])
@@ -221,7 +243,9 @@ export default function App() {
         body: JSON.stringify({ text: pendingRemainingText })
       })
       const data = await res.json()
+      if (res.status === 429) { handleRateLimit('ai', data.resetTime); return }
       if (!res.ok) throw new Error(data.error || 'Failed to generate notes')
+      handleApiUsed('ai')
       // Clear remaining_text from old set in Supabase
       if (user && currentSetIdRef.current) {
         await supabase.from('flashcard_sets').update({ remaining_text: null }).eq('id', currentSetIdRef.current)
@@ -375,12 +399,18 @@ export default function App() {
               ))}
             </nav>
 
-            <button className="btn-settings" aria-label="Settings" onClick={() => { playToggle(); setShowSettings(true) }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="3" />
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-              </svg>
-            </button>
+            <div className="header-right">
+              <div className="limit-badge" title={`${limits.ai.remaining} AI actions left this hour`}>
+                <span className="limit-badge-val">{limits.ai.remaining}/{limits.ai.limit}</span>
+                <span className="limit-badge-label">ai</span>
+              </div>
+              <button className="btn-settings" aria-label="Settings" onClick={() => { playToggle(); setShowSettings(true) }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+              </button>
+            </div>
           </div>
         </motion.header>
 
@@ -408,18 +438,21 @@ export default function App() {
               </motion.div>
             )}
             {stage === STAGES.UPLOAD && (
-              <motion.div key="upload" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition}>
+              <motion.div key="upload" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden auto' }}>
                 <Upload
                   onNotesReady={handleNotesReady}
                   gameMode={gameMode}
                   difficulty={flashcardDifficulty}
                   onDifficultyChange={setFlashcardDifficulty}
                   onBack={() => gameMode === 'flashcards' ? setStage(STAGES.FLASHCARDS) : handleRestart()}
+                  onRateLimit={handleRateLimit}
+                  onApiUsed={handleApiUsed}
+                  uploadLimits={limits.upload}
                 />
               </motion.div>
             )}
             {stage === STAGES.TYPING && (
-              <motion.div key="typing" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <motion.div key="typing" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden auto' }}>
                 {gameMode === 'speed'
                   ? <SpeedTyper key={typingKey} onFinished={handleFinished} onBack={handleRestart} settings={settings} />
                   : <Typer key={typingKey} notes={notes} onFinished={handleFinished} onBack={handleRestart} settings={settings} flashcardDifficulty={flashcardDifficulty} onDifficultyChange={setFlashcardDifficulty} isFlashcard={gameMode === 'flashcards'} />
@@ -427,13 +460,13 @@ export default function App() {
               </motion.div>
             )}
             {stage === STAGES.RESULTS && (
-              <motion.div key="results" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <motion.div key="results" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden auto' }}>
                 <Results stats={results} onRetry={handleRetry} onUpload={() => { handleDiscardContinuation(); handleUpload() }} onNew={() => { handleDiscardContinuation(); handleRestart() }} onTest={handleTest} isFlashcard={gameMode === 'flashcards'} isSpeed={gameMode === 'speed'} flashcardDifficulty={flashcardDifficulty} onDifficultyChange={setFlashcardDifficulty} hasContinuation={!!pendingRemainingText} onContinueDocument={handleContinueDocument} isContinuing={isContinuing} continueError={continueError} />
               </motion.div>
             )}
             {stage === STAGES.TEST && (
               <motion.div key="test" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden auto' }}>
-                <FlashcardTest notes={notes} onBack={() => setStage(STAGES.RESULTS)} settings={settings} />
+                <FlashcardTest notes={notes} onBack={() => setStage(STAGES.RESULTS)} settings={settings} onRateLimit={handleRateLimit} onApiUsed={handleApiUsed} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -441,9 +474,9 @@ export default function App() {
         <footer className="app-footer">
           <span>© 2026 Clickylearner. All rights reserved.</span>
           <span className="app-footer-links">
-            <a href="/privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+            <a href="/privacy.html">Privacy Policy</a>
             <span className="app-footer-dot">·</span>
-            <a href="/terms.html" target="_blank" rel="noopener noreferrer">Terms of Service</a>
+            <a href="/terms.html">Terms of Service</a>
           </span>
         </footer>
       </div>
@@ -476,6 +509,8 @@ export default function App() {
           }}
         />
       )}
+
+      <RateLimitToast error={rateLimitError} onDismiss={() => setRateLimitError(null)} />
     </>
   )
 }

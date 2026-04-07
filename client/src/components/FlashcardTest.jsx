@@ -5,7 +5,7 @@ import './FlashcardTest.css'
 
 const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
 
-export default function FlashcardTest({ notes, onBack, settings }) {
+export default function FlashcardTest({ notes, onBack, settings, onRateLimit, onApiUsed }) {
   const [phase, setPhase] = useState('loading') // loading | question | penalty | failed-intro | done | error
   const [loadError, setLoadError] = useState('')
   const [questions, setQuestions] = useState([])
@@ -60,7 +60,14 @@ export default function FlashcardTest({ notes, onBack, settings }) {
         body: JSON.stringify({ notes }),
       })
       const data = await res.json()
+      if (res.status === 429) {
+        onRateLimit?.('ai', data.resetTime)
+        setLoadError('AI limit reached. Please wait and try again.')
+        setPhase('error')
+        return
+      }
       if (!res.ok) throw new Error(data.error || 'Failed to generate quiz')
+      onApiUsed?.('ai')
       setQuestions(data.questions)
       questionsRef.current = data.questions
       setTotalQuestions(data.questions.length)

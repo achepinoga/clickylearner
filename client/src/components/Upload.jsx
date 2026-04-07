@@ -40,7 +40,7 @@ const DIFFICULTY_LEVELS = [
   { value: 4, label: 'IV', name: 'Brutal', pct: '~80%' },
 ]
 
-export default function Upload({ onNotesReady, gameMode, difficulty, onDifficultyChange, onBack }) {
+export default function Upload({ onNotesReady, gameMode, difficulty, onDifficultyChange, onBack, onRateLimit, onApiUsed, uploadLimits }) {
   const [file, setFile] = useState(null)
   const [dragging, setDragging] = useState(false)
   const [status, setStatus] = useState('idle')
@@ -130,10 +130,12 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
         const ct = uploadRes.headers.get('content-type') || ''
         if (ct.includes('application/json')) {
           const errData = await uploadRes.json()
+          if (uploadRes.status === 429) { onRateLimit?.('upload', errData.resetTime); setError('Ran out of uploads. Please wait before trying again.'); setStatus('idle'); return }
           throw new Error(errData.error || 'Upload failed')
         }
         throw new Error(`Upload failed (${uploadRes.status})`)
       }
+      onApiUsed?.('upload')
       const uploadData = await uploadRes.json()
 
       // Standard mode: skip AI, split raw text directly
@@ -151,7 +153,9 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
         body: JSON.stringify({ text: uploadData.text })
       })
       const notesData = await notesRes.json()
+      if (notesRes.status === 429) { onRateLimit?.('ai', notesData.resetTime); setStatus('idle'); return }
       if (!notesRes.ok) throw new Error(notesData.error || 'Failed to generate notes')
+      onApiUsed?.('ai')
 
       if (notesData.truncated) {
         // Flashcard mode: skip warning, pass remaining text to parent for post-session continuation
@@ -164,7 +168,7 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
         onNotesReady(notesData.notes, file.name, null)
       }
     } catch (err) {
-      setError(err.message)
+      setError(err.message === 'Failed to fetch' ? 'Could not reach the server. Check your connection and try again.' : err.message)
       setStatus('idle')
     }
   }
@@ -180,7 +184,9 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
         body: JSON.stringify({ text: continuation.remainingText })
       })
       const notesData = await notesRes.json()
+      if (notesRes.status === 429) { onRateLimit?.('ai', notesData.resetTime); setStatus('idle'); return }
       if (!notesRes.ok) throw new Error(notesData.error || 'Failed to generate notes')
+      onApiUsed?.('ai')
 
       if (notesData.truncated) {
         const cont = {
@@ -227,6 +233,11 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
         </motion.button>
       )}
       <div className="upload-eyebrow">Step 1 — Upload your material</div>
+      {uploadLimits && (
+        <div className="upload-limit-hint">
+          {uploadLimits.remaining}/{uploadLimits.limit} uploads remaining
+        </div>
+      )}
 
       <AnimatePresence>
         {continuation && !truncationWarning && !isLoading && (
@@ -300,8 +311,9 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
               <motion.button
                 className="remove-btn"
                 onClick={(e) => { e.stopPropagation(); playBack(); setFile(null); if (inputRef.current) inputRef.current.value = '' }}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+                whileHover={!isLoading ? { scale: 1.1 } : {}}
+                whileTap={!isLoading ? { scale: 0.9 } : {}}
+                disabled={isLoading}
               >
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                   <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
