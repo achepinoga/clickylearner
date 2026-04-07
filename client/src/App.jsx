@@ -533,6 +533,7 @@ export default function App() {
                   onTestSet={handleTestSet}
                   onBack={handleRestart}
                   onSignIn={() => setShowAuth(true)}
+                  coinsRemaining={limits.ai.remaining}
                 />
               </motion.div>
             )}
@@ -547,6 +548,7 @@ export default function App() {
                   onRateLimit={handleRateLimit}
                   onApiUsed={handleApiUsed}
                   uploadLimits={limits.ai}
+                  coinsRemaining={limits.ai.remaining}
                 />
               </motion.div>
             )}
@@ -560,7 +562,7 @@ export default function App() {
             )}
             {stage === STAGES.RESULTS && (
               <motion.div key="results" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden auto' }}>
-                <Results stats={results} onRetry={handleRetry} onUpload={() => { handleDiscardContinuation(); handleUpload() }} onNew={() => { handleDiscardContinuation(); handleRestart() }} onTest={handleTest} isFlashcard={gameMode === 'flashcards'} isSpeed={gameMode === 'speed'} flashcardDifficulty={flashcardDifficulty} onDifficultyChange={setFlashcardDifficulty} hasContinuation={!!pendingRemainingText} onContinueDocument={handleContinueDocument} isContinuing={isContinuing} continueError={continueError} />
+                <Results stats={results} onRetry={handleRetry} onUpload={() => { handleDiscardContinuation(); handleUpload() }} onNew={() => { handleDiscardContinuation(); handleRestart() }} onTest={handleTest} isFlashcard={gameMode === 'flashcards'} isSpeed={gameMode === 'speed'} flashcardDifficulty={flashcardDifficulty} onDifficultyChange={setFlashcardDifficulty} hasContinuation={!!pendingRemainingText} onContinueDocument={handleContinueDocument} isContinuing={isContinuing} continueError={continueError} coinsRemaining={limits.ai.remaining} />
               </motion.div>
             )}
             {stage === STAGES.TEST && (

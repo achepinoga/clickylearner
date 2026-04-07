@@ -49,7 +49,7 @@ const DIFFICULTY_LEVELS = [
   { value: 4, label: 'IV', name: 'Brutal', pct: '~80%' },
 ]
 
-export default function Upload({ onNotesReady, gameMode, difficulty, onDifficultyChange, onBack, onRateLimit, onApiUsed, uploadLimits }) {
+export default function Upload({ onNotesReady, gameMode, difficulty, onDifficultyChange, onBack, onRateLimit, onApiUsed, uploadLimits, coinsRemaining }) {
   const [file, setFile] = useState(null)
   const [dragging, setDragging] = useState(false)
   const [status, setStatus] = useState('idle')
@@ -226,6 +226,7 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
   }
 
   const isLoading = status === 'uploading' || status === 'generating'
+  const outOfCoins = gameMode !== 'standard' && coinsRemaining === 0
 
   return (
     <div className="upload-container">
@@ -446,12 +447,13 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
           <motion.button
             className="btn-generate"
             onClick={() => { playClick(); handleSubmit() }}
+            disabled={outOfCoins}
             initial={{ opacity: 0, y: 10, scale: 0.94 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.94 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            whileHover={{ scale: 1.03, y: -2 }}
-            whileTap={{ scale: 0.97 }}
+            whileHover={!outOfCoins ? { scale: 1.03, y: -2 } : {}}
+            whileTap={!outOfCoins ? { scale: 0.97 } : {}}
           >
             <span>{gameMode === 'standard' ? 'Start Typing' : 'Generate Study Notes'}</span>
             {gameMode !== 'standard' ? (

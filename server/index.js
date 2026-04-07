@@ -6,6 +6,7 @@ const uploadRoute = require('./routes/upload');
 const notesRoute = require('./routes/notes');
 const quizRoute = require('./routes/quiz');
 
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -22,7 +23,6 @@ app.use(express.json({ limit: '50mb' }));
 
 const AI_MAX = 25
 const UPLOAD_MAX = 10
-const AI_WINDOW = 24 * 60 * 60 * 1000 // 24 hours (used by express-rate-limit)
 const UPLOAD_WINDOW = 15 * 60 * 1000   // 15 minutes
 
 // Returns the timestamp of the next 12:00 noon (local server time)
@@ -96,19 +96,20 @@ const uploadLimiter = rateLimit({
   legacyHeaders: false,
 })
 
-// 25 coin actions per IP per day, resets at noon (notes + quiz share this)
-const aiLimiter = rateLimit({
-  windowMs: AI_WINDOW,
-  max: AI_MAX,
-  handler: (req, res) => {
-    res.status(429).json({
-      error: 'No coins remaining. Your coins refill at noon.',
-      resetTime: new Date(getNextNoon()).toISOString(),
+// 25 coin actions per IP per day, enforced directly from the noon tracker.
+// Check before increment so the 26th request is blocked without consuming a slot.
+function aiLimiter(req, res, next) {
+  const key = req.ip ?? ''
+  const entry = aiTracker.peek(key)
+  if (entry && entry.hits >= AI_MAX) {
+    return res.status(429).json({
+      error: 'No coins remaining. Your coins refill every day.',
+      resetTime: new Date(entry.resetAt).toISOString(),
     })
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-})
+  }
+  aiTracker.increment(key)
+  next()
+}
 
 // Limit status — does not consume a token; reads from the parallel tracker
 app.get('/api/limits', (req, res) => {
@@ -143,16 +144,8 @@ app.use('/api/upload',
   },
   uploadRoute,
 )
-app.use('/api/notes',
-  (req, res, next) => { aiTracker.increment(req.ip ?? ''); next() },
-  aiLimiter,
-  notesRoute,
-)
-app.use('/api/quiz',
-  (req, res, next) => { aiTracker.increment(req.ip ?? ''); next() },
-  aiLimiter,
-  quizRoute,
-)
+app.use('/api/notes', aiLimiter, notesRoute)
+app.use('/api/quiz', aiLimiter, quizRoute)
 
 if (require.main === module) {
   app.listen(PORT, () => {

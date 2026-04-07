@@ -27,7 +27,7 @@ function FolderIcon({ open }) {
   )
 }
 
-function SetRow({ set, folders, onStudy, onTest, onDelete, onMove }) {
+function SetRow({ set, folders, onStudy, onTest, onDelete, onMove, coinsRemaining }) {
   const [showMove, setShowMove] = useState(false)
   const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 })
   const btnRef = useRef()
@@ -65,7 +65,7 @@ function SetRow({ set, folders, onStudy, onTest, onDelete, onMove }) {
         <button className="set-btn set-btn-study" onClick={() => { playClick(); onStudy(set) }}>
           Study →
         </button>
-        <button className="set-btn set-btn-test" onClick={() => { playClick(); onTest(set) }} title="Generate a quiz on this set (costs 1 coin)">
+        <button className="set-btn set-btn-test" onClick={() => { playClick(); onTest(set) }} disabled={coinsRemaining === 0} title={coinsRemaining === 0 ? 'No coins remaining' : 'Generate a quiz on this set (costs 1 coin)'}>
           Test · 1🪙
         </button>
         {folders.length > 0 && (
@@ -111,7 +111,7 @@ function SetRow({ set, folders, onStudy, onTest, onDelete, onMove }) {
   )
 }
 
-export default function FlashcardsPage({ user, onNewFile, onStudySet, onTestSet, onBack, onSignIn }) {
+export default function FlashcardsPage({ user, onNewFile, onStudySet, onTestSet, onBack, onSignIn, coinsRemaining }) {
   const [folders, setFolders] = useState([])
   const [sets, setSets] = useState([])
   const [loading, setLoading] = useState(false)
@@ -304,6 +304,7 @@ export default function FlashcardsPage({ user, onNewFile, onStudySet, onTestSet,
                                   onTest={onTestSet}
                                   onDelete={deleteSet}
                                   onMove={moveSet}
+                                  coinsRemaining={coinsRemaining}
                                 />
                               ))
                             )}
@@ -333,6 +334,7 @@ export default function FlashcardsPage({ user, onNewFile, onStudySet, onTestSet,
                       onTest={onTestSet}
                       onDelete={deleteSet}
                       onMove={moveSet}
+                      coinsRemaining={coinsRemaining}
                     />
                   ))}
                 </div>

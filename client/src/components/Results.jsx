@@ -40,7 +40,7 @@ const DIFFICULTY_LEVELS = [
   { value: 4, label: 'IV',  name: 'Brutal' },
 ]
 
-export default function Results({ stats, onRetry, onUpload, onNew, onTest, isFlashcard, isSpeed, flashcardDifficulty, onDifficultyChange, hasContinuation, onContinueDocument, isContinuing, continueError }) {
+export default function Results({ stats, onRetry, onUpload, onNew, onTest, isFlashcard, isSpeed, flashcardDifficulty, onDifficultyChange, hasContinuation, onContinueDocument, isContinuing, continueError, coinsRemaining }) {
   const { wpm, accuracy, errors, totalChars, notes, noteResults = [] } = stats
 
   const grade = getGrade(accuracy)
@@ -200,9 +200,10 @@ export default function Results({ stats, onRetry, onUpload, onNew, onTest, isFla
                 <motion.button
                   className="btn-action btn-action--primary"
                   onClick={() => { playClick(); onContinueDocument() }}
-                  disabled={isContinuing}
-                  whileHover={!isContinuing ? { scale: 1.04, y: -2 } : {}}
-                  whileTap={!isContinuing ? { scale: 0.97 } : {}}
+                  disabled={isContinuing || coinsRemaining === 0}
+                  title={coinsRemaining === 0 ? 'No coins remaining' : undefined}
+                  whileHover={!isContinuing && coinsRemaining > 0 ? { scale: 1.04, y: -2 } : {}}
+                  whileTap={!isContinuing && coinsRemaining > 0 ? { scale: 0.97 } : {}}
                 >
                   <span>{isContinuing ? 'Generating next section...' : 'Continue Document →'}</span>
                   {!isContinuing && (
@@ -217,8 +218,10 @@ export default function Results({ stats, onRetry, onUpload, onNew, onTest, isFla
                 <motion.button
                   className="btn-action btn-action--primary"
                   onClick={() => { playClick(); onTest() }}
-                  whileHover={{ scale: 1.04, y: -2 }}
-                  whileTap={{ scale: 0.97 }}
+                  disabled={coinsRemaining === 0}
+                  title={coinsRemaining === 0 ? 'No coins remaining' : undefined}
+                  whileHover={coinsRemaining > 0 ? { scale: 1.04, y: -2 } : {}}
+                  whileTap={coinsRemaining > 0 ? { scale: 0.97 } : {}}
                 >
                   <span>Take the Test</span>
                   <span className="btn-coin-cost">1 <img src="/coin.png" alt="coin" width="14" height="14" style={{ imageRendering: 'pixelated', verticalAlign: 'middle' }} /></span>
