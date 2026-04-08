@@ -476,7 +476,8 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
         } else if (i < typed.length) {
           const wasFailed = failedIndices.has(i) || typed[i] !== fullText[i];
           const displayChar = isBlackedOut(i) && wasFailed ? typed[i] : char;
-          chars.push(<span key={i} className={wasFailed ? 'char incorrect' : 'char correct'}>{displayChar}</span>)
+          const isSpace = /\s/.test(char)
+          chars.push(<span key={i} className={wasFailed ? `char incorrect${isSpace ? ' is-space' : ''}` : 'char correct'}>{displayChar}</span>)
         } else if (isBlackedOut(i)) {
           chars.push(<span key={i} className="char encrypted">{'_'}</span>)
         } else {
@@ -486,12 +487,12 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
       if (index < words.length - 1) {
         const si = wordEnd
         if (si === typed.length) {
-          chars.push(<span key="sp" className="char cursor" ref={cursorRef}>{' '}</span>)
+          chars.push(<span key={si} className={pendingWrong ? 'char cursor wrong is-space' : 'char cursor'} ref={cursorRef}>{' '}</span>)
         } else if (si < typed.length) {
           const wasFailed = failedIndices.has(si) || typed[si] !== fullText[si];
-          chars.push(<span key="sp" className={wasFailed ? 'char incorrect' : 'char correct'}>{' '}</span>)
+          chars.push(<span key={si} className={wasFailed ? 'char incorrect is-space' : 'char correct'}>{' '}</span>)
         } else {
-          chars.push(<span key="sp" className="char pending">{' '}</span>)
+          chars.push(<span key={si} className="char pending">{' '}</span>)
         }
       }
       return <span key={index} className="word-unit">{chars}</span>

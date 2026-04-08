@@ -85,6 +85,62 @@
   color: var(--text-dim);
 }
 
+.setting-info-tip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.setting-info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid var(--text-dim);
+  color: var(--text-dim);
+  font-size: 9px;
+  font-style: italic;
+  font-weight: 700;
+  cursor: default;
+  line-height: 1;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.setting-info-tip:hover .setting-info-icon {
+  border-color: var(--text);
+  color: var(--text);
+}
+
+.setting-info-tooltip {
+  display: none;
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.72rem;
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.45;
+  padding: 7px 10px;
+  border-radius: 6px;
+  width: 220px;
+  box-shadow: var(--panel-shadow);
+  pointer-events: none;
+  z-index: 100;
+  white-space: normal;
+}
+
+.setting-info-tip:hover .setting-info-tooltip {
+  display: block;
+}
+
 .setting-select {
   background: var(--surface-2);
   border: 1px solid var(--border-strong);

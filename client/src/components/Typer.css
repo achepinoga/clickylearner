@@ -119,9 +119,12 @@
 /* Character states */
 .char.pending  { color: var(--pending); }
 .char.correct  { color: var(--correct); text-shadow: 0 0 6px var(--accent-glow); }
-.char.incorrect { color: var(--incorrect); background: var(--error-tint); text-shadow: 0 0 6px var(--error-border); }
+.char.incorrect { color: #ffffff; background: #ff4b4b; border-radius: 2px; text-shadow: none; }
+.char.incorrect.is-space { color: #ffffff; background: #ff4b4b; border-radius: 2px; box-shadow: 0 0 6px 2px #ff4b4b; }
 .char.cursor       { color: var(--bg); background: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
 .char.cursor.wrong { background: var(--incorrect); box-shadow: 0 0 10px var(--error-border); }
+.char.cursor.wrong.is-space { color: #fff; background: #ff2222; box-shadow: 0 0 14px #ff2222, 0 0 4px #ff2222; animation: space-error-pulse 0.5s ease-in-out infinite alternate; }
+@keyframes space-error-pulse { from { box-shadow: 0 0 10px #ff2222; } to { box-shadow: 0 0 20px #ff2222, 0 0 6px #ff0000; } }
 .char.encrypted { color: var(--pending); user-select: none; }
 
 /* Recall phase badge */

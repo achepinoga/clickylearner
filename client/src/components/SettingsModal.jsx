@@ -30,7 +30,13 @@ export default function SettingsModal({ isOpen, onClose, settings, setSettings, 
           <div className="settings-group">
             <div className="setting-row">
               <div className="setting-info">
-                <span className="setting-label">Allow Backspace</span>
+                <span className="setting-label">
+                  Allow Backspace
+                  <span className="setting-info-tip">
+                    <span className="setting-info-icon">i</span>
+                    <span className="setting-info-tooltip">If its turned on you must type out the text with no mistakes to advance</span>
+                  </span>
+                </span>
                 <span className="setting-desc">Lets you delete mistakes</span>
               </div>
               <label className="setting-toggle">
