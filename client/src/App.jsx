@@ -82,7 +82,8 @@ export default function App() {
   const [theme, setTheme] = useState(() => {
     try { return localStorage.getItem('cl_theme') || 'dark' } catch { return 'dark' }
   })
-  const [showIntro, setShowIntro] = useState(() => !localStorage.getItem('cl_intro_seen'))
+  const [showIntro, setShowIntro] = useState(false)
+  const [authLoading, setAuthLoading] = useState(true)
   const [showSettings, setShowSettings] = useState(false)
   const [showAuth, setShowAuth] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
@@ -153,7 +154,10 @@ export default function App() {
   // Auth state listener
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
+      const resolvedUser = session?.user ?? null
+      setUser(resolvedUser)
+      if (!resolvedUser) setShowIntro(true)
+      setAuthLoading(false)
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
@@ -403,8 +407,8 @@ export default function App() {
     <>
       <motion.div
         className="app"
-        initial={false}
-        animate={{ opacity: showIntro ? 0 : 1 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: authLoading || showIntro ? 0 : 1 }}
         transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] }}
       >
         <motion.header
@@ -610,10 +614,7 @@ export default function App() {
 
       {showIntro && (
         <IntroOverlay
-          onComplete={() => {
-            localStorage.setItem('cl_intro_seen', '1')
-            setShowIntro(false)
-          }}
+          onComplete={() => setShowIntro(false)}
         />
       )}
 
