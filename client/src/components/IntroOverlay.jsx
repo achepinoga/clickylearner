@@ -92,8 +92,8 @@ export default function IntroOverlay({ onComplete }) {
       {!isExiting && (
         <motion.div
           className="lp-overlay"
-          exit={{ opacity: 0, filter: prefersReducedMotion ? 'none' : 'blur(8px)' }}
-          transition={{ duration: 0.35, ease: 'easeOut' }}
+          exit={{ opacity: 0, scale: prefersReducedMotion ? 1 : 1.018 }}
+          transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] }}
         >
           {/* Background layers */}
           <div className="lp-backdrop" />

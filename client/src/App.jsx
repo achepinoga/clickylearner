@@ -401,7 +401,12 @@ export default function App() {
 
   return (
     <>
-      <div className="app">
+      <motion.div
+        className="app"
+        initial={false}
+        animate={{ opacity: showIntro ? 0 : 1 }}
+        transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] }}
+      >
         <motion.header
           className="header"
           initial={{ opacity: 0, y: -20 }}
@@ -581,7 +586,7 @@ export default function App() {
             <a href="/terms.html">Terms of Service</a>
           </span>
         </footer>
-      </div>
+      </motion.div>
 
       <SettingsModal
         isOpen={showSettings}
