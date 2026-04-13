@@ -1,60 +1,234 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+import { playChime } from '../sounds'
+import './Typer.css'
 import './IntroOverlay.css'
 
-const DEMO_WORDS = [
-  { text: 'The',          hidden: false },
-  { text: 'mitochondria', hidden: true  },
-  { text: 'is',           hidden: false },
-  { text: 'the',          hidden: false },
-  { text: 'powerhouse',   hidden: true  },
-  { text: 'of',           hidden: false },
-  { text: 'the',          hidden: false },
-  { text: 'cell.',        hidden: false },
+// Pre-computed blackout ranges (character index [start, end))
+const DEMO_CARDS = [
+  {
+    label: 'Biology',
+    text: 'The mitochondria is the powerhouse of the cell.',
+    blackout: [[4, 16], [24, 34]],   // mitochondria, powerhouse
+  },
+  {
+    label: 'History',
+    text: 'The French Revolution began in 1789, ending the monarchy.',
+    blackout: [[31, 35], [48, 56]],  // 1789, monarchy
+  },
+  {
+    label: 'Chemistry',
+    text: 'The chemical formula for water is H2O, made of hydrogen and oxygen.',
+    blackout: [[34, 37], [47, 55], [60, 66]],  // H2O, hydrogen, oxygen
+  },
 ]
 
-function DemoLine() {
-  const [typed, setTyped] = useState('')
-  const [wordIdx, setWordIdx] = useState(0)
-  const [done, setDone] = useState(false)
-  const hiddenWords = DEMO_WORDS.filter(w => w.hidden)
+function FlashcardDemo() {
+  const [cardIdx, setCardIdx]             = useState(0)
+  const [phase, setPhase]                 = useState('study') // 'study' | 'recall'
+  const [typed, setTyped]                 = useState('')
+  const [pendingWrong, setPendingWrong]   = useState(false)
+  const [failedIndices, setFailedIndices] = useState(() => new Set())
+  const [cardSuccess, setCardSuccess]     = useState(false)
+  const [flipped, setFlipped]             = useState(false)
+  const [autoTyping, setAutoTyping]       = useState(false)
+
+  const demoRef      = useRef(null)
+  const idleTimer    = useRef(null)
+  const typedRef     = useRef('')
+  const completingRef = useRef(false)
+
+  const card     = DEMO_CARDS[cardIdx]
+  const fullText = card.text
+  const blackout = phase === 'recall' ? card.blackout : null
+
+  const isBlackedOut = useCallback((i) =>
+    blackout?.some(([s, e]) => i >= s && i < e) ?? false
+  , [blackout])
+
+  // Focus when card or phase changes
+  useEffect(() => { demoRef.current?.focus() }, [cardIdx, phase])
+
+  // Schedule idle → auto-type
+  const scheduleIdle = useCallback(() => {
+    clearTimeout(idleTimer.current)
+    idleTimer.current = setTimeout(() => setAutoTyping(true), 2800)
+  }, [])
 
   useEffect(() => {
-    if (done) {
-      const t = setTimeout(() => { setTyped(''); setWordIdx(0); setDone(false) }, 2200)
-      return () => clearTimeout(t)
-    }
-    const target = hiddenWords[wordIdx]?.text || ''
-    if (typed === target) {
-      const t = setTimeout(() => {
-        if (wordIdx + 1 >= hiddenWords.length) setDone(true)
-        else { setWordIdx(i => i + 1); setTyped('') }
-      }, 400)
-      return () => clearTimeout(t)
-    }
-    const t = setTimeout(() => setTyped(target.slice(0, typed.length + 1)), 90)
-    return () => clearTimeout(t)
-  }, [typed, wordIdx, done, hiddenWords])
+    scheduleIdle()
+    return () => clearTimeout(idleTimer.current)
+  }, [cardIdx, phase, scheduleIdle])
 
-  let hiddenSeen = 0
-  return (
-    <div className="lp-demo-wrap">
-      <span className="lp-demo-label">see how it works</span>
-      <div className="lp-demo-line">
-      {DEMO_WORDS.map((w, i) => {
-        if (!w.hidden) return <span key={i} className="lp-demo-word">{w.text}</span>
-        const idx = hiddenSeen++
-        const isActive = !done && idx === wordIdx
-        const isComplete = done || idx < wordIdx
+  const completePhase = useCallback(() => {
+    if (completingRef.current) return
+    completingRef.current = true
+    setCardSuccess(true)
+    playChime()
+    if (phase === 'study') {
+      setTimeout(() => {
+        setCardSuccess(false)
+        setFlipped(true)
+        setTimeout(() => {
+          typedRef.current = ''
+          setTyped('')
+          setPendingWrong(false)
+          setFailedIndices(new Set())
+          setPhase('recall')
+          setAutoTyping(false)
+          completingRef.current = false
+        }, 320)
+      }, 380)
+    } else {
+      setTimeout(() => {
+        setCardSuccess(false)
+        setFlipped(false)
+        setCardIdx(c => (c + 1) % DEMO_CARDS.length)
+        typedRef.current = ''
+        setTyped('')
+        setPendingWrong(false)
+        setFailedIndices(new Set())
+        setPhase('study')
+        setAutoTyping(false)
+        completingRef.current = false
+      }, 650)
+    }
+  }, [phase])
+
+  // Auto-type tick
+  useEffect(() => {
+    if (!autoTyping || cardSuccess) return
+    const cur = typedRef.current
+    if (cur.length >= fullText.length) { completePhase(); return }
+    const t = setTimeout(() => {
+      const next = fullText.slice(0, cur.length + 1)
+      typedRef.current = next
+      setTyped(next)
+    }, 85)
+    return () => clearTimeout(t)
+  }, [autoTyping, typed, fullText, cardSuccess, completePhase])
+
+  const handleKeyDown = useCallback((e) => {
+    if (cardSuccess) return
+    if (e.key === 'Backspace') {
+      e.preventDefault()
+      if (typedRef.current.length === 0) return
+      const deletedIdx = typedRef.current.length - 1
+      const next = typedRef.current.slice(0, -1)
+      typedRef.current = next
+      setTyped(next)
+      setPendingWrong(false)
+      setFailedIndices(prev => { const n = new Set(prev); n.delete(deletedIdx); return n })
+      setAutoTyping(false)
+      scheduleIdle()
+      return
+    }
+    if (e.key.length !== 1 || e.ctrlKey || e.metaKey) return
+    e.preventDefault()
+    setAutoTyping(false)
+    scheduleIdle()
+    const pos = typedRef.current.length
+    if (pos >= fullText.length) return
+    if (e.key === fullText[pos]) {
+      const next = typedRef.current + e.key
+      typedRef.current = next
+      setPendingWrong(false)
+      setTyped(next)
+      if (next.length >= fullText.length) completePhase()
+    } else {
+      setPendingWrong(true)
+      setFailedIndices(prev => { const n = new Set(prev); n.add(pos); return n })
+    }
+  }, [cardSuccess, fullText, completePhase, scheduleIdle])
+
+  const renderText = () =>
+    fullText.split('').map((char, i) => {
+      if (i === typed.length) {
         return (
-          <span key={i} className={`lp-demo-blank ${isComplete ? 'lp-demo-blank--done' : ''}`}>
-            {isActive
-              ? <span className="lp-demo-typing">{typed}<span className="lp-demo-cursor" /></span>
-              : isComplete ? w.text : '█'.repeat(w.text.length)
-            }
+          <span key={i} className={pendingWrong ? 'char cursor wrong' : 'char cursor'}>
+            {isBlackedOut(i) ? '_' : char}
           </span>
         )
-      })}
+      }
+      if (i < typed.length) {
+        const bad = failedIndices.has(i) || typed[i] !== fullText[i]
+        const sp  = char === ' '
+        return <span key={i} className={bad ? `char incorrect${sp ? ' is-space' : ''}` : 'char correct'}>{char}</span>
+      }
+      if (isBlackedOut(i)) return <span key={i} className="char encrypted">_</span>
+      return <span key={i} className="char pending">{char}</span>
+    })
+
+  const faceClass = (side) => {
+    const base = `flashcard-face flashcard-face--${side}`
+    const ok   = cardSuccess && phase === (side === 'front' ? 'study' : 'recall')
+    return ok ? `${base} flashcard-face--success` : base
+  }
+
+  return (
+    <div
+      ref={demoRef}
+      className="lp-fc-demo"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      onClick={() => { demoRef.current?.focus(); setAutoTyping(false); scheduleIdle() }}
+    >
+      <div className="flashcard-scene">
+        <div className="flashcard-ghost ghost-2" />
+        <div className="flashcard-ghost ghost-1" />
+        <AnimatePresence mode="popLayout">
+          <motion.div
+            key={cardIdx}
+            className="flashcard-card-wrapper"
+            initial={{ scale: 0.94, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ x: 500, rotate: 12, opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
+          >
+            <motion.div
+              className="flashcard-flip-inner"
+              animate={{ rotateY: flipped ? 180 : 0 }}
+              transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] }}
+            >
+              {/* STUDY face */}
+              <div className={faceClass('front')}>
+                <div className="flashcard-corner fc-tl" />
+                <div className="flashcard-corner fc-tr" />
+                <div className="flashcard-corner fc-bl" />
+                <div className="flashcard-corner fc-br" />
+                <div className="flashcard-meta">
+                  <span className="flashcard-counter">{card.label}</span>
+                  <span className="flashcard-phase phase-study">[ STUDY ]</span>
+                </div>
+                <div className="flashcard-rule" />
+                <div className="note-display flashcard-text">{renderText()}</div>
+              </div>
+
+              {/* RECALL face */}
+              <div className={faceClass('back')}>
+                <div className="flashcard-corner fc-tl" />
+                <div className="flashcard-corner fc-tr" />
+                <div className="flashcard-corner fc-bl" />
+                <div className="flashcard-corner fc-br" />
+                <div className="flashcard-meta">
+                  <span className="flashcard-counter">{card.label}</span>
+                  <span className="flashcard-phase phase-recall">[ RECALL ]</span>
+                </div>
+                <div className="flashcard-rule flashcard-rule--recall" />
+                <div className="note-display flashcard-text">{renderText()}</div>
+              </div>
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      <div className="lp-fc-footer">
+        {autoTyping
+          ? <span className="lp-fc-auto">· click to take over ·</span>
+          : phase === 'recall'
+          ? <span className="lp-fc-hint lp-fc-hint--recall">recall — type from memory</span>
+          : <span className="lp-fc-hint">type the card</span>
+        }
       </div>
     </div>
   )
@@ -148,11 +322,13 @@ export default function IntroOverlay({ onComplete }) {
               </motion.p>
 
               <motion.div
+                className="lp-demo-wrap"
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.65, duration: 0.4 }}
               >
-                <DemoLine />
+                <p className="lp-demo-label">↓ try typing the card below</p>
+                <FlashcardDemo />
               </motion.div>
 
               <motion.div
