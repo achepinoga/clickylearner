@@ -4,6 +4,7 @@ const pdfParse = require('pdf-parse');
 const OpenAI = require('openai');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 const router = express.Router();
 
@@ -13,7 +14,7 @@ const uploadDir = (process.env.VERCEL || process.env.RENDER || process.env.NODE_
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
+  filename: (req, file, cb) => cb(null, `${crypto.randomUUID()}${path.extname(file.originalname)}`)
 });
 
 const ALLOWED_TYPES = ['application/pdf', 'text/plain', 'image/jpeg', 'image/png', 'image/webp', 'image/gif'];

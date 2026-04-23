@@ -25,13 +25,14 @@ const FallingText = ({
   useEffect(() => {
     if (!textRef.current || effectStarted) return;
     const words = text.split(' ').filter(Boolean);
-    const newHTML = words
-      .map(word => {
-        const isHighlighted = highlightWords.some(hw => word.startsWith(hw));
-        return `<span class="word ${isHighlighted ? highlightClass : ''}">${word}</span>`;
-      })
-      .join(' ');
-    textRef.current.innerHTML = newHTML;
+    textRef.current.innerHTML = '';
+    words.forEach((word, i) => {
+      if (i > 0) textRef.current.appendChild(document.createTextNode(' '));
+      const span = document.createElement('span');
+      span.className = `word ${highlightWords.some(hw => word.startsWith(hw)) ? highlightClass : ''}`;
+      span.textContent = word;
+      textRef.current.appendChild(span);
+    });
   }, [text, highlightWords, highlightClass, effectStarted]);
 
   useEffect(() => {

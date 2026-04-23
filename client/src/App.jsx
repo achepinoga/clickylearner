@@ -13,7 +13,9 @@ import AuthModal from './components/AuthModal'
 import HistoryPanel from './components/HistoryPanel'
 import FlashcardsPage from './components/FlashcardsPage'
 import IntroOverlay from './components/IntroOverlay'
+import PasswordGate from './components/PasswordGate'
 import RateLimitToast from './components/RateLimitToast'
+import BuyCoinsModal from './components/BuyCoinsModal'
 import './App.css'
 
 const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
@@ -55,6 +57,10 @@ const pageVariants = {
 const pageTransition = { duration: 0.4, ease: [0.4, 0, 0.2, 1] }
 
 export default function App() {
+  const [unlocked, setUnlocked] = useState(() => {
+    try { return sessionStorage.getItem('cl_unlocked') === '1' } catch { return false }
+  })
+
   const [rawNotes, setRawNotes] = useState(() => {
     try { const s = localStorage.getItem('cl_raw_notes'); return s ? JSON.parse(s) : [] } catch { return [] }
   })
@@ -106,31 +112,29 @@ export default function App() {
   const [continueError, setContinueError] = useState('')
   const currentDocTitleRef = useRef('')
   const settingsInitialized = useRef(false)
-  const [limits, setLimits] = useState({ ai: { limit: 25, used: 0, remaining: 25, resetTime: null }, upload: { limit: 10, used: 0, remaining: 10, resetTime: null } })
+  const [limits, setLimits] = useState({ ai: { limit: 10, used: 0, remaining: 10, resetTime: null }, upload: { limit: 10, used: 0, remaining: 10, resetTime: null } })
   const [rateLimitError, setRateLimitError] = useState(null)
-  const [aiBreakdown, setAiBreakdown] = useState({ notes: 0, quiz: 0 })
-  const [showLimitBreakdown, setShowLimitBreakdown] = useState(false)
-  const [badgePos, setBadgePos] = useState({ top: 0, right: 0 })
   const [testBackStage, setTestBackStage] = useState(STAGES.RESULTS)
-  const [aiCountdown, setAiCountdown] = useState('')
-  const [noonCountdown, setNoonCountdown] = useState('')
   const [showCoinInfo, setShowCoinInfo] = useState(false)
   const [coinInfoPos, setCoinInfoPos] = useState({ top: 0, right: 0 })
   const coinInfoBtnRef = useRef(null)
-  const badgeRef = useRef(null)
+  const [showBuyCoins, setShowBuyCoins] = useState(false)
+  const [sessionToken, setSessionToken] = useState(null)
 
   const notes = useMemo(
     () => settings.punctuation ? rawNotes : rawNotes.map(stripPunctuation),
     [rawNotes, settings.punctuation]
   )
 
-  // Fetch initial limit state on mount
+  // Fetch initial limit state on mount (re-runs when sessionToken is set)
   useEffect(() => {
-    fetch(`${API_BASE}/api/limits`)
+    fetch(`${API_BASE}/api/limits`, {
+      headers: sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {},
+    })
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data) setLimits(data) })
       .catch(() => {})
-  }, [])
+  }, [sessionToken])
 
   const handleApiUsed = (type) => {
     const bucket = (type === 'ai-notes' || type === 'ai-quiz') ? 'ai' : type
@@ -139,11 +143,17 @@ export default function App() {
       const used = Math.min(b.limit, b.used + 1)
       return { ...prev, [bucket]: { ...b, used, remaining: Math.max(0, b.limit - used) } }
     })
-    if (type === 'ai-notes') setAiBreakdown(prev => ({ ...prev, notes: prev.notes + 1 }))
-    if (type === 'ai-quiz') setAiBreakdown(prev => ({ ...prev, quiz: prev.quiz + 1 }))
   }
 
-  const handleRateLimit = (type, resetTime) => setRateLimitError({ type, resetTime })
+  const handleRateLimit = (type, resetTime) => {
+    setRateLimitError({ type, resetTime })
+    fetch(`${API_BASE}/api/limits`, {
+      headers: sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {},
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setLimits(data) })
+      .catch(() => {})
+  }
 
   const handleTestSet = (set) => {
     setRawNotes(set.notes)
@@ -156,14 +166,31 @@ export default function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       const resolvedUser = session?.user ?? null
       setUser(resolvedUser)
+      setSessionToken(session?.access_token ?? null)
       if (!resolvedUser) setShowIntro(true)
       setAuthLoading(false)
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      setSessionToken(session?.access_token ?? null)
     })
     return () => subscription.unsubscribe()
   }, [])
+
+  // Handle Stripe redirect back to app
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('payment') === 'success') {
+      window.history.replaceState({}, '', window.location.pathname)
+      // Refresh coin balance from server
+      fetch(`${API_BASE}/api/limits`, {
+        headers: sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {},
+      })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => { if (data) setLimits(data) })
+        .catch(() => {})
+    }
+  }, [sessionToken])
 
   useEffect(() => {
     if (!showMenu) return
@@ -172,51 +199,6 @@ export default function App() {
     return () => document.removeEventListener('mousedown', handler)
   }, [showMenu])
 
-  useEffect(() => {
-    if (!showLimitBreakdown) return
-    const handler = (e) => { if (badgeRef.current && !badgeRef.current.contains(e.target)) setShowLimitBreakdown(false) }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [showLimitBreakdown])
-
-  // Countdown ticker for exhausted coin badge
-  useEffect(() => {
-    if (limits.ai.remaining > 0 || !limits.ai.resetTime) { setAiCountdown(''); return }
-    const fmt = (ms) => {
-      if (ms <= 0) return ''
-      const s = Math.ceil(ms / 1000)
-      const m = Math.floor(s / 60)
-      return `${m}:${String(s % 60).padStart(2, '0')}`
-    }
-    const tick = () => setAiCountdown(fmt(new Date(limits.ai.resetTime) - Date.now()))
-    tick()
-    const id = setInterval(tick, 1000)
-    return () => clearInterval(id)
-  }, [limits.ai.remaining, limits.ai.resetTime])
-
-  // Countdown to next noon (for dropdown — always running)
-  useEffect(() => {
-    function getNextNoon() {
-      const now = new Date()
-      const noon = new Date(now)
-      noon.setHours(12, 0, 0, 0)
-      if (noon <= now) noon.setDate(noon.getDate() + 1)
-      return noon
-    }
-    const fmt = (ms) => {
-      if (ms <= 0) return '0:00'
-      const totalSec = Math.ceil(ms / 1000)
-      const h = Math.floor(totalSec / 3600)
-      const m = Math.floor((totalSec % 3600) / 60)
-      const s = totalSec % 60
-      if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m`
-      return `${m}:${String(s).padStart(2, '0')}`
-    }
-    const tick = () => setNoonCountdown(fmt(getNextNoon() - Date.now()))
-    tick()
-    const id = setInterval(tick, 1000)
-    return () => clearInterval(id)
-  }, [])
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -308,7 +290,10 @@ export default function App() {
     try {
       const res = await fetch(`${API_BASE}/api/notes/generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
+        },
         body: JSON.stringify({ text: pendingRemainingText })
       })
       const data = await res.json()
@@ -403,6 +388,8 @@ export default function App() {
     ? user.email.length > 18 ? user.email.slice(0, 15) + '…' : user.email
     : null
 
+  if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />
+
   return (
     <>
       <motion.div
@@ -475,23 +462,14 @@ export default function App() {
             </nav>
 
             <div className="header-right">
-              <div className="limit-badge-wrap" ref={badgeRef}>
+              <div className="limit-badge-wrap">
                 <button
                   className={`limit-badge${limits.ai.remaining === 0 ? ' limit-badge--exhausted' : ''}`}
-                  onClick={() => {
-                    if (badgeRef.current) {
-                      const r = badgeRef.current.getBoundingClientRect()
-                      setBadgePos({ top: r.bottom + 8, right: window.innerWidth - r.right })
-                    }
-                    setShowLimitBreakdown(v => !v)
-                  }}
-                  title="Coin balance"
+                  title="Buy coins"
+                  onClick={() => { playClick(); setShowBuyCoins(true) }}
                 >
                   <span className="limit-badge-coin">🪙</span>
-                  {limits.ai.remaining === 0 && aiCountdown
-                    ? <><span className="limit-badge-val">{aiCountdown}</span><span className="limit-badge-label">refills</span></>
-                    : <span className="limit-badge-val">{limits.ai.remaining}</span>
-                  }
+                  <span className="limit-badge-val">{limits.ai.remaining}</span>
                 </button>
                 <button
                   ref={coinInfoBtnRef}
@@ -559,6 +537,7 @@ export default function App() {
                   onApiUsed={handleApiUsed}
                   uploadLimits={limits.ai}
                   coinsRemaining={limits.ai.remaining}
+                  authToken={sessionToken}
                 />
               </motion.div>
             )}
@@ -577,7 +556,7 @@ export default function App() {
             )}
             {stage === STAGES.TEST && (
               <motion.div key="test" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden auto' }}>
-                <FlashcardTest notes={notes} onBack={() => setStage(testBackStage)} settings={settings} onRateLimit={handleRateLimit} onApiUsed={handleApiUsed} />
+                <FlashcardTest notes={notes} onBack={() => setStage(testBackStage)} settings={settings} onRateLimit={handleRateLimit} onApiUsed={handleApiUsed} coinsRemaining={limits.ai.remaining} authToken={sessionToken} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -618,40 +597,19 @@ export default function App() {
         />
       )}
 
-      <AnimatePresence>
-        {showLimitBreakdown && (
-          <motion.div
-            className="limit-breakdown"
-            style={{ top: badgePos.top, right: badgePos.right }}
-            initial={{ opacity: 0, y: -6, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.97 }}
-            transition={{ duration: 0.15 }}
-          >
-            <div className="limit-breakdown-title">Coins</div>
-            <div className="limit-breakdown-row">
-              <span>Remaining</span>
-              <span>{limits.ai.remaining}/{limits.ai.limit}</span>
-            </div>
-            <div className={`limit-breakdown-row${limits.ai.remaining === 0 ? ' limit-breakdown-row--warn' : ''}`}>
-              <span>Refills in</span>
-              <span>{noonCountdown}</span>
-            </div>
-            <div className="limit-breakdown-divider" />
-            <div className="limit-breakdown-title">This session</div>
-            <div className="limit-breakdown-row">
-              <span>Flashcards</span>
-              <span>{aiBreakdown.notes}</span>
-            </div>
-            <div className="limit-breakdown-row">
-              <span>Tests</span>
-              <span>{aiBreakdown.quiz}</span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <RateLimitToast error={rateLimitError} onDismiss={() => setRateLimitError(null)} />
+
+      <BuyCoinsModal
+        isOpen={showBuyCoins}
+        onClose={() => setShowBuyCoins(false)}
+        userId={user?.id ?? null}
+        userEmail={user?.email ?? null}
+        coinsRemaining={limits.ai.remaining}
+        onCoinsAdded={(coins) => setLimits(prev => ({
+          ...prev,
+          ai: { ...prev.ai, remaining: prev.ai.remaining + coins },
+        }))}
+      />
 
       <AnimatePresence>
         {showCoinInfo && (
@@ -664,7 +622,7 @@ export default function App() {
             transition={{ duration: 0.15 }}
           >
             <span className="coin-info-title">Clickycoins</span>
-            <span className="coin-info-body">Coins are the currency for AI actions. Generating flashcards or running a test each costs 1 coin. You get 25 coins, refilling every day.</span>
+            <span className="coin-info-body">Coins are the currency for AI actions. Generating flashcards or running a test each costs 1 coin. You get 10 free coins to try the app.</span>
           </motion.div>
         )}
       </AnimatePresence>

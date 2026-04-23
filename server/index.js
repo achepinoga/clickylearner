@@ -5,6 +5,8 @@ const rateLimit = require('express-rate-limit');
 const uploadRoute = require('./routes/upload');
 const notesRoute = require('./routes/notes');
 const quizRoute = require('./routes/quiz');
+const { router: stripeRouter, webhookHandler } = require('./routes/stripe');
+const supabaseAdmin = require('./lib/supabaseAdmin');
 
 
 const app = express();
@@ -15,24 +17,29 @@ app.set('trust proxy', 1);
 const allowedOrigins = process.env.NODE_ENV === 'production'
   ? (process.env.ALLOWED_ORIGIN
       ? process.env.ALLOWED_ORIGIN.split(',').map(s => s.trim())
-      : true)
+      : [])
   : ['http://localhost:5173', 'http://localhost:5174']
 
 app.use(cors({ origin: allowedOrigins, credentials: true }));
+
+// ── Stripe webhook — must come before express.json() to receive raw body ──
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), webhookHandler)
+
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '0');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  next();
+});
+
 app.use(express.json({ limit: '50mb' }));
 
-const AI_MAX = 25
+const AI_MAX = 10
 const UPLOAD_MAX = 10
 const UPLOAD_WINDOW = 15 * 60 * 1000   // 15 minutes
-
-// Returns the timestamp of the next 12:00 noon (local server time)
-function getNextNoon() {
-  const now = new Date()
-  const noon = new Date(now)
-  noon.setHours(12, 0, 0, 0)
-  if (noon <= now) noon.setDate(noon.getDate() + 1)
-  return noon.getTime()
-}
 
 // Parallel hit tracker — mirrors express-rate-limit windows without touching its internals.
 // Increments on every inbound request to a tracked route (same as the rate limiter does).
@@ -57,29 +64,25 @@ function makeTracker(windowMs) {
   }
 }
 
-// AI tracker resets at noon each day instead of a rolling window
-function makeNoonTracker() {
+// AI tracker — permanent, never resets. Users get AI_MAX coins total.
+function makePermanentTracker() {
   const store = new Map()
   return {
     increment(key) {
-      const now = Date.now()
       const entry = store.get(key)
-      if (entry && entry.resetAt > now) {
+      if (entry) {
         entry.hits++
       } else {
-        store.set(key, { hits: 1, resetAt: getNextNoon() })
+        store.set(key, { hits: 1 })
       }
     },
     peek(key) {
-      const now = Date.now()
-      const entry = store.get(key)
-      if (!entry || entry.resetAt <= now) return null
-      return entry
+      return store.get(key) ?? null
     },
   }
 }
 
-const aiTracker = makeNoonTracker()
+const aiTracker = makePermanentTracker()
 const uploadTracker = makeTracker(UPLOAD_WINDOW)
 
 // 10 uploads per IP per 15 minutes
@@ -96,32 +99,101 @@ const uploadLimiter = rateLimit({
   legacyHeaders: false,
 })
 
-// 25 coin actions per IP per day, enforced directly from the noon tracker.
-// Check before increment so the 26th request is blocked without consuming a slot.
-function aiLimiter(req, res, next) {
+// Extract user from Supabase JWT (returns null if missing/invalid)
+async function getUserFromRequest(req) {
+  try {
+    const auth = req.headers.authorization
+    if (!auth?.startsWith('Bearer ')) return null
+    const token = auth.slice(7)
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
+    return error ? null : user
+  } catch { return null }
+}
+
+// Get purchased coin balance from DB
+async function getPurchasedCoins(userId) {
+  try {
+    const { data } = await supabaseAdmin
+      .from('user_coins')
+      .select('balance')
+      .eq('user_id', userId)
+      .single()
+    return data?.balance ?? 0
+  } catch { return 0 }
+}
+
+// Check if user has an active subscription
+async function hasActiveSubscription(userId) {
+  try {
+    const { data } = await supabaseAdmin
+      .from('user_subscriptions')
+      .select('status')
+      .eq('user_id', userId)
+      .single()
+    return data?.status === 'active'
+  } catch { return false }
+}
+
+// Deduct one purchased coin from DB
+async function deductPurchasedCoin(userId) {
+  try {
+    await supabaseAdmin.rpc('decrement_user_coins', { p_user_id: userId })
+  } catch { /* non-fatal */ }
+}
+
+// AI limiter — subscription → purchased coins → free trial
+async function aiLimiter(req, res, next) {
+  const user = await getUserFromRequest(req)
+
+  if (user) {
+    const purchased = await getPurchasedCoins(user.id)
+    if (purchased > 0) {
+      await deductPurchasedCoin(user.id)
+      return next()
+    }
+  }
+
+  // Free trial — IP-based, permanent
   const key = req.ip ?? ''
   const entry = aiTracker.peek(key)
   if (entry && entry.hits >= AI_MAX) {
     return res.status(429).json({
-      error: 'No coins remaining. Your coins refill every day.',
-      resetTime: new Date(entry.resetAt).toISOString(),
+      error: 'No coins remaining. Purchase more to continue.',
+      resetTime: null,
     })
   }
   aiTracker.increment(key)
   next()
 }
 
-// Limit status — does not consume a token; reads from the parallel tracker
-app.get('/api/limits', (req, res) => {
+const limitsRateLimit = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
+// Limit status — reads from parallel tracker + purchased coins for auth'd users
+app.get('/api/limits', limitsRateLimit, async (req, res) => {
   const key = req.ip ?? ''
   const ai = aiTracker.peek(key)
   const upload = uploadTracker.peek(key)
+
+  const trialRemaining = Math.max(0, AI_MAX - (ai?.hits ?? 0))
+  let purchasedRemaining = 0
+
+  const user = await getUserFromRequest(req)
+  if (user) {
+    purchasedRemaining = await getPurchasedCoins(user.id)
+  }
+
   res.json({
     ai: {
       limit: AI_MAX,
       used: ai?.hits ?? 0,
-      remaining: Math.max(0, AI_MAX - (ai?.hits ?? 0)),
-      resetTime: ai ? new Date(ai.resetAt).toISOString() : null,
+      remaining: trialRemaining + purchasedRemaining,
+      purchased: purchasedRemaining,
+      resetTime: null,
     },
     upload: {
       limit: UPLOAD_MAX,
@@ -131,6 +203,8 @@ app.get('/api/limits', (req, res) => {
     },
   })
 })
+
+app.use('/api/stripe', stripeRouter)
 
 app.use('/api/upload',
   (req, res, next) => {

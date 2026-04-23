@@ -49,7 +49,7 @@ const DIFFICULTY_LEVELS = [
   { value: 4, label: 'IV', name: 'Brutal', pct: '~80%' },
 ]
 
-export default function Upload({ onNotesReady, gameMode, difficulty, onDifficultyChange, onBack, onRateLimit, onApiUsed, uploadLimits, coinsRemaining }) {
+export default function Upload({ onNotesReady, gameMode, difficulty, onDifficultyChange, onBack, onRateLimit, onApiUsed, uploadLimits, coinsRemaining, authToken }) {
   const [file, setFile] = useState(null)
   const [dragging, setDragging] = useState(false)
   const [status, setStatus] = useState('idle')
@@ -131,7 +131,11 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
       const formData = new FormData()
       formData.append('file', file)
 
-      const uploadRes = await fetch(`${API_BASE}/api/upload?mode=${gameMode}`, { method: 'POST', body: formData })
+      const uploadRes = await fetch(`${API_BASE}/api/upload?mode=${gameMode}`, {
+        method: 'POST',
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+        body: formData,
+      })
       if (!uploadRes.ok) {
         if (uploadRes.status === 413) {
           throw new Error('File too large for the server to process. Please use a file under 4 MB.')
@@ -157,13 +161,15 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
       setStatus('generating')
       const notesRes = await fetch(`${API_BASE}/api/notes/generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
         body: JSON.stringify({ text: uploadData.text })
       })
       const notesData = await notesRes.json()
       if (notesRes.status === 429) { onRateLimit?.('ai', notesData.resetTime); setStatus('idle'); return }
       if (!notesRes.ok) throw new Error(notesData.error || 'Failed to generate notes')
-      // Both counters update together after successful AI generation
       onApiUsed?.('upload')
       onApiUsed?.('ai-notes')
 
@@ -190,7 +196,10 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
     try {
       const notesRes = await fetch(`${API_BASE}/api/notes/generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
         body: JSON.stringify({ text: continuation.remainingText })
       })
       const notesData = await notesRes.json()
@@ -464,6 +473,20 @@ export default function Upload({ onNotesReady, gameMode, difficulty, onDifficult
               </svg>
             )}
           </motion.button>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {outOfCoins && (
+          <motion.p
+            className="no-coins-notice"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 6 }}
+            transition={{ duration: 0.2 }}
+          >
+            No coins remaining — <a href="https://clickylearner.com/pricing" target="_blank" rel="noopener noreferrer">buy more</a> to continue.
+          </motion.p>
         )}
       </AnimatePresence>
 

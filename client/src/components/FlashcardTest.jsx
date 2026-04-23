@@ -5,7 +5,7 @@ import './FlashcardTest.css'
 
 const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
 
-export default function FlashcardTest({ notes, onBack, settings, onRateLimit, onApiUsed }) {
+export default function FlashcardTest({ notes, onBack, settings, onRateLimit, onApiUsed, coinsRemaining, authToken }) {
   const [phase, setPhase] = useState('loading') // loading | question | penalty | failed-intro | done | error
   const [loadError, setLoadError] = useState('')
   const [questions, setQuestions] = useState([])
@@ -42,10 +42,11 @@ export default function FlashcardTest({ notes, onBack, settings, onRateLimit, on
   const q = questions[qIdx]
   const penaltyText = q ? (notes[q.sourceNoteIndex] ?? notes[0] ?? '') : ''
 
+  const fetchStarted = useRef(false)
   useEffect(() => {
-    const controller = new AbortController()
-    fetchQuiz(controller.signal)
-    return () => controller.abort()
+    if (fetchStarted.current) return
+    fetchStarted.current = true
+    fetchQuiz()
   }, [])
 
   // Re-focus penalty input whenever a click happens anywhere during penalty phase
@@ -56,18 +57,25 @@ export default function FlashcardTest({ notes, onBack, settings, onRateLimit, on
     return () => document.removeEventListener('click', refocus)
   }, [phase])
 
-  async function fetchQuiz(signal) {
+  async function fetchQuiz() {
+    if (coinsRemaining === 0) {
+      setLoadError('No coins remaining. Buy more to continue.')
+      setPhase('error')
+      return
+    }
     try {
       const res = await fetch(`${API_BASE}/api/quiz/generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
         body: JSON.stringify({ notes }),
-        signal,
       })
       const data = await res.json()
       if (res.status === 429) {
         onRateLimit?.('ai', data.resetTime)
-        setLoadError('AI limit reached. Please wait and try again.')
+        setLoadError('No coins remaining. Buy more to continue.')
         setPhase('error')
         return
       }
@@ -248,7 +256,7 @@ export default function FlashcardTest({ notes, onBack, settings, onRateLimit, on
 
   if (phase === 'error') return (
     <div className="quiz-container quiz-center">
-      <p className="quiz-error-msg">Failed to generate quiz: {loadError}</p>
+      <p className="quiz-error-msg">{loadError}</p>
       <button className="quiz-btn-back" onClick={() => { playBack(); onBack() }}>← Back</button>
     </div>
   )

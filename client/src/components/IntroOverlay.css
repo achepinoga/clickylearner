@@ -340,14 +340,14 @@
   gap: 2rem;
   padding: clamp(2rem, 5vh, 4rem) 2rem;
   width: 100%;
-  max-width: 60rem;
+  max-width: 68rem;
   border-top: 1px solid var(--glass-border);
   border-bottom: 1px solid var(--glass-border);
 }
 
 .lp-steps {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 1.5rem;
   width: 100%;
 }
@@ -357,6 +357,9 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  padding: 1.25rem 1.25rem 1.5rem;
 }
 
 .lp-step-num {
@@ -384,12 +387,17 @@
   margin: 0;
 }
 
+.lp-step-desc strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
 .lp-step-arrow {
   font-family: 'JetBrains Mono', monospace;
   font-size: 1.2rem;
   color: var(--text-faint);
-  padding-top: 1.8rem;
   flex-shrink: 0;
+  align-self: center;
 }
 
 /* ── Bottom CTA ── */

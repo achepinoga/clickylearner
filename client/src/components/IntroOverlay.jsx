@@ -352,12 +352,55 @@ export default function IntroOverlay({ onComplete }) {
               transition={{ delay: 0.9, duration: 0.5 }}
             />
 
+            {/* ── How it works ── */}
+            <motion.section
+              className="lp-how"
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.0, duration: 0.5 }}
+            >
+              <p className="lp-section-label">how it works</p>
+              <div className="lp-steps">
+                <div className="lp-step">
+                  <span className="lp-step-num">01</span>
+                  <div>
+                    <h4 className="lp-step-title">Pick a mode</h4>
+                    <p className="lp-step-desc">Choose how you want to study — with AI-generated flashcards, typing through your own text, or pure speed practice.</p>
+                  </div>
+                </div>
+                <div className="lp-step-arrow">→</div>
+                <div className="lp-step">
+                  <span className="lp-step-num">02</span>
+                  <div>
+                    <h4 className="lp-step-title">Upload your material</h4>
+                    <p className="lp-step-desc">Drop in a PDF or paste your notes. The AI condenses them into focused cards and marks key terms to test.</p>
+                  </div>
+                </div>
+                <div className="lp-step-arrow">→</div>
+                <div className="lp-step">
+                  <span className="lp-step-num">03</span>
+                  <div>
+                    <h4 className="lp-step-title">Type to remember</h4>
+                    <p className="lp-step-desc">Type every character. Key terms are blacked out on the second pass — you have to retrieve them from memory.</p>
+                  </div>
+                </div>
+                <div className="lp-step-arrow">→</div>
+                <div className="lp-step">
+                  <span className="lp-step-num">04</span>
+                  <div>
+                    <h4 className="lp-step-title">Review your results</h4>
+                    <p className="lp-step-desc">See your accuracy and speed, then take an AI quiz. Missed questions get a penalty round so nothing slips through.</p>
+                  </div>
+                </div>
+              </div>
+            </motion.section>
+
             {/* ── Value props ── */}
             <motion.section
               className="lp-props"
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.0, duration: 0.5 }}
+              transition={{ delay: 1.05, duration: 0.5 }}
             >
               <p className="lp-section-label">why it works</p>
               <div className="lp-props-grid">
@@ -368,41 +411,6 @@ export default function IntroOverlay({ onComplete }) {
                     <p className="lp-prop-desc">{p.desc}</p>
                   </div>
                 ))}
-              </div>
-            </motion.section>
-
-            {/* ── How it works ── */}
-            <motion.section
-              className="lp-how"
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.05, duration: 0.5 }}
-            >
-              <p className="lp-section-label">how it works</p>
-              <div className="lp-steps">
-                <div className="lp-step">
-                  <span className="lp-step-num">01</span>
-                  <div>
-                    <h4 className="lp-step-title">Upload your material</h4>
-                    <p className="lp-step-desc">Drop in a PDF, paste text, or let the AI condense your document into focused study cards.</p>
-                  </div>
-                </div>
-                <div className="lp-step-arrow">→</div>
-                <div className="lp-step">
-                  <span className="lp-step-num">02</span>
-                  <div>
-                    <h4 className="lp-step-title">Type through it</h4>
-                    <p className="lp-step-desc">Key terms are hidden. You type them back from memory — no clicking, no multiple choice, no shortcuts.</p>
-                  </div>
-                </div>
-                <div className="lp-step-arrow">→</div>
-                <div className="lp-step">
-                  <span className="lp-step-num">03</span>
-                  <div>
-                    <h4 className="lp-step-title">Quiz and review</h4>
-                    <p className="lp-step-desc">An AI quiz tests your knowledge after each session. Review what you missed and lock it in.</p>
-                  </div>
-                </div>
               </div>
             </motion.section>
 

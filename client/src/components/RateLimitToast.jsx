@@ -32,7 +32,6 @@ export default function RateLimitToast({ error, onDismiss }) {
 
   const isUpload = error?.type === 'upload'
   const title = isUpload ? 'Upload limit reached' : 'No coins remaining'
-  const windowHint = isUpload ? '15 minutes' : 'noon'
 
   return (
     <AnimatePresence>
@@ -49,9 +48,11 @@ export default function RateLimitToast({ error, onDismiss }) {
           <div className="rl-toast-body">
             <span className="rl-toast-title">{title}</span>
             <span className="rl-toast-sub">
-              {remaining != null && remaining > 0
-                ? `Refills in ${formatCountdown(remaining)}`
-                : `Refills at ${windowHint}`}
+              {isUpload
+                ? remaining != null && remaining > 0
+                  ? `Refills in ${formatCountdown(remaining)}`
+                  : 'Try again in 15 minutes'
+                : 'Buy more to continue'}
             </span>
           </div>
           <button className="rl-toast-close" onClick={onDismiss} aria-label="Dismiss">×</button>

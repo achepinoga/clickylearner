@@ -231,6 +231,45 @@
   color: var(--incorrect);
 }
 
+.limit-buy-btn {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 5px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--bg);
+  background: var(--text);
+  border: none;
+  border-radius: 3px;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.limit-buy-btn:hover {
+  opacity: 0.85;
+}
+
+.no-coins-notice {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  margin: 0.5rem 0 0;
+  text-align: center;
+}
+.no-coins-notice a {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.no-coins-notice a:hover {
+  opacity: 0.7;
+}
+
+
 /* Right header group (limit badge + settings) */
 .header-right {
   position: absolute;

@@ -214,6 +214,9 @@ export default function Results({ stats, onRetry, onUpload, onNew, onTest, isFla
               {continueError && (
                 <p style={{ fontSize: '0.72rem', color: 'var(--incorrect)', margin: 0 }}>{continueError}</p>
               )}
+              {coinsRemaining === 0 && (
+                <p className="no-coins-notice">No coins remaining — <a href="https://clickylearner.com/pricing" target="_blank" rel="noopener noreferrer">buy more</a> to continue.</p>
+              )}
               {isFlashcard && (
                 <motion.button
                   className="btn-action btn-action--primary"
