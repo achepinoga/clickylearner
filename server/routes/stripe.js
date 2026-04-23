@@ -119,15 +119,28 @@ async function webhookHandler(req, res) {
       break
     }
 
-    // Monthly renewal — credit 50 coins on each successful invoice
+    // Subscription activated or renewed
     case 'invoice.payment_succeeded': {
       const invoice = event.data.object
-      if (invoice.billing_reason !== 'subscription_cycle') break
       const sub = await stripe.subscriptions.retrieve(invoice.subscription)
       const userId = sub.metadata?.userId
       if (!userId) break
-      await supabaseAdmin.rpc('increment_user_coins', { p_user_id: userId, p_amount: SUBSCRIPTION.coins })
-      console.log(`Subscription renewal: credited ${SUBSCRIPTION.coins} coins to user ${userId}`)
+
+      if (invoice.billing_reason === 'subscription_create') {
+        // First payment — mark subscription active and credit initial coins
+        await supabaseAdmin.from('user_subscriptions').upsert({
+          user_id: userId,
+          status: 'active',
+          stripe_customer_id: sub.customer,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' })
+        await supabaseAdmin.rpc('increment_user_coins', { p_user_id: userId, p_amount: SUBSCRIPTION.coins })
+        console.log(`Subscription activated: credited ${SUBSCRIPTION.coins} coins to user ${userId}`)
+      } else if (invoice.billing_reason === 'subscription_cycle') {
+        // Monthly renewal — credit coins
+        await supabaseAdmin.rpc('increment_user_coins', { p_user_id: userId, p_amount: SUBSCRIPTION.coins })
+        console.log(`Subscription renewal: credited ${SUBSCRIPTION.coins} coins to user ${userId}`)
+      }
       break
     }
 
