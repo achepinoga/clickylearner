@@ -84,8 +84,11 @@ router.post('/create-subscription', async (req, res) => {
       metadata: { userId },
     })
 
-    const clientSecret = subscription.latest_invoice.payment_intent.client_secret
-    res.json({ clientSecret, subscriptionId: subscription.id })
+    const paymentIntent = subscription.latest_invoice?.payment_intent
+    if (!paymentIntent?.client_secret) {
+      return res.status(500).json({ error: 'Subscription created but payment could not be initialised. Please try again.' })
+    }
+    res.json({ clientSecret: paymentIntent.client_secret, subscriptionId: subscription.id })
   } catch (err) {
     console.error('Subscription error:', err.message)
     res.status(500).json({ error: 'Failed to create subscription.' })
