@@ -95,6 +95,14 @@ router.post('/create-subscription', async (req, res) => {
     if (!paymentIntent?.client_secret && invoice?.id) {
       const freshInvoice = await stripe.invoices.retrieve(invoice.id, { expand: ['payment_intent'] })
       paymentIntent = freshInvoice.payment_intent
+      console.log('Fresh invoice collection_method:', freshInvoice.collection_method, '| PI:', freshInvoice.payment_intent?.id ?? 'null')
+    }
+
+    // Last resort: list PaymentIntents by invoice
+    if (!paymentIntent?.client_secret && invoice?.id) {
+      const piList = await stripe.paymentIntents.list({ invoice: invoice.id, limit: 1 })
+      paymentIntent = piList.data[0] ?? null
+      console.log('PI list result:', piList.data.length, 'items', piList.data[0]?.id ?? 'none')
     }
 
     if (!paymentIntent?.client_secret) {
