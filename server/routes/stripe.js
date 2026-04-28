@@ -87,7 +87,8 @@ router.post('/create-subscription', async (req, res) => {
     const invoice = subscription.latest_invoice
     const paymentIntent = invoice?.payment_intent
     console.log('Subscription status:', subscription.status)
-    console.log('Invoice type:', typeof invoice, '| PI type:', typeof paymentIntent, '| PI status:', paymentIntent?.status, '| has secret:', !!paymentIntent?.client_secret)
+    console.log('Invoice keys:', invoice ? Object.keys(invoice).filter(k => k.includes('payment') || k.includes('intent') || k.includes('secret') || k.includes('confirm')).join(', ') : 'null')
+    console.log('PI type:', typeof paymentIntent, '| PI status:', paymentIntent?.status, '| has secret:', !!paymentIntent?.client_secret)
     if (!paymentIntent?.client_secret) {
       return res.status(500).json({ error: 'Subscription created but payment could not be initialised. Please try again.' })
     }
