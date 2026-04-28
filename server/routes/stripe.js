@@ -79,17 +79,26 @@ router.post('/create-subscription', async (req, res) => {
       customer: customerId,
       items: [{ price: SUBSCRIPTION.priceId }],
       payment_behavior: 'default_incomplete',
-      payment_settings: { save_default_payment_method: 'on_subscription' },
+      collection_method: 'charge_automatically',
+      payment_settings: {
+        save_default_payment_method: 'on_subscription',
+        payment_method_types: ['card'],
+      },
       expand: ['latest_invoice.payment_intent'],
       metadata: { userId },
     })
 
     const invoice = subscription.latest_invoice
-    const paymentIntent = invoice?.payment_intent
-    console.log('Subscription status:', subscription.status)
-    console.log('Invoice keys:', invoice ? Object.keys(invoice).filter(k => k.includes('payment') || k.includes('intent') || k.includes('secret') || k.includes('confirm')).join(', ') : 'null')
-    console.log('PI type:', typeof paymentIntent, '| PI status:', paymentIntent?.status, '| has secret:', !!paymentIntent?.client_secret)
+    let paymentIntent = invoice?.payment_intent
+
+    // Stripe v22+ may not inline the payment_intent — fetch the invoice directly
+    if (!paymentIntent?.client_secret && invoice?.id) {
+      const freshInvoice = await stripe.invoices.retrieve(invoice.id, { expand: ['payment_intent'] })
+      paymentIntent = freshInvoice.payment_intent
+    }
+
     if (!paymentIntent?.client_secret) {
+      console.error('No payment intent found. Subscription id:', subscription.id, '| invoice id:', invoice?.id)
       return res.status(500).json({ error: 'Subscription created but payment could not be initialised. Please try again.' })
     }
     res.json({ clientSecret: paymentIntent.client_secret, subscriptionId: subscription.id })
