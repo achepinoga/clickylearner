@@ -2,7 +2,7 @@ const express = require('express')
 const Stripe = require('stripe')
 const supabaseAdmin = require('../lib/supabaseAdmin')
 
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY)
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' })
 const router = express.Router()
 
 // One-time coin packages
@@ -91,22 +91,14 @@ router.post('/create-subscription', async (req, res) => {
     const invoice = subscription.latest_invoice
     let paymentIntent = invoice?.payment_intent
 
-    // Stripe v22+ may not inline the payment_intent — fetch the invoice directly
+    // Fallback: retrieve invoice directly in case SDK version didn't inline it
     if (!paymentIntent?.client_secret && invoice?.id) {
       const freshInvoice = await stripe.invoices.retrieve(invoice.id, { expand: ['payment_intent'] })
       paymentIntent = freshInvoice.payment_intent
-      console.log('Fresh invoice collection_method:', freshInvoice.collection_method, '| PI:', freshInvoice.payment_intent?.id ?? 'null')
-    }
-
-    // Last resort: list PaymentIntents by invoice
-    if (!paymentIntent?.client_secret && invoice?.id) {
-      const piList = await stripe.paymentIntents.list({ invoice: invoice.id, limit: 1 })
-      paymentIntent = piList.data[0] ?? null
-      console.log('PI list result:', piList.data.length, 'items', piList.data[0]?.id ?? 'none')
     }
 
     if (!paymentIntent?.client_secret) {
-      console.error('No payment intent found. Subscription id:', subscription.id, '| invoice id:', invoice?.id)
+      console.error('Subscription created but no payment intent. sub:', subscription.id, 'inv:', invoice?.id)
       return res.status(500).json({ error: 'Subscription created but payment could not be initialised. Please try again.' })
     }
     res.json({ clientSecret: paymentIntent.client_secret, subscriptionId: subscription.id })
