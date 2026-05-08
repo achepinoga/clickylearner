@@ -1,29 +1,8 @@
-import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { playBack, playToggle } from '../sounds'
 import './SettingsModal.css'
 
-const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
-
-export default function SettingsModal({ isOpen, onClose, settings, setSettings, theme, setTheme, userId }) {
-  const [portalLoading, setPortalLoading] = useState(false)
-
-  const handleManageSubscription = async () => {
-    setPortalLoading(true)
-    try {
-      const res = await fetch(`${API_BASE}/api/stripe/create-portal-session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId }),
-      })
-      const data = await res.json()
-      if (data.url) window.location.href = data.url
-    } catch {
-      // silently fail
-    } finally {
-      setPortalLoading(false)
-    }
-  }
+export default function SettingsModal({ isOpen, onClose, settings, setSettings, theme, setTheme }) {
   if (!isOpen) return null
 
   return (
@@ -145,19 +124,6 @@ export default function SettingsModal({ isOpen, onClose, settings, setSettings, 
             </div>
           </div>
 
-          {userId && (
-            <div className="settings-group">
-              <div className="setting-row">
-                <div className="setting-info">
-                  <span className="setting-label">Subscription</span>
-                  <span className="setting-desc">Manage or cancel your plan</span>
-                </div>
-                <button className="theme-btn" onClick={handleManageSubscription} disabled={portalLoading}>
-                  {portalLoading ? '...' : 'Manage'}
-                </button>
-              </div>
-            </div>
-          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>

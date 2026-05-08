@@ -422,6 +422,18 @@ export default function App() {
     setStage(STAGES.TYPING)
   }
 
+  const handleManageSubscription = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/stripe/create-portal-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user?.id }),
+      })
+      const data = await res.json()
+      if (data.url) window.location.href = data.url
+    } catch {}
+  }
+
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     setShowHistory(false)
@@ -483,6 +495,7 @@ export default function App() {
                         </div>
                         <div className="dropdown-divider" />
                         <button className="dropdown-item" onClick={() => { playClick(); setShowMenu(false); setShowHistory(true) }}>History</button>
+                        {isPremium && <button className="dropdown-item" onClick={() => { playClick(); setShowMenu(false); handleManageSubscription() }}>Manage Subscription</button>}
                         <button className="dropdown-item dropdown-item--danger" onClick={() => { playBack(); setShowMenu(false); handleSignOut() }}>Sign Out</button>
                       </>
                     ) : (
@@ -621,7 +634,6 @@ export default function App() {
         setSettings={setSettings}
         theme={theme}
         setTheme={setTheme}
-        userId={user?.id}
       />
 
       <AuthModal
