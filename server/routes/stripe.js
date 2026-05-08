@@ -93,8 +93,13 @@ async function webhookHandler(req, res) {
   switch (event.type) {
     // Subscription activated or renewed
     case 'invoice.payment_succeeded': {
+      try {
       const invoice = event.data.object
-      const sub = await stripe.subscriptions.retrieve(invoice.subscription)
+      // Support both old (invoice.subscription) and new API (invoice.parent.subscription_details.subscription)
+      const subscriptionId = invoice.subscription
+        ?? invoice.parent?.subscription_details?.subscription
+      if (!subscriptionId) { console.error('invoice.payment_succeeded: no subscription id found'); break }
+      const sub = await stripe.subscriptions.retrieve(subscriptionId)
       const userId = sub.metadata?.userId
       if (!userId) break
 
@@ -113,6 +118,7 @@ async function webhookHandler(req, res) {
         await supabaseAdmin.rpc('increment_user_coins', { p_user_id: userId, p_amount: SUBSCRIPTION.coins })
         console.log(`Subscription renewal: credited ${SUBSCRIPTION.coins} coins to user ${userId}`)
       }
+      } catch (err) { console.error('invoice.payment_succeeded handler error:', err.message) }
       break
     }
 
