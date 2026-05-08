@@ -55,7 +55,7 @@ const STAGE_KEYS_FLASHCARDS   = [STAGES.GAMEMODE, STAGES.FLASHCARDS, STAGES.TYPI
 
 const pageVariants = {
   initial: { opacity: 0, y: 22, filter: 'blur(6px)' },
-  animate: { opacity: 1, y: 0, filter: 'blur(0px)' },
+  animate: { opacity: 1, y: 0, filter: 'blur(0px)', transitionEnd: { filter: 'none' } },
   exit: { opacity: 0, y: -22, filter: 'blur(6px)' },
 }
 
@@ -104,8 +104,8 @@ export default function App() {
   const [settings, setSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('cl_settings')
-      return saved ? JSON.parse(saved) : { allowBackspace: true, punctuation: true, menuSounds: true, completionSound: true, autoAdvance: true }
-    } catch { return { allowBackspace: true, punctuation: true, menuSounds: true, completionSound: true, autoAdvance: true } }
+      return saved ? JSON.parse(saved) : { allowBackspace: true, punctuation: true, menuSounds: true, completionSound: true, autoAdvance: false }
+    } catch { return { allowBackspace: true, punctuation: true, menuSounds: true, completionSound: true, autoAdvance: false } }
   })
   const [typingKey, setTypingKey] = useState(0)
   const [gameMode, setGameMode] = useState(() => {

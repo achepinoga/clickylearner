@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { playClick } from '../sounds'
+import HowItWorksModal from './HowItWorksModal'
 import './GameMode.css'
 
 const MODES = [
@@ -38,6 +39,7 @@ const AVAILABLE = MODES.filter(m => m.available)
 
 export default function GameMode({ onSelect, showFreeLimit = true }) {
   const [focusedIndex, setFocusedIndex] = useState(null)
+  const [showHowItWorks, setShowHowItWorks] = useState(false)
   const focusedRef = useRef(null)
   focusedRef.current = focusedIndex
 
@@ -102,6 +104,24 @@ export default function GameMode({ onSelect, showFreeLimit = true }) {
           )
         })}
       </div>
+
+      <motion.button
+        className="hiw-trigger"
+        onClick={() => { playClick(); setShowHowItWorks(true) }}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, delay: 0.35 }}
+        whileHover={{ y: -2 }}
+        whileTap={{ scale: 0.97 }}
+      >
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+          <circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" strokeWidth="1.2" />
+          <path d="M6.5 5.8v3.2M6.5 4v.4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+        </svg>
+        How it works
+      </motion.button>
+
+      <HowItWorksModal isOpen={showHowItWorks} onClose={() => setShowHowItWorks(false)} />
     </div>
   )
 }

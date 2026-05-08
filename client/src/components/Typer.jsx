@@ -244,7 +244,7 @@ export default function Typer({ notes, onFinished, onBack, settings, flashcardDi
     noteResultsRef.current = [...noteResultsRef.current, thisNoteResult]
 
     if (isFlashcard) {
-      const autoAdv = settings?.autoAdvance ?? true
+      const autoAdv = settings?.autoAdvance ?? false
       if (cardPhase === 'study') {
         setCardSuccess(true)
         if (settings?.completionSound ?? true) playChime()

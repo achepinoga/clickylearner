@@ -99,7 +99,7 @@ export default function SettingsModal({ isOpen, onClose, settings, setSettings, 
               <label className="setting-toggle">
                 <input
                   type="checkbox"
-                  checked={settings.autoAdvance ?? true}
+                  checked={settings.autoAdvance ?? false}
                   onChange={(e) => { playToggle(); setSettings({ ...settings, autoAdvance: e.target.checked }) }}
                 />
                 <span className="toggle-slider"></span>
