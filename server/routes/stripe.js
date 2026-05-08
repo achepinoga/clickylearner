@@ -2,7 +2,7 @@ const express = require('express')
 const Stripe = require('stripe')
 const supabaseAdmin = require('../lib/supabaseAdmin')
 
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY)
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' })
 const router = express.Router()
 
 // Subscription plan
@@ -49,13 +49,29 @@ router.post('/create-subscription', async (req, res) => {
       customer: customerId,
       items: [{ price: SUBSCRIPTION.priceId }],
       payment_behavior: 'default_incomplete',
-      payment_settings: { save_default_payment_method: 'on_subscription' },
+      collection_method: 'charge_automatically',
+      payment_settings: {
+        save_default_payment_method: 'on_subscription',
+        payment_method_types: ['card'],
+      },
       expand: ['latest_invoice.payment_intent'],
       metadata: { userId },
     })
 
-    const clientSecret = subscription.latest_invoice.payment_intent.client_secret
-    res.json({ clientSecret, subscriptionId: subscription.id })
+    const invoice = subscription.latest_invoice
+    let paymentIntent = invoice?.payment_intent
+
+    // Fallback: retrieve invoice directly in case SDK version didn't inline it
+    if (!paymentIntent?.client_secret && invoice?.id) {
+      const freshInvoice = await stripe.invoices.retrieve(invoice.id, { expand: ['payment_intent'] })
+      paymentIntent = freshInvoice.payment_intent
+    }
+
+    if (!paymentIntent?.client_secret) {
+      console.error('Subscription created but no payment intent. sub:', subscription.id, 'inv:', invoice?.id)
+      return res.status(500).json({ error: 'Subscription created but payment could not be initialised. Please try again.' })
+    }
+    res.json({ clientSecret: paymentIntent.client_secret, subscriptionId: subscription.id })
   } catch (err) {
     console.error('Subscription error:', err.message)
     res.status(500).json({ error: 'Failed to create subscription.' })
