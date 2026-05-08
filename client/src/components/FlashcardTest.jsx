@@ -5,7 +5,7 @@ import './FlashcardTest.css'
 
 const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
 
-export default function FlashcardTest({ notes, onBack, settings, onRateLimit, onApiUsed, coinsRemaining, authToken }) {
+export default function FlashcardTest({ notes, onBack, settings, onRateLimit, onApiUsed, authToken }) {
   const [phase, setPhase] = useState('loading') // loading | question | penalty | failed-intro | done | error
   const [loadError, setLoadError] = useState('')
   const [questions, setQuestions] = useState([])
@@ -58,11 +58,6 @@ export default function FlashcardTest({ notes, onBack, settings, onRateLimit, on
   }, [phase])
 
   async function fetchQuiz() {
-    if (coinsRemaining === 0) {
-      setLoadError('No coins remaining. Buy more to continue.')
-      setPhase('error')
-      return
-    }
     try {
       const res = await fetch(`${API_BASE}/api/quiz/generate`, {
         method: 'POST',
@@ -75,7 +70,7 @@ export default function FlashcardTest({ notes, onBack, settings, onRateLimit, on
       const data = await res.json()
       if (res.status === 429) {
         onRateLimit?.('ai', data.resetTime)
-        setLoadError('No coins remaining. Buy more to continue.')
+        setLoadError('Rate limit reached. Please try again shortly.')
         setPhase('error')
         return
       }

@@ -219,6 +219,17 @@
   box-shadow: 0 0 24px var(--accent-glow);
 }
 
+.btn-generate--premium {
+  color: #d4af37;
+  border-color: rgba(212, 175, 55, 0.6);
+  box-shadow: 0 0 14px rgba(212, 175, 55, 0.15), inset 0 0 14px rgba(212, 175, 55, 0.03);
+}
+.btn-generate--premium:hover {
+  border-color: rgba(212, 175, 55, 0.9);
+  box-shadow: 0 0 24px rgba(212, 175, 55, 0.28);
+  background: rgba(212, 175, 55, 0.05);
+}
+
 /* Size warning */
 .size-warning-msg {
   display: flex;

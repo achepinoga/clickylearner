@@ -37,12 +37,10 @@ app.use((req, res, next) => {
 
 app.use(express.json({ limit: '50mb' }));
 
-const AI_MAX = 10
 const UPLOAD_MAX = 10
 const UPLOAD_WINDOW = 15 * 60 * 1000   // 15 minutes
 
 // Parallel hit tracker — mirrors express-rate-limit windows without touching its internals.
-// Increments on every inbound request to a tracked route (same as the rate limiter does).
 function makeTracker(windowMs) {
   const store = new Map()
   return {
@@ -64,25 +62,6 @@ function makeTracker(windowMs) {
   }
 }
 
-// AI tracker — permanent, never resets. Users get AI_MAX coins total.
-function makePermanentTracker() {
-  const store = new Map()
-  return {
-    increment(key) {
-      const entry = store.get(key)
-      if (entry) {
-        entry.hits++
-      } else {
-        store.set(key, { hits: 1 })
-      }
-    },
-    peek(key) {
-      return store.get(key) ?? null
-    },
-  }
-}
-
-const aiTracker = makePermanentTracker()
 const uploadTracker = makeTracker(UPLOAD_WINDOW)
 
 // 10 uploads per IP per 15 minutes
@@ -110,18 +89,6 @@ async function getUserFromRequest(req) {
   } catch { return null }
 }
 
-// Get purchased coin balance from DB
-async function getPurchasedCoins(userId) {
-  try {
-    const { data } = await supabaseAdmin
-      .from('user_coins')
-      .select('balance')
-      .eq('user_id', userId)
-      .single()
-    return data?.balance ?? 0
-  } catch { return 0 }
-}
-
 // Check if user has an active subscription
 async function hasActiveSubscription(userId) {
   try {
@@ -134,38 +101,6 @@ async function hasActiveSubscription(userId) {
   } catch { return false }
 }
 
-// Deduct one purchased coin from DB
-async function deductPurchasedCoin(userId) {
-  try {
-    await supabaseAdmin.rpc('decrement_user_coins', { p_user_id: userId })
-  } catch { /* non-fatal */ }
-}
-
-// AI limiter — subscription → purchased coins → free trial
-async function aiLimiter(req, res, next) {
-  const user = await getUserFromRequest(req)
-
-  if (user) {
-    const purchased = await getPurchasedCoins(user.id)
-    if (purchased > 0) {
-      await deductPurchasedCoin(user.id)
-      return next()
-    }
-  }
-
-  // Free trial — IP-based, permanent
-  const key = req.ip ?? ''
-  const entry = aiTracker.peek(key)
-  if (entry && entry.hits >= AI_MAX) {
-    return res.status(429).json({
-      error: 'No coins remaining. Purchase more to continue.',
-      resetTime: null,
-    })
-  }
-  aiTracker.increment(key)
-  next()
-}
-
 const limitsRateLimit = rateLimit({
   windowMs: 60 * 1000,
   max: 30,
@@ -173,28 +108,19 @@ const limitsRateLimit = rateLimit({
   legacyHeaders: false,
 })
 
-// Limit status — reads from parallel tracker + purchased coins for auth'd users
+// Limit status
 app.get('/api/limits', limitsRateLimit, async (req, res) => {
   const key = req.ip ?? ''
-  const ai = aiTracker.peek(key)
   const upload = uploadTracker.peek(key)
 
-  const trialRemaining = Math.max(0, AI_MAX - (ai?.hits ?? 0))
-  let purchasedRemaining = 0
-
+  let isSubscribed = false
   const user = await getUserFromRequest(req)
   if (user) {
-    purchasedRemaining = await getPurchasedCoins(user.id)
+    isSubscribed = await hasActiveSubscription(user.id)
   }
 
   res.json({
-    ai: {
-      limit: AI_MAX,
-      used: ai?.hits ?? 0,
-      remaining: trialRemaining + purchasedRemaining,
-      purchased: purchasedRemaining,
-      resetTime: null,
-    },
+    isSubscribed,
     upload: {
       limit: UPLOAD_MAX,
       used: upload?.hits ?? 0,
@@ -218,8 +144,8 @@ app.use('/api/upload',
   },
   uploadRoute,
 )
-app.use('/api/notes', aiLimiter, notesRoute)
-app.use('/api/quiz', aiLimiter, quizRoute)
+app.use('/api/notes', notesRoute)
+app.use('/api/quiz', quizRoute)
 
 if (require.main === module) {
   app.listen(PORT, () => {

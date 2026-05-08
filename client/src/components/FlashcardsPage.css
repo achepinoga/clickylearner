@@ -114,6 +114,61 @@
   background: var(--accent);
 }
 
+/* Usage boxes */
+.fc-usage-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.fc-usage-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  padding: 0.6rem 0.875rem;
+  background: rgba(212, 175, 55, 0.03);
+}
+
+.fc-usage-box--full {
+  border-color: rgba(255, 68, 68, 0.3);
+  background: rgba(255, 68, 68, 0.03);
+}
+
+.fc-usage-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.fc-usage-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #d4af37;
+  line-height: 1;
+}
+
+.fc-usage-box--full .fc-usage-count {
+  color: var(--incorrect);
+}
+
+.fc-usage-limit {
+  font-size: 0.6rem;
+  font-weight: 400;
+  color: var(--text-faint);
+}
+
+.fc-usage-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.52rem;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+}
+
 /* Section */
 .fc-section {
   display: flex;
@@ -420,6 +475,16 @@
 .set-btn-test:hover {
   border-color: var(--warning);
   color: var(--warning);
+}
+
+.set-btn-test--gold {
+  color: #d4af37;
+  border-color: rgba(212, 175, 55, 0.4);
+}
+.set-btn-test--gold:hover {
+  border-color: rgba(212, 175, 55, 0.85);
+  color: #d4af37;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.18);
 }
 
 .set-btn-move {

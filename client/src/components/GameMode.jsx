@@ -21,6 +21,7 @@ const MODES = [
     keys: ['A', '█', '?'],
     available: true,
     recommended: true,
+    freeLimit: '1 free set · 2 free tests',
   },
   {
     id: 'speed',
@@ -35,7 +36,7 @@ const MODES = [
 
 const AVAILABLE = MODES.filter(m => m.available)
 
-export default function GameMode({ onSelect }) {
+export default function GameMode({ onSelect, showFreeLimit = true }) {
   const [focusedIndex, setFocusedIndex] = useState(null)
   const focusedRef = useRef(null)
   focusedRef.current = focusedIndex
@@ -84,7 +85,7 @@ export default function GameMode({ onSelect }) {
             whileHover={mode.available ? { y: -4 } : {}}
             whileTap={mode.available ? { scale: 0.97 } : {}}
           >
-            <span className="mode-recommended-label">recommended</span>
+            <span className="mode-recommended-label">♛ recommended</span>
             <div className="mode-keys">
               {mode.keys.map((k, j) => (
                 <span key={j} className="mode-key">{k}</span>
@@ -94,6 +95,9 @@ export default function GameMode({ onSelect }) {
             <h3 className="mode-name">{mode.name}</h3>
             <p className="mode-desc">{mode.description}</p>
             {mode.available && <span className="mode-arrow">→</span>}
+            {mode.freeLimit && showFreeLimit && (
+              <span className="mode-free-limit">{mode.freeLimit}</span>
+            )}
           </motion.button>
           )
         })}

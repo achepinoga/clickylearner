@@ -61,19 +61,6 @@
   object-fit: contain;
 }
 
-.logo-beta {
-  position: absolute;
-  top: 0.375rem;
-  right: -1rem;
-  font-size: 0.6rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--warning);
-  text-shadow: none;
-  transform: rotate(20deg);
-  transform-origin: right top;
-}
 
 .logo-text {
   font-family: 'JetBrains Mono', monospace;
@@ -177,100 +164,7 @@
 }
 
 
-/* Limit badge breakdown dropdown */
-.limit-badge-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-.limit-breakdown {
-  position: fixed;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  min-width: 11rem;
-  padding: 0.5rem 0;
-  box-shadow: var(--panel-shadow);
-  z-index: 9000;
-}
-
-.limit-breakdown-title {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.55rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  padding: 0.25rem 0.875rem 0.375rem;
-}
-
-.limit-breakdown-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.3rem 0.875rem;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.65rem;
-  letter-spacing: 0.06em;
-  color: var(--text-dim);
-}
-
-.limit-breakdown-divider {
-  height: 1px;
-  background: var(--border-soft);
-  margin: 0.25rem 0;
-}
-
-.limit-breakdown-row--total {
-  color: var(--text-dim);
-  font-size: 0.6rem;
-  letter-spacing: 0.08em;
-}
-
-.limit-breakdown-row--warn {
-  color: var(--incorrect);
-}
-
-.limit-buy-btn {
-  display: block;
-  width: 100%;
-  margin-top: 4px;
-  padding: 5px 10px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.62rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--bg);
-  background: var(--text);
-  border: none;
-  border-radius: 3px;
-  text-align: center;
-  text-decoration: none;
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-.limit-buy-btn:hover {
-  opacity: 0.85;
-}
-
-.no-coins-notice {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.65rem;
-  color: var(--text-dim);
-  margin: 0.5rem 0 0;
-  text-align: center;
-}
-.no-coins-notice a {
-  color: var(--text);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-.no-coins-notice a:hover {
-  opacity: 0.7;
-}
-
-
-/* Right header group (limit badge + settings) */
+/* Right header group (premium button + settings) */
 .header-right {
   position: absolute;
   right: 3rem;
@@ -282,100 +176,101 @@
   overflow: visible;
 }
 
-.limit-badge {
+/* Usage boxes inside the profile dropdown */
+.dropdown-usage-row {
   display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  border: 1px solid var(--border-soft);
-  padding: 0.25rem 0.5rem;
-  background: transparent;
-  cursor: pointer;
-  user-select: none;
-  transition: border-color 0.15s;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem 0.625rem;
 }
 
-.limit-badge:hover {
-  border-color: var(--border);
+.dropdown-usage-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  padding: 0.45rem 0.6rem;
+  background: rgba(212, 175, 55, 0.025);
 }
 
-.limit-badge--exhausted {
-  border-color: var(--error-border);
+.dropdown-usage-box--full {
+  border-color: rgba(255, 68, 68, 0.28);
+  background: rgba(255, 68, 68, 0.025);
 }
 
-.limit-badge--exhausted .limit-badge-val,
-.limit-badge--exhausted .limit-badge-label {
-  color: var(--incorrect);
+.dropdown-usage-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.44rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
 }
 
-.limit-badge-coin {
-  flex-shrink: 0;
-  font-size: 0.8rem;
+.dropdown-usage-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #d4af37;
   line-height: 1;
 }
 
-.limit-badge-val {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.65rem;
-  font-weight: 600;
-  color: var(--text-dim);
-  letter-spacing: 0.04em;
+.dropdown-usage-box--full .dropdown-usage-count {
+  color: var(--incorrect);
 }
 
-.limit-badge-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.55rem;
+.dropdown-usage-limit {
+  font-size: 0.52rem;
   font-weight: 400;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
   color: var(--text-faint);
 }
 
-/* Coin info button + tooltip */
-.coin-info-btn {
+.dropdown-usage-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.46rem;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+}
+
+/* Premium button */
+.btn-premium {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #d4af37;
   background: transparent;
-  border: none;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  padding: 0.3rem 0.65rem;
   cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  white-space: nowrap;
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.1);
+}
+
+.btn-premium:hover {
+  border-color: rgba(212, 175, 55, 0.75);
+  box-shadow: 0 0 14px rgba(212, 175, 55, 0.2);
+}
+
+.premium-status {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 0.2rem;
-  color: var(--text-faint);
-  transition: color 0.15s;
-}
-
-.coin-info-btn:hover {
-  color: var(--text-dim);
-}
-
-.coin-info-tooltip {
-  position: fixed;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  padding: 0.6rem 0.75rem;
-  width: 15rem;
-  box-shadow: var(--panel-shadow);
-  z-index: 9001;
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  pointer-events: none;
-}
-
-.coin-info-title {
+  gap: 0.35rem;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--text-dim);
-  font-weight: 600;
+  color: #d4af37;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  padding: 0.3rem 0.65rem;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.1);
+  white-space: nowrap;
+  cursor: default;
+  user-select: none;
 }
 
-.coin-info-body {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.6rem;
-  letter-spacing: 0.04em;
-  color: var(--text-faint);
-  line-height: 1.6;
+.premium-status-icon {
+  font-size: 0.55rem;
 }
 
 /* Settings Button */

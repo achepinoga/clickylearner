@@ -40,7 +40,7 @@ const DIFFICULTY_LEVELS = [
   { value: 4, label: 'IV',  name: 'Brutal' },
 ]
 
-export default function Results({ stats, onRetry, onUpload, onNew, onTest, isFlashcard, isSpeed, flashcardDifficulty, onDifficultyChange, hasContinuation, onContinueDocument, isContinuing, continueError, coinsRemaining }) {
+export default function Results({ stats, onRetry, onUpload, onNew, onTest, isFlashcard, isSpeed, flashcardDifficulty, onDifficultyChange, hasContinuation, onContinueDocument, isContinuing, continueError, canTakeTest = true }) {
   const { wpm, accuracy, errors, totalChars, notes, noteResults = [] } = stats
 
   const grade = getGrade(accuracy)
@@ -200,34 +200,24 @@ export default function Results({ stats, onRetry, onUpload, onNew, onTest, isFla
                 <motion.button
                   className="btn-action btn-action--primary"
                   onClick={() => { playClick(); onContinueDocument() }}
-                  disabled={isContinuing || coinsRemaining === 0}
-                  title={coinsRemaining === 0 ? 'No coins remaining' : undefined}
-                  whileHover={!isContinuing && coinsRemaining > 0 ? { scale: 1.04, y: -2 } : {}}
-                  whileTap={!isContinuing && coinsRemaining > 0 ? { scale: 0.97 } : {}}
+                  disabled={isContinuing}
+                  whileHover={!isContinuing ? { scale: 1.04, y: -2 } : {}}
+                  whileTap={!isContinuing ? { scale: 0.97 } : {}}
                 >
                   <span>{isContinuing ? 'Generating next section...' : 'Continue Document →'}</span>
-                  {!isContinuing && (
-                    <span className="btn-coin-cost">1🪙</span>
-                  )}
                 </motion.button>
               )}
               {continueError && (
                 <p style={{ fontSize: '0.72rem', color: 'var(--incorrect)', margin: 0 }}>{continueError}</p>
               )}
-              {coinsRemaining === 0 && (
-                <p className="no-coins-notice">No coins remaining — <a href="https://clickylearner.com/pricing" target="_blank" rel="noopener noreferrer">buy more</a> to continue.</p>
-              )}
               {isFlashcard && (
                 <motion.button
-                  className="btn-action btn-action--primary"
+                  className="btn-action btn-action--gold"
                   onClick={() => { playClick(); onTest() }}
-                  disabled={coinsRemaining === 0}
-                  title={coinsRemaining === 0 ? 'No coins remaining' : undefined}
-                  whileHover={coinsRemaining > 0 ? { scale: 1.04, y: -2 } : {}}
-                  whileTap={coinsRemaining > 0 ? { scale: 0.97 } : {}}
+                  whileHover={{ scale: 1.04, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
                 >
-                  <span>Take the Test</span>
-                  <span className="btn-coin-cost">1 <img src="/coin.png" alt="coin" width="14" height="14" style={{ imageRendering: 'pixelated', verticalAlign: 'middle' }} /></span>
+                  <span>{canTakeTest ? 'Take the Test' : '✦ Get Premium to Test'}</span>
                 </motion.button>
               )}
               <motion.button

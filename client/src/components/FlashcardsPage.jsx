@@ -27,7 +27,7 @@ function FolderIcon({ open }) {
   )
 }
 
-function SetRow({ set, folders, onStudy, onTest, onDelete, onMove, coinsRemaining }) {
+function SetRow({ set, folders, onStudy, onTest, onDelete, onMove, canTakeTest, onNeedPremium }) {
   const [showMove, setShowMove] = useState(false)
   const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 })
   const btnRef = useRef()
@@ -65,8 +65,8 @@ function SetRow({ set, folders, onStudy, onTest, onDelete, onMove, coinsRemainin
         <button className="set-btn set-btn-study" onClick={() => { playClick(); onStudy(set) }}>
           Study →
         </button>
-        <button className="set-btn set-btn-test" onClick={() => { playClick(); onTest(set) }} disabled={coinsRemaining === 0} title={coinsRemaining === 0 ? 'No coins remaining' : 'Generate a quiz on this set (costs 1 coin)'}>
-          Test · 1🪙
+        <button className="set-btn set-btn-test set-btn-test--gold" onClick={() => { playClick(); canTakeTest ? onTest(set) : onNeedPremium?.() }}>
+          Test
         </button>
         {folders.length > 0 && (
           <>
@@ -111,7 +111,7 @@ function SetRow({ set, folders, onStudy, onTest, onDelete, onMove, coinsRemainin
   )
 }
 
-export default function FlashcardsPage({ user, onNewFile, onStudySet, onTestSet, onBack, onSignIn, coinsRemaining }) {
+export default function FlashcardsPage({ user, onNewFile, onStudySet, onTestSet, onBack, onSignIn, setsUsed = 0, setsLimit = 1, testsUsed = 0, testsLimit = 2, canTakeTest = true, onNeedPremium }) {
   const [folders, setFolders] = useState([])
   const [sets, setSets] = useState([])
   const [loading, setLoading] = useState(false)
@@ -219,6 +219,20 @@ export default function FlashcardsPage({ user, onNewFile, onStudySet, onTestSet,
           </div>
         ) : (
           <>
+            {/* Usage boxes */}
+            <div className="fc-usage-row">
+              <div className={`fc-usage-box${setsUsed >= setsLimit ? ' fc-usage-box--full' : ''}`}>
+                <span className="fc-usage-label">Sets</span>
+                <span className="fc-usage-count">{setsUsed}<span className="fc-usage-limit">/{setsLimit}</span></span>
+                <span className="fc-usage-sub">{Math.max(0, setsLimit - setsUsed)} remaining</span>
+              </div>
+              <div className={`fc-usage-box${testsUsed >= testsLimit ? ' fc-usage-box--full' : ''}`}>
+                <span className="fc-usage-label">Tests</span>
+                <span className="fc-usage-count">{testsUsed}<span className="fc-usage-limit">/{testsLimit}</span></span>
+                <span className="fc-usage-sub">{Math.max(0, testsLimit - testsUsed)} remaining</span>
+              </div>
+            </div>
+
             {/* Folders section */}
             <div className="fc-section">
               <div className="fc-section-header">
@@ -304,7 +318,8 @@ export default function FlashcardsPage({ user, onNewFile, onStudySet, onTestSet,
                                   onTest={onTestSet}
                                   onDelete={deleteSet}
                                   onMove={moveSet}
-                                  coinsRemaining={coinsRemaining}
+                                  canTakeTest={canTakeTest}
+                                  onNeedPremium={onNeedPremium}
                                 />
                               ))
                             )}
@@ -334,7 +349,8 @@ export default function FlashcardsPage({ user, onNewFile, onStudySet, onTestSet,
                       onTest={onTestSet}
                       onDelete={deleteSet}
                       onMove={moveSet}
-                      coinsRemaining={coinsRemaining}
+                      canTakeTest={canTakeTest}
+                      onNeedPremium={onNeedPremium}
                     />
                   ))}
                 </div>

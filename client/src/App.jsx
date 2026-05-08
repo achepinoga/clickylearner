@@ -15,12 +15,17 @@ import FlashcardsPage from './components/FlashcardsPage'
 import IntroOverlay from './components/IntroOverlay'
 import PasswordGate from './components/PasswordGate'
 import RateLimitToast from './components/RateLimitToast'
-import BuyCoinsModal from './components/BuyCoinsModal'
+import PremiumModal from './components/PremiumModal'
 import './App.css'
 
 const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
 
 const STAGES = { GAMEMODE: 'gamemode', FLASHCARDS: 'flashcards', UPLOAD: 'upload', TYPING: 'typing', RESULTS: 'results', TEST: 'test' }
+
+const FREE_SET_LIMIT = 1
+const FREE_TEST_LIMIT = 2
+const PREMIUM_SET_LIMIT = 100
+const PREMIUM_TEST_LIMIT = 300
 
 function numberToWords(n) {
   if (n < 0) return 'negative ' + numberToWords(-n)
@@ -112,14 +117,21 @@ export default function App() {
   const [continueError, setContinueError] = useState('')
   const currentDocTitleRef = useRef('')
   const settingsInitialized = useRef(false)
-  const [limits, setLimits] = useState({ ai: { limit: 10, used: 0, remaining: 10, resetTime: null }, upload: { limit: 10, used: 0, remaining: 10, resetTime: null } })
+  const [limits, setLimits] = useState({ upload: { limit: 10, used: 0, remaining: 10, resetTime: null } })
   const [rateLimitError, setRateLimitError] = useState(null)
   const [testBackStage, setTestBackStage] = useState(STAGES.RESULTS)
-  const [showCoinInfo, setShowCoinInfo] = useState(false)
-  const [coinInfoPos, setCoinInfoPos] = useState({ top: 0, right: 0 })
-  const coinInfoBtnRef = useRef(null)
-  const [showBuyCoins, setShowBuyCoins] = useState(false)
+  const [isPremium, setIsPremium] = useState(false)
+  const [showPremium, setShowPremium] = useState(false)
   const [sessionToken, setSessionToken] = useState(null)
+  const [usage, setUsage] = useState(() => {
+    try {
+      const month = new Date().toISOString().slice(0, 7)
+      const stored = localStorage.getItem('cl_usage')
+      const storedMonth = localStorage.getItem('cl_usage_month')
+      if (stored && storedMonth === month) return JSON.parse(stored)
+      return { sets: 0, tests: 0 }
+    } catch { return { sets: 0, tests: 0 } }
+  })
 
   const notes = useMemo(
     () => settings.punctuation ? rawNotes : rawNotes.map(stripPunctuation),
@@ -132,16 +144,21 @@ export default function App() {
       headers: sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {},
     })
       .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data) setLimits(data) })
+      .then(data => {
+        if (data) {
+          setLimits({ upload: data.upload })
+          setIsPremium(!!data.isSubscribed)
+        }
+      })
       .catch(() => {})
   }, [sessionToken])
 
   const handleApiUsed = (type) => {
-    const bucket = (type === 'ai-notes' || type === 'ai-quiz') ? 'ai' : type
+    if (type !== 'upload') return
     setLimits(prev => {
-      const b = prev[bucket]
+      const b = prev.upload
       const used = Math.min(b.limit, b.used + 1)
-      return { ...prev, [bucket]: { ...b, used, remaining: Math.max(0, b.limit - used) } }
+      return { ...prev, upload: { ...b, used, remaining: Math.max(0, b.limit - used) } }
     })
   }
 
@@ -156,6 +173,8 @@ export default function App() {
   }
 
   const handleTestSet = (set) => {
+    if (!canTakeTest) { setShowPremium(true); return }
+    setUsage(prev => ({ ...prev, tests: prev.tests + 1 }))
     setRawNotes(set.notes)
     setTestBackStage(STAGES.FLASHCARDS)
     setStage(STAGES.TEST)
@@ -182,12 +201,16 @@ export default function App() {
     const params = new URLSearchParams(window.location.search)
     if (params.get('payment') === 'success') {
       window.history.replaceState({}, '', window.location.pathname)
-      // Refresh coin balance from server
       fetch(`${API_BASE}/api/limits`, {
         headers: sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {},
       })
         .then(r => r.ok ? r.json() : null)
-        .then(data => { if (data) setLimits(data) })
+        .then(data => {
+          if (data) {
+            setLimits({ upload: data.upload })
+            setIsPremium(!!data.isSubscribed)
+          }
+        })
         .catch(() => {})
     }
   }, [sessionToken])
@@ -223,6 +246,13 @@ export default function App() {
   useEffect(() => { localStorage.setItem('cl_raw_notes', JSON.stringify(rawNotes)) }, [rawNotes])
   useEffect(() => { localStorage.setItem('cl_results', JSON.stringify(results)) }, [results])
   useEffect(() => {
+    try {
+      const month = new Date().toISOString().slice(0, 7)
+      localStorage.setItem('cl_usage', JSON.stringify(usage))
+      localStorage.setItem('cl_usage_month', month)
+    } catch {}
+  }, [usage])
+  useEffect(() => {
     if (!settingsInitialized.current) { settingsInitialized.current = true; return }
     setTypingKey(k => k + 1)
   }, [settings])
@@ -231,6 +261,13 @@ export default function App() {
   const stageKeys   = gameMode === 'flashcards' ? STAGE_KEYS_FLASHCARDS   : STAGE_KEYS_DEFAULT
   const navStage = (gameMode === 'flashcards' && stage === STAGES.UPLOAD) ? STAGES.FLASHCARDS : stage
   const currentStageIndex = stageKeys.indexOf(navStage)
+
+  const setsLimit = isPremium ? PREMIUM_SET_LIMIT : FREE_SET_LIMIT
+  const testsLimit = isPremium ? PREMIUM_TEST_LIMIT : FREE_TEST_LIMIT
+  const setsRemaining = Math.max(0, setsLimit - usage.sets)
+  const testsRemaining = Math.max(0, testsLimit - usage.tests)
+  const canCreateSet = setsRemaining > 0
+  const canTakeTest = testsRemaining > 0
 
   const chunkNotes = (incoming) => {
     const MAX_CHARS = 240
@@ -280,6 +317,7 @@ export default function App() {
         .select('id')
         .single()
       if (!error && data) currentSetIdRef.current = data.id
+      setUsage(prev => ({ ...prev, sets: prev.sets + 1 }))
     }
   }
 
@@ -369,7 +407,12 @@ export default function App() {
     setStage(STAGES.UPLOAD)
   }
 
-  const handleTest = () => { setTestBackStage(STAGES.RESULTS); setStage(STAGES.TEST) }
+  const handleTest = () => {
+    if (!canTakeTest) { setShowPremium(true); return }
+    setUsage(prev => ({ ...prev, tests: prev.tests + 1 }))
+    setTestBackStage(STAGES.RESULTS)
+    setStage(STAGES.TEST)
+  }
 
   const handleReplaySet = (notes) => {
     setRawNotes(notes)
@@ -407,7 +450,7 @@ export default function App() {
           <div className="header-inner">
             {/* Hamburger menu — left side */}
             <div className="header-menu-wrap" ref={menuRef}>
-              <button className="btn-hamburger" onClick={() => { playToggle(); setShowMenu(v => !v) }} aria-label="Menu">
+              <button className="btn-hamburger" onClick={() => { playToggle(); setShowMenu(v => !v) }} aria-label="Menu" title={`${setsRemaining} sets · ${testsRemaining} tests remaining`}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="8" r="4" />
                   <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
@@ -426,6 +469,19 @@ export default function App() {
                       <>
                         <span className="dropdown-email">{user.email}</span>
                         <div className="dropdown-divider" />
+                        <div className="dropdown-usage-row">
+                          <div className={`dropdown-usage-box${setsRemaining === 0 && !isPremium ? ' dropdown-usage-box--full' : ''}`}>
+                            <span className="dropdown-usage-label">Sets</span>
+                            <span className="dropdown-usage-count">{usage.sets}<span className="dropdown-usage-limit">/{setsLimit}</span></span>
+                            <span className="dropdown-usage-sub">{setsRemaining} left</span>
+                          </div>
+                          <div className={`dropdown-usage-box${testsRemaining === 0 && !isPremium ? ' dropdown-usage-box--full' : ''}`}>
+                            <span className="dropdown-usage-label">Tests</span>
+                            <span className="dropdown-usage-count">{usage.tests}<span className="dropdown-usage-limit">/{testsLimit}</span></span>
+                            <span className="dropdown-usage-sub">{testsRemaining} left</span>
+                          </div>
+                        </div>
+                        <div className="dropdown-divider" />
                         <button className="dropdown-item" onClick={() => { playClick(); setShowMenu(false); setShowHistory(true) }}>History</button>
                         <button className="dropdown-item dropdown-item--danger" onClick={() => { playBack(); setShowMenu(false); handleSignOut() }}>Sign Out</button>
                       </>
@@ -442,7 +498,6 @@ export default function App() {
                 <img src="/logo.png" alt="cL" className="logo-img" />
               </div>
               <span className="logo-text">Clickylearner</span>
-              <span className="logo-beta">beta</span>
             </div>
 
             <nav className="stage-nav" aria-label="Progress">
@@ -462,34 +517,16 @@ export default function App() {
             </nav>
 
             <div className="header-right">
-              <div className="limit-badge-wrap">
-                <button
-                  className={`limit-badge${limits.ai.remaining === 0 ? ' limit-badge--exhausted' : ''}`}
-                  title="Buy coins"
-                  onClick={() => { playClick(); setShowBuyCoins(true) }}
-                >
-                  <span className="limit-badge-coin">🪙</span>
-                  <span className="limit-badge-val">{limits.ai.remaining}</span>
+              {isPremium ? (
+                <div className="premium-status" title="100 sets · 300 tests per month">
+                  <span className="premium-status-icon">✦</span>
+                  <span>Premium</span>
+                </div>
+              ) : (
+                <button className="btn-premium" onClick={() => { playClick(); setShowPremium(true) }}>
+                  Get Premium
                 </button>
-                <button
-                  ref={coinInfoBtnRef}
-                  className="coin-info-btn"
-                  aria-label="What are Clickycoins?"
-                  onMouseEnter={() => {
-                    if (coinInfoBtnRef.current) {
-                      const r = coinInfoBtnRef.current.getBoundingClientRect()
-                      setCoinInfoPos({ top: r.bottom + 8, right: window.innerWidth - r.right })
-                    }
-                    setShowCoinInfo(true)
-                  }}
-                  onMouseLeave={() => setShowCoinInfo(false)}
-                >
-                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-                    <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.3" />
-                    <path d="M7 6.3v3.4M7 4.5v.4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                  </svg>
-                </button>
-              </div>
+              )}
               <button className="btn-settings" aria-label="Settings" onClick={() => { playToggle(); setShowSettings(true) }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="3" />
@@ -504,7 +541,7 @@ export default function App() {
           <AnimatePresence mode="wait">
             {stage === STAGES.GAMEMODE && (
               <motion.div key="gamemode" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden auto' }}>
-                <GameMode onSelect={handleModeSelect} />
+                <GameMode onSelect={handleModeSelect} showFreeLimit={!isPremium && (setsRemaining > 0 || testsRemaining > 0)} />
               </motion.div>
             )}
             {stage === STAGES.FLASHCARDS && (
@@ -521,7 +558,12 @@ export default function App() {
                   onTestSet={handleTestSet}
                   onBack={handleRestart}
                   onSignIn={() => setShowAuth(true)}
-                  coinsRemaining={limits.ai.remaining}
+                  setsUsed={usage.sets}
+                  setsLimit={setsLimit}
+                  testsUsed={usage.tests}
+                  testsLimit={testsLimit}
+                  canTakeTest={canTakeTest}
+                  onNeedPremium={() => setShowPremium(true)}
                 />
               </motion.div>
             )}
@@ -535,9 +577,10 @@ export default function App() {
                   onBack={() => gameMode === 'flashcards' ? setStage(STAGES.FLASHCARDS) : handleRestart()}
                   onRateLimit={handleRateLimit}
                   onApiUsed={handleApiUsed}
-                  uploadLimits={limits.ai}
-                  coinsRemaining={limits.ai.remaining}
+                  uploadLimits={limits.upload}
                   authToken={sessionToken}
+                  canCreateSet={canCreateSet}
+                  onNeedPremium={() => setShowPremium(true)}
                 />
               </motion.div>
             )}
@@ -551,12 +594,12 @@ export default function App() {
             )}
             {stage === STAGES.RESULTS && (
               <motion.div key="results" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden auto' }}>
-                <Results stats={results} onRetry={handleRetry} onUpload={() => { handleDiscardContinuation(); handleUpload() }} onNew={() => { handleDiscardContinuation(); handleRestart() }} onTest={handleTest} isFlashcard={gameMode === 'flashcards'} isSpeed={gameMode === 'speed'} flashcardDifficulty={flashcardDifficulty} onDifficultyChange={setFlashcardDifficulty} hasContinuation={!!pendingRemainingText} onContinueDocument={handleContinueDocument} isContinuing={isContinuing} continueError={continueError} coinsRemaining={limits.ai.remaining} />
+                <Results stats={results} onRetry={handleRetry} onUpload={() => { handleDiscardContinuation(); handleUpload() }} onNew={() => { handleDiscardContinuation(); handleRestart() }} onTest={handleTest} isFlashcard={gameMode === 'flashcards'} isSpeed={gameMode === 'speed'} flashcardDifficulty={flashcardDifficulty} onDifficultyChange={setFlashcardDifficulty} hasContinuation={!!pendingRemainingText} onContinueDocument={handleContinueDocument} isContinuing={isContinuing} continueError={continueError} canTakeTest={canTakeTest} />
               </motion.div>
             )}
             {stage === STAGES.TEST && (
               <motion.div key="test" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden auto' }}>
-                <FlashcardTest notes={notes} onBack={() => setStage(testBackStage)} settings={settings} onRateLimit={handleRateLimit} onApiUsed={handleApiUsed} coinsRemaining={limits.ai.remaining} authToken={sessionToken} />
+                <FlashcardTest notes={notes} onBack={() => setStage(testBackStage)} settings={settings} onRateLimit={handleRateLimit} onApiUsed={handleApiUsed} authToken={sessionToken} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -599,33 +642,13 @@ export default function App() {
 
       <RateLimitToast error={rateLimitError} onDismiss={() => setRateLimitError(null)} />
 
-      <BuyCoinsModal
-        isOpen={showBuyCoins}
-        onClose={() => setShowBuyCoins(false)}
+      <PremiumModal
+        isOpen={showPremium}
+        onClose={() => setShowPremium(false)}
         userId={user?.id ?? null}
         userEmail={user?.email ?? null}
-        coinsRemaining={limits.ai.remaining}
-        onCoinsAdded={(coins) => setLimits(prev => ({
-          ...prev,
-          ai: { ...prev.ai, remaining: prev.ai.remaining + coins },
-        }))}
+        onSubscribed={() => setIsPremium(true)}
       />
-
-      <AnimatePresence>
-        {showCoinInfo && (
-          <motion.div
-            className="coin-info-tooltip"
-            style={{ top: coinInfoPos.top, right: coinInfoPos.right }}
-            initial={{ opacity: 0, y: -4, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -4, scale: 0.97 }}
-            transition={{ duration: 0.15 }}
-          >
-            <span className="coin-info-title">Clickycoins</span>
-            <span className="coin-info-body">Coins are the currency for AI actions. Generating flashcards or running a test each costs 1 coin. You get 10 free coins to try the app.</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </>
   )
 }

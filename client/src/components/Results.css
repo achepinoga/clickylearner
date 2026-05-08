@@ -229,6 +229,18 @@
   box-shadow: 0 0 24px var(--accent-glow);
 }
 
+.btn-action--gold {
+  border-color: rgba(212, 175, 55, 0.55);
+  color: #d4af37;
+  box-shadow: 0 0 14px rgba(212, 175, 55, 0.15);
+}
+
+.btn-action--gold:hover {
+  background: rgba(212, 175, 55, 0.06);
+  border-color: rgba(212, 175, 55, 0.9);
+  box-shadow: 0 0 24px rgba(212, 175, 55, 0.25);
+}
+
 /* RIGHT column — challenge breakdown */
 .results-right {
   flex: 1;
