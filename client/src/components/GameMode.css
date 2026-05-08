@@ -82,7 +82,8 @@
   border-color: rgba(212, 175, 55, 0.6);
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.45),
-    0 0 18px rgba(212, 175, 55, 0.14);
+    0 0 40px rgba(212, 175, 55, 0.18),
+    0 0 80px rgba(212, 175, 55, 0.08);
   overflow: visible;
   padding-bottom: 1.75rem;
 }
@@ -92,7 +93,8 @@
   border-color: rgba(212, 175, 55, 0.9);
   box-shadow:
     0 12px 40px rgba(0, 0, 0, 0.5),
-    0 0 28px rgba(212, 175, 55, 0.22);
+    0 0 55px rgba(212, 175, 55, 0.28),
+    0 0 100px rgba(212, 175, 55, 0.12);
 }
 
 /* Golden corner brackets — always visible */
