@@ -621,6 +621,7 @@ export default function App() {
         setSettings={setSettings}
         theme={theme}
         setTheme={setTheme}
+        userId={user?.id}
       />
 
       <AuthModal

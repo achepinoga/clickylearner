@@ -78,6 +78,31 @@ router.post('/create-subscription', async (req, res) => {
   }
 })
 
+// POST /api/stripe/create-portal-session
+router.post('/create-portal-session', async (req, res) => {
+  const { userId } = req.body
+  if (!userId) return res.status(400).json({ error: 'Must be signed in.' })
+
+  try {
+    const { data } = await supabaseAdmin
+      .from('user_subscriptions')
+      .select('stripe_customer_id')
+      .eq('user_id', userId)
+      .single()
+
+    if (!data?.stripe_customer_id) return res.status(404).json({ error: 'No subscription found.' })
+
+    const session = await stripe.billingPortal.sessions.create({
+      customer: data.stripe_customer_id,
+      return_url: process.env.CLIENT_URL || 'https://clickylearner.com',
+    })
+    res.json({ url: session.url })
+  } catch (err) {
+    console.error('Portal session error:', err.message)
+    res.status(500).json({ error: 'Failed to create portal session.' })
+  }
+})
+
 // POST /api/stripe/webhook
 async function webhookHandler(req, res) {
   const sig = req.headers['stripe-signature']
