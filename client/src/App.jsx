@@ -189,6 +189,9 @@ export default function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
       setSessionToken(session?.access_token ?? null)
+      // Reset local usage when user changes so stale data doesn't bleed between accounts
+      setUsage({ sets: 0, tests: 0 })
+      try { localStorage.removeItem('cl_usage'); localStorage.removeItem('cl_usage_month') } catch {}
     })
     return () => subscription.unsubscribe()
   }, [])
