@@ -234,6 +234,7 @@ export default function App() {
   useEffect(() => { updateSoundSettings(settings) }, [settings])
   useEffect(() => { try { localStorage.removeItem('cl_stage') } catch {} }, [])
   useEffect(() => { history.replaceState({ stage: stageRef.current }, '') }, [])
+  useEffect(() => { if (window.location.hash === '#') history.replaceState(null, '', window.location.pathname) }, [])
   useEffect(() => {
     const handlePopState = (e) => {
       const prevStage = e.state?.stage

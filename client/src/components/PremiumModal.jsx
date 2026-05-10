@@ -70,7 +70,7 @@ function PaymentForm({ summary, onSuccess, onBack }) {
 
 export default function PremiumModal({ isOpen, onClose, userId, userEmail, onSubscribed }) {
   const [clientSecret, setClientSecret] = useState(null)
-  const [subscriptionPrice, setSubscriptionPrice] = useState('$9.99 / mo')
+  const [subscriptionPrice, setSubscriptionPrice] = useState('€6.99 / mo')
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState('')
   const [success, setSuccess] = useState(false)

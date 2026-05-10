@@ -9,7 +9,7 @@ const router = express.Router()
 const SUBSCRIPTION = {
   id: 'monthly',
   type: 'subscription',
-  displayPrice: '$9.99 / mo',
+  displayPrice: '€6.99 / mo',
   priceId: process.env.STRIPE_PRICE_SUBSCRIPTION,
 }
 
