@@ -430,7 +430,8 @@ export default function App() {
       })
       const data = await res.json()
       if (data.url) window.location.href = data.url
-    } catch {}
+      else alert(data.error || 'Could not open subscription portal.')
+    } catch { alert('Could not connect to server.') }
   }
 
   const handleSignOut = async () => {
