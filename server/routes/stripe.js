@@ -9,8 +9,6 @@ const router = express.Router()
 const SUBSCRIPTION = {
   id: 'monthly',
   type: 'subscription',
-  coins: 50,
-  label: '50 coins / month',
   displayPrice: '$9.99 / mo',
   priceId: process.env.STRIPE_PRICE_SUBSCRIPTION,
 }
@@ -129,33 +127,29 @@ async function webhookHandler(req, res) {
       if (!userId) break
 
       if (invoice.billing_reason === 'subscription_create') {
-        // First payment — mark subscription active and credit initial coins
         await supabaseAdmin.from('user_subscriptions').upsert({
           user_id: userId,
           status: 'active',
           stripe_customer_id: sub.customer,
           updated_at: new Date().toISOString(),
         }, { onConflict: 'user_id' })
-        await supabaseAdmin.rpc('increment_user_coins', { p_user_id: userId, p_amount: SUBSCRIPTION.coins })
-        console.log(`Subscription activated: credited ${SUBSCRIPTION.coins} coins to user ${userId}`)
-      } else if (invoice.billing_reason === 'subscription_cycle') {
-        // Monthly renewal — credit coins
-        await supabaseAdmin.rpc('increment_user_coins', { p_user_id: userId, p_amount: SUBSCRIPTION.coins })
-        console.log(`Subscription renewal: credited ${SUBSCRIPTION.coins} coins to user ${userId}`)
+        console.log(`Subscription activated for user ${userId}`)
       }
       } catch (err) { console.error('invoice.payment_succeeded handler error:', err.message) }
       break
     }
 
-    // Subscription cancelled
-    case 'customer.subscription.deleted': {
+    // Subscription cancelled or payment failed
+    case 'customer.subscription.deleted':
+    case 'customer.subscription.updated': {
       const sub = event.data.object
       const userId = sub.metadata?.userId
       if (!userId) break
+      const isActive = sub.status === 'active'
       await supabaseAdmin.from('user_subscriptions')
-        .update({ status: 'inactive', updated_at: new Date().toISOString() })
+        .update({ status: isActive ? 'active' : 'inactive', updated_at: new Date().toISOString() })
         .eq('user_id', userId)
-      console.log(`Subscription cancelled for user ${userId}`)
+      console.log(`Subscription ${sub.status} for user ${userId}`)
       break
     }
   }

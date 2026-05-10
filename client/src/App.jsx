@@ -13,7 +13,6 @@ import AuthModal from './components/AuthModal'
 import HistoryPanel from './components/HistoryPanel'
 import FlashcardsPage from './components/FlashcardsPage'
 import IntroOverlay from './components/IntroOverlay'
-import PasswordGate from './components/PasswordGate'
 import RateLimitToast from './components/RateLimitToast'
 import PremiumModal from './components/PremiumModal'
 import './App.css'
@@ -24,8 +23,6 @@ const STAGES = { GAMEMODE: 'gamemode', FLASHCARDS: 'flashcards', UPLOAD: 'upload
 
 const FREE_SET_LIMIT = 1
 const FREE_TEST_LIMIT = 2
-const PREMIUM_SET_LIMIT = 100
-const PREMIUM_TEST_LIMIT = 300
 
 function numberToWords(n) {
   if (n < 0) return 'negative ' + numberToWords(-n)
@@ -62,10 +59,6 @@ const pageVariants = {
 const pageTransition = { duration: 0.4, ease: [0.4, 0, 0.2, 1] }
 
 export default function App() {
-  const [unlocked, setUnlocked] = useState(() => {
-    try { return sessionStorage.getItem('cl_unlocked') === '1' } catch { return false }
-  })
-
   const [rawNotes, setRawNotes] = useState(() => {
     try { const s = localStorage.getItem('cl_raw_notes'); return s ? JSON.parse(s) : [] } catch { return [] }
   })
@@ -120,7 +113,9 @@ export default function App() {
   const [limits, setLimits] = useState({ upload: { limit: 10, used: 0, remaining: 10, resetTime: null } })
   const [rateLimitError, setRateLimitError] = useState(null)
   const [testBackStage, setTestBackStage] = useState(STAGES.RESULTS)
-  const [isPremium, setIsPremium] = useState(false)
+  const [isPremium, setIsPremium] = useState(() => {
+    try { return localStorage.getItem('cl_is_premium') === 'true' } catch { return false }
+  })
   const [showPremium, setShowPremium] = useState(false)
   const [sessionToken, setSessionToken] = useState(null)
   const [usage, setUsage] = useState(() => {
@@ -147,7 +142,9 @@ export default function App() {
       .then(data => {
         if (data) {
           setLimits({ upload: data.upload })
-          setIsPremium(!!data.isSubscribed)
+          const premium = !!data.isSubscribed
+          setIsPremium(premium)
+          try { localStorage.setItem('cl_is_premium', premium) } catch {}
         }
       })
       .catch(() => {})
@@ -208,7 +205,9 @@ export default function App() {
         .then(data => {
           if (data) {
             setLimits({ upload: data.upload })
-            setIsPremium(!!data.isSubscribed)
+            const premium = !!data.isSubscribed
+            setIsPremium(premium)
+            try { localStorage.setItem('cl_is_premium', premium) } catch {}
           }
         })
         .catch(() => {})
@@ -262,12 +261,12 @@ export default function App() {
   const navStage = (gameMode === 'flashcards' && stage === STAGES.UPLOAD) ? STAGES.FLASHCARDS : stage
   const currentStageIndex = stageKeys.indexOf(navStage)
 
-  const setsLimit = isPremium ? PREMIUM_SET_LIMIT : FREE_SET_LIMIT
-  const testsLimit = isPremium ? PREMIUM_TEST_LIMIT : FREE_TEST_LIMIT
+  const setsLimit = FREE_SET_LIMIT
+  const testsLimit = FREE_TEST_LIMIT
   const setsRemaining = Math.max(0, setsLimit - usage.sets)
   const testsRemaining = Math.max(0, testsLimit - usage.tests)
-  const canCreateSet = setsRemaining > 0
-  const canTakeTest = testsRemaining > 0
+  const canCreateSet = isPremium || setsRemaining > 0
+  const canTakeTest = isPremium || testsRemaining > 0
 
   const chunkNotes = (incoming) => {
     const MAX_CHARS = 240
@@ -436,14 +435,14 @@ export default function App() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
+    setIsPremium(false)
+    try { localStorage.removeItem('cl_is_premium') } catch {}
     setShowHistory(false)
   }
 
   const displayEmail = user?.email
     ? user.email.length > 18 ? user.email.slice(0, 15) + '…' : user.email
     : null
-
-  if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />
 
   return (
     <>
@@ -462,7 +461,7 @@ export default function App() {
           <div className="header-inner">
             {/* Hamburger menu — left side */}
             <div className="header-menu-wrap" ref={menuRef}>
-              <button className="btn-hamburger" onClick={() => { playToggle(); setShowMenu(v => !v) }} aria-label="Menu" title={`${setsRemaining} sets · ${testsRemaining} tests remaining`}>
+              <button className="btn-hamburger" onClick={() => { playToggle(); setShowMenu(v => !v) }} aria-label="Menu" title={isPremium ? `${usage.sets} sets · ${usage.tests} tests` : `${setsRemaining} sets · ${testsRemaining} tests remaining`}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="8" r="4" />
                   <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
@@ -482,15 +481,21 @@ export default function App() {
                         <span className="dropdown-email">{user.email}</span>
                         <div className="dropdown-divider" />
                         <div className="dropdown-usage-row">
-                          <div className={`dropdown-usage-box${setsRemaining === 0 && !isPremium ? ' dropdown-usage-box--full' : ''}`}>
+                          <div className={`dropdown-usage-box${!isPremium && setsRemaining === 0 ? ' dropdown-usage-box--full' : ''}`}>
                             <span className="dropdown-usage-label">Sets</span>
-                            <span className="dropdown-usage-count">{usage.sets}<span className="dropdown-usage-limit">/{setsLimit}</span></span>
-                            <span className="dropdown-usage-sub">{setsRemaining} left</span>
+                            <span className="dropdown-usage-count">
+                              {usage.sets}
+                              {!isPremium && <span className="dropdown-usage-limit">/{setsLimit}</span>}
+                            </span>
+                            {!isPremium && <span className="dropdown-usage-sub">{setsRemaining} left</span>}
                           </div>
-                          <div className={`dropdown-usage-box${testsRemaining === 0 && !isPremium ? ' dropdown-usage-box--full' : ''}`}>
+                          <div className={`dropdown-usage-box${!isPremium && testsRemaining === 0 ? ' dropdown-usage-box--full' : ''}`}>
                             <span className="dropdown-usage-label">Tests</span>
-                            <span className="dropdown-usage-count">{usage.tests}<span className="dropdown-usage-limit">/{testsLimit}</span></span>
-                            <span className="dropdown-usage-sub">{testsRemaining} left</span>
+                            <span className="dropdown-usage-count">
+                              {usage.tests}
+                              {!isPremium && <span className="dropdown-usage-limit">/{testsLimit}</span>}
+                            </span>
+                            {!isPremium && <span className="dropdown-usage-sub">{testsRemaining} left</span>}
                           </div>
                         </div>
                         <div className="dropdown-divider" />
@@ -531,7 +536,7 @@ export default function App() {
 
             <div className="header-right">
               {isPremium ? (
-                <div className="premium-status" title="100 sets · 300 tests per month">
+                <div className="premium-status" title="Unlimited sets & tests">
                   <span className="premium-status-icon">✦</span>
                   <span>Premium</span>
                 </div>
@@ -576,6 +581,7 @@ export default function App() {
                   testsUsed={usage.tests}
                   testsLimit={testsLimit}
                   canTakeTest={canTakeTest}
+                  isPremium={isPremium}
                   onNeedPremium={() => setShowPremium(true)}
                 />
               </motion.div>

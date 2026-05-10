@@ -10,8 +10,8 @@ const STRIPE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
 const stripePromise = STRIPE_KEY ? loadStripe(STRIPE_KEY) : null
 
 const BENEFITS = [
-  '100 flashcard sets per month',
-  '300 AI-generated tests per month',
+  'Unlimited flashcard sets',
+  'Unlimited AI-generated tests',
   'Priority AI generation',
 ]
 

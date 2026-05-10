@@ -111,7 +111,7 @@ function SetRow({ set, folders, onStudy, onTest, onDelete, onMove, canTakeTest, 
   )
 }
 
-export default function FlashcardsPage({ user, onNewFile, onStudySet, onTestSet, onBack, onSignIn, setsUsed = 0, setsLimit = 1, testsUsed = 0, testsLimit = 2, canTakeTest = true, onNeedPremium }) {
+export default function FlashcardsPage({ user, onNewFile, onStudySet, onTestSet, onBack, onSignIn, setsUsed = 0, setsLimit = 1, testsUsed = 0, testsLimit = 2, canTakeTest = true, isPremium = false, onNeedPremium }) {
   const [folders, setFolders] = useState([])
   const [sets, setSets] = useState([])
   const [loading, setLoading] = useState(false)
@@ -221,15 +221,21 @@ export default function FlashcardsPage({ user, onNewFile, onStudySet, onTestSet,
           <>
             {/* Usage boxes */}
             <div className="fc-usage-row">
-              <div className={`fc-usage-box${setsUsed >= setsLimit ? ' fc-usage-box--full' : ''}`}>
+              <div className={`fc-usage-box${!isPremium && setsUsed >= setsLimit ? ' fc-usage-box--full' : ''}`}>
                 <span className="fc-usage-label">Sets</span>
-                <span className="fc-usage-count">{setsUsed}<span className="fc-usage-limit">/{setsLimit}</span></span>
-                <span className="fc-usage-sub">{Math.max(0, setsLimit - setsUsed)} remaining</span>
+                <span className="fc-usage-count">
+                  {setsUsed}
+                  {!isPremium && <span className="fc-usage-limit">/{setsLimit}</span>}
+                </span>
+                {!isPremium && <span className="fc-usage-sub">{Math.max(0, setsLimit - setsUsed)} remaining</span>}
               </div>
-              <div className={`fc-usage-box${testsUsed >= testsLimit ? ' fc-usage-box--full' : ''}`}>
+              <div className={`fc-usage-box${!isPremium && testsUsed >= testsLimit ? ' fc-usage-box--full' : ''}`}>
                 <span className="fc-usage-label">Tests</span>
-                <span className="fc-usage-count">{testsUsed}<span className="fc-usage-limit">/{testsLimit}</span></span>
-                <span className="fc-usage-sub">{Math.max(0, testsLimit - testsUsed)} remaining</span>
+                <span className="fc-usage-count">
+                  {testsUsed}
+                  {!isPremium && <span className="fc-usage-limit">/{testsLimit}</span>}
+                </span>
+                {!isPremium && <span className="fc-usage-sub">{Math.max(0, testsLimit - testsUsed)} remaining</span>}
               </div>
             </div>
 
